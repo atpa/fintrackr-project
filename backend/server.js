@@ -24,6 +24,125 @@ const BANKS = [
   { id: 4, name: "ВТБ" },
 ];
 
+const MOCK_BANK_TRANSACTIONS = {
+  1: [
+    {
+      external_id: "tnk_grocery_001",
+      description: "Перекрёсток, Москва",
+      type: "expense",
+      amount: 2350.4,
+      currency: "RUB",
+      date: "2025-03-12",
+      category: { name: "Продукты", kind: "expense" },
+    },
+    {
+      external_id: "tnk_taxi_001",
+      description: "Яндекс Такси",
+      type: "expense",
+      amount: 680.3,
+      currency: "RUB",
+      date: "2025-03-14",
+      category: { name: "Транспорт", kind: "expense" },
+    },
+    {
+      external_id: "tnk_salary_001",
+      description: "Зарплата ООО \"Финтех\"",
+      type: "income",
+      amount: 180000,
+      currency: "RUB",
+      date: "2025-03-10",
+      category: { name: "Зарплата", kind: "income" },
+    },
+  ],
+  2: [
+    {
+      external_id: "sbr_coffee_001",
+      description: "Кофейня DoubleB",
+      type: "expense",
+      amount: 18.5,
+      currency: "EUR",
+      date: "2025-03-11",
+      category: { name: "Развлечения", kind: "expense" },
+    },
+    {
+      external_id: "sbr_gas_001",
+      description: "АЗС Лукойл",
+      type: "expense",
+      amount: 3200,
+      currency: "RUB",
+      date: "2025-03-09",
+      category: { name: "Транспорт", kind: "expense" },
+    },
+    {
+      external_id: "sbr_interest_001",
+      description: "Проценты по вкладу",
+      type: "income",
+      amount: 52.75,
+      currency: "EUR",
+      date: "2025-03-08",
+      category: { name: "Зарплата", kind: "income" },
+    },
+  ],
+  3: [
+    {
+      external_id: "alf_market_001",
+      description: "Продуктовый рынок",
+      type: "expense",
+      amount: 94.2,
+      currency: "USD",
+      date: "2025-02-27",
+      category: { name: "Продукты", kind: "expense" },
+    },
+    {
+      external_id: "alf_entertainment_001",
+      description: "Кинотеатр \"Октябрь\"",
+      type: "expense",
+      amount: 1450,
+      currency: "RUB",
+      date: "2025-03-01",
+      category: { name: "Развлечения", kind: "expense" },
+    },
+    {
+      external_id: "alf_bonus_001",
+      description: "Бонусы кэшбэк",
+      type: "income",
+      amount: 25.6,
+      currency: "USD",
+      date: "2025-03-05",
+      category: { name: "Зарплата", kind: "income" },
+    },
+  ],
+  4: [
+    {
+      external_id: "vtb_gift_001",
+      description: "Подарок коллеге",
+      type: "expense",
+      amount: 4100,
+      currency: "RUB",
+      date: "2025-03-02",
+      category: { name: "Подарки", kind: "expense" },
+    },
+    {
+      external_id: "vtb_grocery_001",
+      description: "Пятёрочка",
+      type: "expense",
+      amount: 2750.8,
+      currency: "RUB",
+      date: "2025-03-03",
+      category: { name: "Продукты", kind: "expense" },
+    },
+    {
+      external_id: "vtb_salary_001",
+      description: "Аванс",
+      type: "income",
+      amount: 62000,
+      currency: "RUB",
+      date: "2025-03-15",
+      category: { name: "Зарплата", kind: "income" },
+    },
+  ],
+};
+
 // Загружаем данные из файла JSON; в реальном приложении здесь бы была БД
 const dataPath = path.join(__dirname, "data.json");
 let data;
@@ -54,6 +173,17 @@ try {
   };
 }
 
+const defaultUserId = data.users && data.users.length > 0 ? data.users[0].id : null;
+ensureCollectionUserId(data.accounts, defaultUserId);
+ensureCollectionUserId(data.categories, defaultUserId);
+ensureCollectionUserId(data.transactions, defaultUserId);
+ensureCollectionUserId(data.budgets, defaultUserId);
+ensureCollectionUserId(data.goals, defaultUserId);
+ensureCollectionUserId(data.planned, defaultUserId);
+ensureCollectionUserId(data.bankConnections, defaultUserId);
+ensureCollectionUserId(data.subscriptions, defaultUserId);
+ensureCollectionUserId(data.rules, defaultUserId);
+
 /**
  * Сохраняет текущее состояние `data` в файл. Если происходит ошибка, выводит её в консоль.
  */
@@ -82,6 +212,77 @@ const RATE_MAP = {
   RUB: { USD: 0.011, EUR: 0.0105, PLN: 0.05, RUB: 1 },
 };
 
+const ALLOWED_CURRENCIES = ["USD", "EUR", "PLN", "RUB"];
+
+function getNextId(arr) {
+  return arr.reduce((max, item) => Math.max(max, item.id || 0), 0) + 1;
+}
+
+function parseUserId(raw) {
+  if (raw == null) return null;
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  const num = Number(value);
+  return Number.isInteger(num) && num > 0 ? num : null;
+}
+
+function ensureCollectionUserId(collection, fallbackUserId = null) {
+  if (!Array.isArray(collection)) return;
+  collection.forEach((item) => {
+    if (item && typeof item === "object" && item.user_id == null) {
+      item.user_id = fallbackUserId;
+    }
+  });
+}
+
+function isPublicApiRequest(method, pathname) {
+  if (method === "POST" && (pathname === "/api/login" || pathname === "/api/register")) {
+    return true;
+  }
+  if (method === "GET" && ["/api/convert", "/api/banks", "/api/rates"].includes(pathname)) {
+    return true;
+  }
+  return false;
+}
+
+function getBudgetMonth(dateStr) {
+  if (!dateStr) return null;
+  const dt = new Date(dateStr);
+  if (Number.isNaN(dt.getTime())) return null;
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function resolveBudgetForExpense(dataObj, tx, userId, createIfMissing = false) {
+  if (!tx || tx.type !== "expense") return null;
+  const month = getBudgetMonth(tx.date);
+  if (!month) return null;
+  let budget = dataObj.budgets.find(
+    (b) => b.user_id === userId && b.category_id === tx.category_id && b.month === month
+  );
+  if (!budget && createIfMissing) {
+    budget = {
+      id: getNextId(dataObj.budgets),
+      user_id: userId,
+      category_id: tx.category_id,
+      month,
+      limit: 0,
+      spent: 0,
+      type: "fixed",
+      percent: null,
+      currency: tx.currency || "USD",
+    };
+    dataObj.budgets.push(budget);
+  }
+  return budget;
+}
+
+function adjustBudgetWithTransaction(budget, tx, direction = 1) {
+  if (!budget || !tx || tx.type !== "expense") return;
+  const bCur = budget.currency || "USD";
+  const delta = convertAmount(Number(tx.amount), tx.currency || "USD", bCur);
+  const nextValue = Number(budget.spent) + direction * Number(delta);
+  budget.spent = Math.max(0, Number.isFinite(nextValue) ? nextValue : Number(budget.spent) || 0);
+}
+
 function convertAmount(amount, from, to) {
   if (!from || !to || from === to) return Number(amount) || 0;
   const rates = RATE_MAP[from];
@@ -95,24 +296,52 @@ function convertAmount(amount, from, to) {
 function handleApi(req, res) {
   const url = new URL(req.url, `http://${req.headers.host}`);
 
+  let currentUserId = parseUserId(req.headers["x-user-id"]);
+  if (!currentUserId) {
+    currentUserId = parseUserId(url.searchParams.get("userId"));
+  }
+  const currentUser =
+    currentUserId != null
+      ? data.users.find((u) => u.id === currentUserId)
+      : null;
+  const authRequired = !isPublicApiRequest(req.method, url.pathname);
+  if (authRequired && !currentUser) {
+    return sendJson(res, { error: "Unauthorized" }, 401);
+  }
+  const userId = currentUser ? currentUser.id : null;
+  const filterForUser = (collection) => {
+    if (!Array.isArray(collection) || !userId) return [];
+    return collection.filter((item) => item.user_id === userId);
+  };
+  const findForUser = (collection, id) => {
+    if (!userId) return null;
+    return collection.find((item) => item.id === id && item.user_id === userId);
+  };
+
   // Обработка DELETE‑запросов для API (удаление сущностей)
   if (req.method === "DELETE") {
     // Удаление категории: /api/categories/:id
     const catMatch = url.pathname.match(/^\/api\/categories\/(\d+)$/);
     if (catMatch) {
       const catId = Number(catMatch[1]);
-      const index = data.categories.findIndex((c) => c.id === catId);
+      const index = data.categories.findIndex(
+        (c) => c.id === catId && c.user_id === userId
+      );
       if (index === -1) {
         return sendJson(res, { error: "Category not found" }, 404);
       }
       // Удаляем категорию
       data.categories.splice(index, 1);
       // Также удаляем связанные бюджеты и плановые операции по этой категории
-      data.budgets = data.budgets.filter((b) => b.category_id !== catId);
-      data.planned = data.planned.filter((p) => p.category_id !== catId);
+      data.budgets = data.budgets.filter(
+        (b) => b.category_id !== catId || b.user_id !== userId
+      );
+      data.planned = data.planned.filter(
+        (p) => p.category_id !== catId || p.user_id !== userId
+      );
       // Очищаем ссылку на категорию в транзакциях
       data.transactions.forEach((tx) => {
-        if (tx.category_id === catId) tx.category_id = null;
+        if (tx.user_id === userId && tx.category_id === catId) tx.category_id = null;
       });
       persistData();
       return sendJson(res, { success: true }, 200);
@@ -121,7 +350,9 @@ function handleApi(req, res) {
     const subMatch = url.pathname.match(/^\/api\/subscriptions\/(\d+)$/);
     if (subMatch) {
       const subId = Number(subMatch[1]);
-      const idx = data.subscriptions.findIndex((s) => s.id === subId);
+      const idx = data.subscriptions.findIndex(
+        (s) => s.id === subId && s.user_id === userId
+      );
       if (idx === -1) {
         return sendJson(res, { error: "Subscription not found" }, 404);
       }
@@ -134,7 +365,9 @@ function handleApi(req, res) {
     const ruleMatch = url.pathname.match(/^\/api\/rules\/(\d+)$/);
     if (ruleMatch) {
       const ruleId = Number(ruleMatch[1]);
-      const rIndex = data.rules.findIndex((r) => r.id === ruleId);
+      const rIndex = data.rules.findIndex(
+        (r) => r.id === ruleId && r.user_id === userId
+      );
       if (rIndex === -1) {
         return sendJson(res, { error: "Rule not found" }, 404);
       }
@@ -146,11 +379,15 @@ function handleApi(req, res) {
     const txMatch = url.pathname.match(/^\/api\/transactions\/(\d+)$/);
     if (txMatch) {
       const txId = Number(txMatch[1]);
-      const idx = data.transactions.findIndex((t) => t.id === txId);
+      const idx = data.transactions.findIndex(
+        (t) => t.id === txId && t.user_id === userId
+      );
       if (idx === -1) return sendJson(res, { error: "Transaction not found" }, 404);
       const tx = data.transactions[idx];
       // Откат баланса счёта с учётом валюты счёта
-      const acc = data.accounts.find((a) => a.id === tx.account_id);
+      const acc = data.accounts.find(
+        (a) => a.id === tx.account_id && a.user_id === userId
+      );
       if (acc) {
         const adj = convertAmount(Number(tx.amount), tx.currency || acc.currency || "USD", acc.currency || "USD");
         if (tx.type === "income") acc.balance = Number(acc.balance) - adj;
@@ -160,12 +397,13 @@ function handleApi(req, res) {
       if (tx.type === "expense") {
         const dt = new Date(tx.date);
         const month = dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0");
-        const b = data.budgets.find((b) => b.category_id === tx.category_id && b.month === month);
-        if (b) {
-          const bCur = b.currency || "USD";
-          const dec = convertAmount(Number(tx.amount), tx.currency || "USD", bCur);
-          b.spent = Math.max(0, Number(b.spent) - Number(dec));
-        }
+        const b = data.budgets.find(
+          (b) =>
+            b.user_id === userId &&
+            b.category_id === tx.category_id &&
+            b.month === month
+        );
+        adjustBudgetWithTransaction(b, tx, -1);
       }
       data.transactions.splice(idx, 1);
       persistData();
@@ -194,12 +432,11 @@ function handleApi(req, res) {
       m = url.pathname.match(/^\/api\/accounts\/(\d+)$/);
       if (m) {
         const id = Number(m[1]);
-        const acc = data.accounts.find((a) => a.id === id);
+        const acc = findForUser(data.accounts, id);
         if (!acc) return sendJson(res, { error: "Account not found" }, 404);
-        const allowedCur = ["USD", "EUR", "PLN", "RUB"];
         if (payload.name != null) acc.name = String(payload.name);
         if (payload.currency != null) {
-          if (!allowedCur.includes(String(payload.currency))) {
+          if (!ALLOWED_CURRENCIES.includes(String(payload.currency))) {
             return sendJson(res, { error: "Invalid currency" }, 400);
           }
           acc.currency = String(payload.currency);
@@ -216,7 +453,7 @@ function handleApi(req, res) {
       m = url.pathname.match(/^\/api\/categories\/(\d+)$/);
       if (m) {
         const id = Number(m[1]);
-        const cat = data.categories.find((c) => c.id === id);
+        const cat = findForUser(data.categories, id);
         if (!cat) return sendJson(res, { error: "Category not found" }, 404);
         if (payload.name != null) cat.name = String(payload.name);
         if (payload.kind != null) {
@@ -232,9 +469,8 @@ function handleApi(req, res) {
       m = url.pathname.match(/^\/api\/budgets\/(\d+)$/);
       if (m) {
         const id = Number(m[1]);
-        const budget = data.budgets.find((b) => b.id === id);
+        const budget = findForUser(data.budgets, id);
         if (!budget) return sendJson(res, { error: "Budget not found" }, 404);
-        const allowedCur = ["USD", "EUR", "PLN", "RUB"];
         if (payload.limit != null) {
           const l = Number(payload.limit);
           if (!isFinite(l) || l < 0) return sendJson(res, { error: "Invalid limit" }, 400);
@@ -254,7 +490,7 @@ function handleApi(req, res) {
           budget.percent = p;
         }
         if (payload.currency != null) {
-          if (!allowedCur.includes(String(payload.currency))) {
+          if (!ALLOWED_CURRENCIES.includes(String(payload.currency))) {
             return sendJson(res, { error: "Invalid currency" }, 400);
           }
           budget.currency = String(payload.currency);
@@ -267,7 +503,7 @@ function handleApi(req, res) {
       m = url.pathname.match(/^\/api\/goals\/(\d+)$/);
       if (m) {
         const id = Number(m[1]);
-        const goal = data.goals.find((g) => g.id === id);
+        const goal = findForUser(data.goals, id);
         if (!goal) return sendJson(res, { error: "Goal not found" }, 404);
         if (payload.title != null) goal.title = String(payload.title);
         if (payload.target_amount != null) {
@@ -288,16 +524,53 @@ function handleApi(req, res) {
       m = url.pathname.match(/^\/api\/planned\/(\d+)$/);
       if (m) {
         const id = Number(m[1]);
-        const plan = data.planned.find((p) => p.id === id);
+        const plan = findForUser(data.planned, id);
         if (!plan) return sendJson(res, { error: "Planned not found" }, 404);
-        const allowedCur = ["USD", "EUR", "PLN", "RUB"];
-        if (payload.account_id != null) plan.account_id = Number(payload.account_id);
-        if (payload.category_id != null) plan.category_id = Number(payload.category_id);
+        if (payload.account_id != null) {
+          const newAccount = findForUser(
+            data.accounts,
+            Number(payload.account_id)
+          );
+          if (!newAccount) {
+            return sendJson(res, { error: "Account not found" }, 404);
+          }
+          plan.account_id = newAccount.id;
+        }
+        let nextType = plan.type;
         if (payload.type != null) {
           if (!["income", "expense"].includes(String(payload.type))) {
             return sendJson(res, { error: "Invalid type" }, 400);
           }
-          plan.type = String(payload.type);
+          nextType = String(payload.type);
+          plan.type = nextType;
+        }
+        if (payload.category_id != null) {
+          const newCategory = findForUser(
+            data.categories,
+            Number(payload.category_id)
+          );
+          if (!newCategory) {
+            return sendJson(res, { error: "Category not found" }, 404);
+          }
+          if (
+            (newCategory.kind === "income" && nextType !== "income") ||
+            (newCategory.kind === "expense" && nextType !== "expense")
+          ) {
+            return sendJson(res, { error: "Type does not match category" }, 400);
+          }
+          plan.category_id = newCategory.id;
+        } else {
+          const currentCategory = findForUser(
+            data.categories,
+            plan.category_id
+          );
+          if (
+            currentCategory &&
+            ((currentCategory.kind === "income" && nextType !== "income") ||
+              (currentCategory.kind === "expense" && nextType !== "expense"))
+          ) {
+            return sendJson(res, { error: "Type does not match category" }, 400);
+          }
         }
         if (payload.amount != null) {
           const a = Number(payload.amount);
@@ -305,7 +578,7 @@ function handleApi(req, res) {
           plan.amount = a;
         }
         if (payload.currency != null) {
-          if (!allowedCur.includes(String(payload.currency))) {
+          if (!ALLOWED_CURRENCIES.includes(String(payload.currency))) {
             return sendJson(res, { error: "Invalid currency" }, 400);
           }
           plan.currency = String(payload.currency);
@@ -320,9 +593,8 @@ function handleApi(req, res) {
       m = url.pathname.match(/^\/api\/subscriptions\/(\d+)$/);
       if (m) {
         const id = Number(m[1]);
-        const sub = data.subscriptions.find((s) => s.id === id);
+        const sub = findForUser(data.subscriptions, id);
         if (!sub) return sendJson(res, { error: "Subscription not found" }, 404);
-        const allowedCur = ["USD", "EUR", "PLN", "RUB"];
         const allowedFreq = ["weekly", "monthly", "yearly"];
         if (payload.title != null) sub.title = String(payload.title);
         if (payload.amount != null) {
@@ -331,7 +603,7 @@ function handleApi(req, res) {
           sub.amount = a;
         }
         if (payload.currency != null) {
-          if (!allowedCur.includes(String(payload.currency))) {
+          if (!ALLOWED_CURRENCIES.includes(String(payload.currency))) {
             return sendJson(res, { error: "Invalid currency" }, 400);
           }
           sub.currency = String(payload.currency);
@@ -350,10 +622,19 @@ function handleApi(req, res) {
       m = url.pathname.match(/^\/api\/rules\/(\d+)$/);
       if (m) {
         const id = Number(m[1]);
-        const rule = data.rules.find((r) => r.id === id);
+        const rule = findForUser(data.rules, id);
         if (!rule) return sendJson(res, { error: "Rule not found" }, 404);
         if (payload.keyword != null) rule.keyword = String(payload.keyword).toLowerCase();
-        if (payload.category_id != null) rule.category_id = Number(payload.category_id);
+        if (payload.category_id != null) {
+          const ruleCategory = findForUser(
+            data.categories,
+            Number(payload.category_id)
+          );
+          if (!ruleCategory) {
+            return sendJson(res, { error: "Category not found" }, 404);
+          }
+          rule.category_id = ruleCategory.id;
+        }
         persistData();
         return sendJson(res, rule, 200);
       }
@@ -445,15 +726,15 @@ function handleApi(req, res) {
     }
     // Возврат подключённых банковских аккаунтов
     if (url.pathname === "/api/sync/connections") {
-      return sendJson(res, data.bankConnections || []);
+      return sendJson(res, filterForUser(data.bankConnections || []));
     }
     // Возвращает список подписок
     if (url.pathname === "/api/subscriptions") {
-      return sendJson(res, data.subscriptions || []);
+      return sendJson(res, filterForUser(data.subscriptions || []));
     }
     // Возврат списка правил категоризации
     if (url.pathname === "/api/rules") {
-      return sendJson(res, data.rules || []);
+      return sendJson(res, filterForUser(data.rules || []));
     }
     if (url.pathname === "/api/rates") {
       // Возврат курсов валют: принимает параметры base и quote
@@ -476,17 +757,17 @@ function handleApi(req, res) {
     // (удалено) /api/categories и /api/sync — см. switch ниже и POST /api/sync/transactions
     switch (url.pathname) {
       case "/api/accounts":
-        return sendJson(res, data.accounts);
+        return sendJson(res, filterForUser(data.accounts));
       case "/api/categories":
-        return sendJson(res, data.categories);
+        return sendJson(res, filterForUser(data.categories));
       case "/api/transactions":
-        return sendJson(res, data.transactions);
+        return sendJson(res, filterForUser(data.transactions));
       case "/api/budgets":
-        return sendJson(res, data.budgets);
+        return sendJson(res, filterForUser(data.budgets));
       case "/api/goals":
-        return sendJson(res, data.goals);
+        return sendJson(res, filterForUser(data.goals));
       case "/api/planned":
-        return sendJson(res, data.planned);
+        return sendJson(res, filterForUser(data.planned));
       case "/api/forecast": {
         // Простой прогноз: рассчитываем средние ежедневные доходы и расходы за последние 30 дней.
         // Для согласованности все суммы приводим к единой базе (USD).
@@ -497,7 +778,7 @@ function handleApi(req, res) {
         let expenseSum = 0;
         let incomeCount = 0;
         let expenseCount = 0;
-        data.transactions.forEach((tx) => {
+        filterForUser(data.transactions).forEach((tx) => {
           const txDate = new Date(tx.date);
           if (txDate >= cutoff && txDate <= now) {
             if (tx.type === "income") {
@@ -528,7 +809,7 @@ function handleApi(req, res) {
             .toLowerCase()
             .trim();
         const byKey = new Map();
-        data.transactions.forEach((tx) => {
+        filterForUser(data.transactions).forEach((tx) => {
           if (tx.type !== "expense") return;
           const k = groupKey(tx);
           if (!byKey.has(k)) byKey.set(k, []);
@@ -585,20 +866,21 @@ function handleApi(req, res) {
       } catch (err) {
         return sendJson(res, { error: "Invalid JSON" }, 400);
       }
-      // Генерация следующего ID
-      const getNextId = (arr) =>
-        arr.reduce((max, item) => Math.max(max, item.id || 0), 0) + 1;
       switch (url.pathname) {
         case "/api/accounts": {
           // payload: { name, currency, balance }
           if (!payload.name || !payload.currency) {
             return sendJson(res, { error: "Missing account parameters" }, 400);
           }
+          if (!ALLOWED_CURRENCIES.includes(String(payload.currency))) {
+            return sendJson(res, { error: "Invalid currency" }, 400);
+          }
           if (typeof payload.balance !== "undefined" && isNaN(Number(payload.balance))) {
             return sendJson(res, { error: "Invalid balance" }, 400);
           }
           const newAccount = {
             id: getNextId(data.accounts),
+            user_id: userId,
             name: payload.name,
             currency: payload.currency,
             balance: Number(payload.balance) || 0,
@@ -617,6 +899,7 @@ function handleApi(req, res) {
           }
           const newCategory = {
             id: getNextId(data.categories),
+            user_id: userId,
             name: payload.name,
             kind: payload.kind,
           };
@@ -646,14 +929,17 @@ function handleApi(req, res) {
           if (isNaN(Number(payload.amount)) || Number(payload.amount) < 0) {
             return sendJson(res, { error: "Invalid amount" }, 400);
           }
+          const txDate = new Date(payload.date);
+          if (Number.isNaN(txDate.getTime())) {
+            return sendJson(res, { error: "Invalid date" }, 400);
+          }
           // Валюта должна быть из допустимого списка
-          const allowedCur = ["USD", "EUR", "PLN", "RUB"];
-          if (!allowedCur.includes(String(payload.currency))) {
+          if (!ALLOWED_CURRENCIES.includes(String(payload.currency))) {
             return sendJson(res, { error: "Invalid currency" }, 400);
           }
-          const acc = data.accounts.find((a) => a.id === Number(payload.account_id));
+          const acc = findForUser(data.accounts, Number(payload.account_id));
           if (!acc) return sendJson(res, { error: "Account not found" }, 404);
-          const cat = data.categories.find((c) => c.id === Number(payload.category_id));
+          const cat = findForUser(data.categories, Number(payload.category_id));
           if (!cat) return sendJson(res, { error: "Category not found" }, 404);
           // Согласованность типа операции и типа категории
           if ((cat.kind === "income" && payload.type !== "income") || (cat.kind === "expense" && payload.type !== "expense")) {
@@ -662,6 +948,7 @@ function handleApi(req, res) {
           const newId = getNextId(data.transactions);
           const newTx = {
             id: newId,
+            user_id: userId,
             account_id: Number(payload.account_id),
             category_id: Number(payload.category_id),
             type: payload.type,
@@ -670,47 +957,34 @@ function handleApi(req, res) {
             date: payload.date,
             note: payload.note || "",
           };
-          data.transactions.push(newTx);
-          // Обновляем баланс счёта с учётом валюты счёта
-          if (acc) {
-            const adj = convertAmount(
-              Number(newTx.amount),
-              newTx.currency || acc.currency || "USD",
-              acc.currency || "USD"
-            );
-            if (newTx.type === "income") {
-              acc.balance = Number(acc.balance) + adj;
-            } else {
-              acc.balance = Number(acc.balance) - adj;
-            }
+          const accountCurrency = acc.currency || "USD";
+          const txCurrency = newTx.currency || accountCurrency;
+          const adjustment = convertAmount(Number(newTx.amount), txCurrency, accountCurrency);
+          const nextBalance =
+            newTx.type === "income"
+              ? Number(acc.balance) + Number(adjustment)
+              : Number(acc.balance) - Number(adjustment);
+          if (!Number.isFinite(nextBalance)) {
+            return sendJson(res, { error: "Unable to update account balance" }, 400);
           }
-          // Обновляем бюджет по категории и месяцу (если тип расход)
+          let budgetToUpdate = null;
+          let budgetNextSpent = null;
           if (newTx.type === "expense") {
-            const dt = new Date(newTx.date);
-            const month =
-              dt.getFullYear() +
-              "-" +
-              String(dt.getMonth() + 1).padStart(2, "0");
-            // Ищем бюджет для этой категории и месяца
-            let budget = data.budgets.find(
-              (b) => b.category_id === newTx.category_id && b.month === month
-            );
-            if (!budget) {
-              budget = {
-                id: getNextId(data.budgets),
-                category_id: newTx.category_id,
-                month,
-                limit: 0,
-                spent: 0,
-                currency: "USD",
-              };
-              data.budgets.push(budget);
+            budgetToUpdate = resolveBudgetForExpense(data, newTx, userId, true);
+            if (budgetToUpdate) {
+              const bCur = budgetToUpdate.currency || "USD";
+              const delta = convertAmount(Number(newTx.amount), txCurrency, bCur);
+              budgetNextSpent = Number(budgetToUpdate.spent) + Number(delta);
+              if (!Number.isFinite(budgetNextSpent)) {
+                return sendJson(res, { error: "Unable to update budget" }, 400);
+              }
             }
-            // Если у бюджета задана валюта, конвертируем расход в валюту бюджета
-            const bCur = budget.currency || "USD";
-            const add = convertAmount(Number(newTx.amount), newTx.currency || "USD", bCur);
-            budget.spent = Number(budget.spent) + Number(add);
           }
+          acc.balance = nextBalance;
+          if (budgetToUpdate && budgetNextSpent != null) {
+            budgetToUpdate.spent = budgetNextSpent;
+          }
+          data.transactions.push(newTx);
           persistData();
           return sendJson(res, newTx, 201);
         }
@@ -719,6 +993,13 @@ function handleApi(req, res) {
           // type: 'fixed' | 'percent'. Если 'percent', то берётся процент от дохода.
           if (!payload.category_id || !payload.month) {
             return sendJson(res, { error: "Missing budget parameters" }, 400);
+          }
+          const category = findForUser(
+            data.categories,
+            Number(payload.category_id)
+          );
+          if (!category) {
+            return sendJson(res, { error: "Category not found" }, 404);
           }
           if (payload.type && !["fixed", "percent"].includes(payload.type)) {
             return sendJson(res, { error: "Invalid budget type" }, 400);
@@ -729,18 +1010,19 @@ function handleApi(req, res) {
               return sendJson(res, { error: "Invalid percent" }, 400);
             }
           }
-          const allowedCur = ["USD", "EUR", "PLN", "RUB"];
-          const bCurrency = allowedCur.includes(String(payload.currency))
+          const bCurrency = ALLOWED_CURRENCIES.includes(String(payload.currency))
             ? String(payload.currency)
             : "USD";
           let budget = data.budgets.find(
             (b) =>
+              b.user_id === userId &&
               b.category_id === Number(payload.category_id) &&
               b.month === payload.month
           );
           if (!budget) {
             budget = {
               id: getNextId(data.budgets),
+              user_id: userId,
               category_id: Number(payload.category_id),
               month: payload.month,
               limit: Number(payload.limit) || 0,
@@ -767,11 +1049,20 @@ function handleApi(req, res) {
           if (!payload.title || !payload.target_amount) {
             return sendJson(res, { error: "Missing goal parameters" }, 400);
           }
+          const targetAmount = Number(payload.target_amount);
+          const currentAmount = Number(payload.current_amount || 0);
+          if (!Number.isFinite(targetAmount) || targetAmount < 0) {
+            return sendJson(res, { error: "Invalid target_amount" }, 400);
+          }
+          if (!Number.isFinite(currentAmount) || currentAmount < 0) {
+            return sendJson(res, { error: "Invalid current_amount" }, 400);
+          }
           const newGoal = {
             id: getNextId(data.goals),
+            user_id: userId,
             title: payload.title,
-            target_amount: Number(payload.target_amount),
-            current_amount: Number(payload.current_amount) || 0,
+            target_amount: targetAmount,
+            current_amount: currentAmount,
             deadline: payload.deadline || null,
           };
           data.goals.push(newGoal);
@@ -794,12 +1085,43 @@ function handleApi(req, res) {
               400
             );
           }
+          if (!["income", "expense"].includes(String(payload.type))) {
+            return sendJson(res, { error: "Invalid type" }, 400);
+          }
+          if (!ALLOWED_CURRENCIES.includes(String(payload.currency))) {
+            return sendJson(res, { error: "Invalid currency" }, 400);
+          }
+          const plannedAccount = findForUser(
+            data.accounts,
+            Number(payload.account_id)
+          );
+          if (!plannedAccount) {
+            return sendJson(res, { error: "Account not found" }, 404);
+          }
+          const plannedCategory = findForUser(
+            data.categories,
+            Number(payload.category_id)
+          );
+          if (!plannedCategory) {
+            return sendJson(res, { error: "Category not found" }, 404);
+          }
+          if (
+            (plannedCategory.kind === "income" && payload.type !== "income") ||
+            (plannedCategory.kind === "expense" && payload.type !== "expense")
+          ) {
+            return sendJson(res, { error: "Type does not match category" }, 400);
+          }
+          const plannedAmount = Number(payload.amount);
+          if (!Number.isFinite(plannedAmount) || plannedAmount < 0) {
+            return sendJson(res, { error: "Invalid amount" }, 400);
+          }
           const newPlanned = {
             id: getNextId(data.planned),
+            user_id: userId,
             account_id: Number(payload.account_id),
             category_id: Number(payload.category_id),
             type: payload.type,
-            amount: Number(payload.amount),
+            amount: plannedAmount,
             currency: payload.currency,
             start_date:
               payload.start_date || new Date().toISOString().slice(0, 10),
@@ -812,12 +1134,20 @@ function handleApi(req, res) {
         }
         case "/api/rules": {
           // payload: { keyword, category_id }
-          if (!payload.keyword || typeof payload.category_id !== "number") {
+          if (payload.keyword == null || payload.category_id == null) {
             return sendJson(res, { error: "Missing rule parameters" }, 400);
+          }
+          const ruleCategory = findForUser(
+            data.categories,
+            Number(payload.category_id)
+          );
+          if (!ruleCategory) {
+            return sendJson(res, { error: "Category not found" }, 404);
           }
           // Lowercase keyword to ensure case-insensitive matching
           const newRule = {
             id: getNextId(data.rules),
+            user_id: userId,
             keyword: String(payload.keyword).toLowerCase(),
             category_id: Number(payload.category_id),
           };
@@ -887,18 +1217,16 @@ function handleApi(req, res) {
           if (isNaN(Number(amount)) || Number(amount) < 0) {
             return sendJson(res, { error: "Invalid amount" }, 400);
           }
-          const allowedCur = ["USD", "EUR", "PLN", "RUB"];
-          if (!allowedCur.includes(String(currency))) {
+          if (!ALLOWED_CURRENCIES.includes(String(currency))) {
             return sendJson(res, { error: "Invalid currency" }, 400);
           }
           const allowedFreq = ["weekly", "monthly", "yearly"];
           if (!allowedFreq.includes(String(frequency))) {
             return sendJson(res, { error: "Invalid frequency" }, 400);
           }
-          const getNextId = (arr) =>
-            arr.reduce((max, item) => Math.max(max, item.id || 0), 0) + 1;
           const newSub = {
             id: getNextId(data.subscriptions),
+            user_id: userId,
             title: title,
             amount: Number(amount),
             currency: currency,
@@ -924,21 +1252,24 @@ function handleApi(req, res) {
           }
           // Если не указан account_id, пытаемся выбрать первый счёт
           if (!accId) {
-            if (!data.accounts || data.accounts.length === 0) {
+            const userAccounts = filterForUser(data.accounts);
+            if (!userAccounts || userAccounts.length === 0) {
               return sendJson(res, { error: "Нет доступных счетов" }, 400);
             }
-            accId = data.accounts[0].id;
+            accId = userAccounts[0].id;
+          }
+          const linkedAccount = findForUser(data.accounts, accId);
+          if (!linkedAccount) {
+            return sendJson(res, { error: "Account not found" }, 404);
           }
           const bank = BANKS.find((b) => b.id === bankId);
           if (!bank) {
             return sendJson(res, { error: "Банк не найден" }, 404);
           }
-          // генерируем id
-          const getNextId = (arr) =>
-            arr.reduce((max, item) => Math.max(max, item.id || 0), 0) + 1;
           const connId = getNextId(data.bankConnections);
           const newConn = {
             id: connId,
+            user_id: userId,
             bank_id: bank.id,
             bank_name: bank.name,
             account_id: accId,
@@ -956,47 +1287,148 @@ function handleApi(req, res) {
           if (!connId) {
             return sendJson(res, { error: "Missing connection_id" }, 400);
           }
-          const connection = data.bankConnections.find((c) => c.id === connId);
+          const connection = findForUser(data.bankConnections, connId);
           if (!connection) {
             return sendJson(res, { error: "Connection not found" }, 404);
           }
           // ensure there is a linked account
-          const acc = data.accounts.find((a) => a.id === connection.account_id);
+          const acc = findForUser(data.accounts, connection.account_id);
           if (!acc) {
             return sendJson(res, { error: "Account not found" }, 404);
           }
-          // categories for expenses (filter expense categories)
-          const categoriesList = data.categories.filter(
-            (c) => c.kind === "expense" || !c.kind
-          );
-          const getNextTxId = (arr) =>
-            arr.reduce((max, item) => Math.max(max, item.id || 0), 0) + 1;
+          const samples = MOCK_BANK_TRANSACTIONS[connection.bank_id] || [];
+          if (!samples.length) {
+            return sendJson(
+              res,
+              {
+                synced: 0,
+                transactions: [],
+                skipped: [
+                  {
+                    reason: "No mock data for bank",
+                    bank_id: connection.bank_id,
+                  },
+                ],
+              },
+              200
+            );
+          }
+          const existingTransactions = filterForUser(data.transactions);
+          const userCategories = filterForUser(data.categories);
           const newTxs = [];
-          for (let i = 0; i < 3; i++) {
-            const randomCat =
-              categoriesList[Math.floor(Math.random() * categoriesList.length)];
-            const amount = Math.round(Math.random() * 100 + 10);
-            const dateStr = new Date().toISOString().slice(0, 10);
+          const skipped = [];
+          const pickCategory = (sample) => {
+            if (!sample.category) return null;
+            const { name, kind } = sample.category;
+            let category = null;
+            if (name) {
+              category = userCategories.find(
+                (c) => c.name && c.name.toLowerCase() === String(name).toLowerCase()
+              );
+            }
+            if (!category && kind) {
+              category = userCategories.find((c) => c.kind === kind);
+            }
+            return category || null;
+          };
+          for (const sample of samples) {
+            const category = pickCategory(sample);
+            if (!category) {
+              skipped.push({
+                external_id: sample.external_id,
+                description: sample.description,
+                reason: "Category not available for user",
+              });
+              continue;
+            }
+            if (
+              (category.kind === "income" && sample.type !== "income") ||
+              (category.kind === "expense" && sample.type !== "expense")
+            ) {
+              skipped.push({
+                external_id: sample.external_id,
+                description: sample.description,
+                reason: "Category kind mismatch",
+              });
+              continue;
+            }
+            const txCurrency = sample.currency || acc.currency || "USD";
+            const txDate = sample.date || new Date().toISOString().slice(0, 10);
+            const noteBase = sample.description
+              ? `${sample.description}`
+              : `Синхронизация банка ${connection.bank_name}`;
+            const note = `${noteBase} (синхр. ${connection.bank_name})`;
+            const duplicate = existingTransactions.some(
+              (t) =>
+                t.user_id === userId &&
+                t.account_id === acc.id &&
+                t.external_id &&
+                sample.external_id &&
+                t.external_id === sample.external_id
+            );
+            if (duplicate) {
+              skipped.push({
+                external_id: sample.external_id,
+                description: sample.description,
+                reason: "Already synced",
+              });
+              continue;
+            }
+            const amountValue = Number(sample.amount);
+            if (!Number.isFinite(amountValue) || amountValue < 0) {
+              skipped.push({
+                external_id: sample.external_id,
+                description: sample.description,
+                reason: "Invalid amount",
+              });
+              continue;
+            }
             const newTx = {
-              id: getNextTxId(data.transactions),
+              id: getNextId(data.transactions),
+              user_id: userId,
               account_id: acc.id,
-              category_id: randomCat ? randomCat.id : null,
-              type: "expense",
-              amount: amount,
-              currency: acc.currency || "USD",
-              date: dateStr,
-              note: `Синхронизация банка ${connection.bank_name}`,
+              category_id: category.id,
+              type: sample.type,
+              amount: amountValue,
+              currency: txCurrency,
+              date: txDate,
+              note,
+              external_id: sample.external_id,
             };
+            const accountCurrency = acc.currency || "USD";
+            const adjustment = convertAmount(
+              Number(newTx.amount),
+              txCurrency,
+              accountCurrency
+            );
+            const updatedBalance =
+              newTx.type === "income"
+                ? Number(acc.balance) + Number(adjustment)
+                : Number(acc.balance) - Number(adjustment);
+            if (!Number.isFinite(updatedBalance)) {
+              skipped.push({
+                external_id: sample.external_id,
+                description: sample.description,
+                reason: "Unable to update account balance",
+              });
+              continue;
+            }
+            acc.balance = updatedBalance;
+            if (newTx.type === "expense") {
+              const budget = resolveBudgetForExpense(data, newTx, userId, true);
+              adjustBudgetWithTransaction(budget, newTx, 1);
+            }
             data.transactions.push(newTx);
-            // обновляем баланс счёта
-            acc.balance = Number(acc.balance) - amount;
+            existingTransactions.push(newTx);
             newTxs.push(newTx);
           }
-          persistData();
+          if (newTxs.length > 0) {
+            persistData();
+          }
           return sendJson(
             res,
-            { synced: newTxs.length, transactions: newTxs },
-            201
+            { synced: newTxs.length, transactions: newTxs, skipped },
+            newTxs.length > 0 ? 201 : 200
           );
         }
         default:
