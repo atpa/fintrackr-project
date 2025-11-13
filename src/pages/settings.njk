@@ -1,0 +1,111 @@
+---
+title: "FinTrackr \u2013 \u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438"
+showHeader: true
+scripts:
+  - settings
+---
+
+<main>
+<!-- Раздел профиля -->
+      <section class="card">
+        <h2>Профиль</h2>
+        <p>Обновите свои данные: имя, базовую валюту и часовой пояс.</p>
+        <form id="profileForm">
+          <div style="display: flex; flex-wrap: wrap; gap: 1rem">
+            <label style="flex: 1 1 200px">
+              Имя
+              <input type="text" id="profileName" required />
+            </label>
+            <label style="flex: 1 1 150px">
+              Валюта
+              <select id="profileCurrency" required>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="PLN">PLN</option>
+                <option value="RUB">RUB</option>
+              </select>
+            </label>
+            <label style="flex: 1 1 200px">
+              Часовой пояс
+              <select id="profileTimezone" required>
+                <option value="Europe/Warsaw">Europe/Warsaw</option>
+                <option value="Europe/Moscow">Europe/Moscow</option>
+                <option value="America/New_York">America/New_York</option>
+                <option value="Asia/Tokyo">Asia/Tokyo</option>
+              </select>
+            </label>
+          </div>
+          <button type="submit" class="btn-primary" style="margin-top: 1rem">
+            Сохранить профиль
+          </button>
+        </form>
+      </section>
+      <!-- Раздел отчётной валюты -->
+      <section class="card">
+        <h2>Валюта отчётов</h2>
+        <p>
+          Выберите валюту, в которой будут отображаться отчёты, дэшборд и
+          прогнозы.
+        </p>
+        <form id="reportCurrencyForm">
+          <label>
+            Валюта для отчётов
+            <select id="reportCurrencySelect" required>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="PLN">PLN</option>
+              <option value="RUB">RUB</option>
+            </select>
+          </label>
+          <button type="submit" class="btn-primary" style="margin-top: 1rem">
+            Сохранить валюту
+          </button>
+        </form>
+      </section>
+
+      <!-- Раздел валюты баланса -->
+      <section class="card">
+        <h2>Валюта баланса</h2>
+        <p>
+          Выберите валюту, в которой будут отображаться общие показатели
+          (баланс, доходы и расходы) на дэшборде.
+        </p>
+        <form id="balanceCurrencyForm">
+          <label>
+            Валюта баланса
+            <select id="balanceCurrencySelect" required>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="PLN">PLN</option>
+              <option value="RUB">RUB</option>
+            </select>
+          </label>
+          <button type="submit" class="btn-primary" style="margin-top: 1rem">
+            Сохранить валюту
+          </button>
+        </form>
+      </section>
+      <!-- Раздел уведомлений -->
+      <section class="card">
+        <h2>Уведомления</h2>
+        <p>Выберите, как вы хотите получать уведомления о важных событиях.</p>
+        <form id="notifyForm">
+          <div style="display: flex; flex-direction: column; gap: 0.5rem">
+            <label
+              ><input type="checkbox" id="notifyEmail" /> Уведомлять по
+              e‑mail</label
+            >
+            <label
+              ><input type="checkbox" id="notifyTelegram" /> Уведомлять в
+              Telegram</label
+            >
+            <label
+              ><input type="checkbox" id="notifyPush" /> Push‑уведомления</label
+            >
+          </div>
+          <button type="submit" class="btn-primary" style="margin-top: 1rem">
+            Сохранить уведомления
+          </button>
+        </form>
+      </section>
+</main>

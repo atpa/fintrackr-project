@@ -1,0 +1,55 @@
+---
+title: "FinTrackr \u2013 \u0421\u0447\u0451\u0442\u0430"
+showHeader: true
+scripts:
+  - accounts
+---
+
+<main>
+<!-- Форма для добавления нового счёта -->
+      <section class="card">
+        <h2>Добавить счёт</h2>
+        <form id="addAccountForm">
+          <div style="display: flex; flex-wrap: wrap; gap: 1rem">
+            <label style="flex: 1 1 200px">
+              Название
+              <input type="text" id="accName" required />
+            </label>
+            <label style="flex: 1 1 150px">
+              Валюта
+              <select id="accCurrency" required>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="PLN">PLN</option>
+                <option value="RUB">RUB</option>
+              </select>
+            </label>
+            <label style="flex: 1 1 150px">
+              Начальный баланс
+              <input type="number" id="accBalance" step="0.01" />
+            </label>
+          </div>
+          <button type="submit" class="btn-primary" style="margin-top: 1rem">
+            Добавить
+          </button>
+        </form>
+      </section>
+      <!-- Таблица со счётами -->
+      <section class="card">
+        <h2>Мои счёта</h2>
+        <table id="accountsTable">
+          <thead>
+            <tr>
+              <th>Название</th>
+              <th>Валюта</th>
+              <th>Баланс</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="3">Загрузка...</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+</main>

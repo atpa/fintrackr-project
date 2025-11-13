@@ -1,0 +1,52 @@
+---
+title: "FinTrackr \u2013 \u0426\u0435\u043b\u0438"
+showHeader: true
+scripts:
+  - goals
+---
+
+<main>
+<section class="card">
+        <h2>Финансовые цели</h2>
+        <p>
+          Здесь вы сможете создать цели (например, накопить на путешествие или
+          крупную покупку), следить за прогрессом и получать прогнозы по
+          достижению. В настоящий момент раздел содержит только форму для
+          добавления цели и таблицу с текущими целями.
+        </p>
+        <form id="addGoalForm">
+          <div style="display: flex; flex-wrap: wrap; gap: 1rem">
+            <label style="flex: 1 1 200px">
+              Название цели
+              <input type="text" id="goalTitle" required />
+            </label>
+            <label style="flex: 1 1 150px">
+              Сумма цели
+              <input type="number" id="goalTarget" step="0.01" required />
+            </label>
+            <label style="flex: 1 1 150px">
+              Текущая сумма
+              <input type="number" id="goalCurrent" step="0.01" value="0" />
+            </label>
+            <label style="flex: 1 1 200px">
+              Дедлайн
+              <input type="date" id="goalDeadline" />
+            </label>
+          </div>
+          <button type="submit" class="btn-primary" style="margin-top: 1rem">
+            Добавить цель
+          </button>
+        </form>
+      </section>
+      <section class="card">
+        <h2>Мои цели</h2>
+        <p>
+          Прогресс по вашим целям визуально отображается в карточках ниже.
+          Достижение цели отслеживается по текущей сумме.
+        </p>
+        <div id="goalsGrid" class="goals-grid">
+          <!-- Карточки целей будут вставлены динамически -->
+          <p>Загрузка...</p>
+        </div>
+      </section>
+</main>
