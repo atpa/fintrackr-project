@@ -209,8 +209,8 @@ body.landing-page {
   margin: 0 auto;
   /* Reset sidebar-driven offsets and account for fixed header height */
   padding-top: calc(var(--header-h, 64px) + 1rem);
-  padding-left: 1rem;
-  padding-right: 1rem;
+  padding-left: 16px;
+  padding-right: 16px;
 }
 .landing-page .features {
   /* Responsive grid for feature cards (1–2–3 columns) */
@@ -1888,10 +1888,15 @@ body.collapsed-nav .main-nav .nav-item.active::before {
   main {
     transition: padding-left var(--sidebar-transition) ease;
   }
-  body:not(.collapsed-nav) main {
+  /* Sidebar offset for internal pages only (NOT landing/auth) */
+  body:not(.collapsed-nav):not(.landing-page):not(.auth-page) main {
     padding-left: var(--sidebar-width);
   }
-  body.collapsed-nav main {
+  body.collapsed-nav:not(.landing-page):not(.auth-page) main {
     padding-left: var(--sidebar-collapsed-width);
+  }
+  /* Override: landing pages must NOT have sidebar offset */
+  body.landing-page main {
+    padding-left: 16px !important;
   }
 }
