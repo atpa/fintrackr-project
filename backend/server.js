@@ -1790,19 +1790,7 @@ function handleStatic(req, res) {
     return res.end("Forbidden");
   }
 
-  fs.readFile(filePath, (err, content) => {
-    if (err) {
-      // Файл не найден
-      res.statusCode = 404;
-      return res.end("Not Found");
-    }
-    const ext = path.extname(filePath).toLowerCase();
-    const mime = MIME_TYPES[ext] || "application/octet-stream";
-    res.statusCode = 200;
-    res.setHeader("Content-Type", mime);
-    res.end(content);
-  });
-}
+const server = http.createServer(app);
 
 // Создание HTTP‑сервера
 function createServer() {
