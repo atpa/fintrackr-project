@@ -2,6 +2,39 @@
  * Общие функции для загрузки данных и построения графиков
  */
 
+// Добавляем заголовок X-User-Id ко всем запросам, если пользователь авторизован
+(() => {
+  if (typeof window === "undefined" || typeof window.fetch !== "function") {
+    return;
+  }
+  const originalFetch = window.fetch.bind(window);
+  window.fetch = async (input, init) => {
+    const options = init ? { ...init } : {};
+    const headers = new Headers(options.headers || undefined);
+    if (typeof Request !== "undefined" && input instanceof Request) {
+      const requestHeaders = new Headers(input.headers);
+      requestHeaders.forEach((value, key) => {
+        if (!headers.has(key)) headers.set(key, value);
+      });
+    }
+    try {
+      if (window.Auth && typeof window.Auth.getUser === "function") {
+        const user = window.Auth.getUser();
+        if (user && user.id) {
+          headers.set("X-User-Id", String(user.id));
+        }
+      }
+    } catch (err) {
+      // Ошибки доступа к localStorage игнорируем, чтобы не ломать запросы
+    }
+    options.headers = headers;
+    if (typeof Request !== "undefined" && input instanceof Request) {
+      return originalFetch(new Request(input, options));
+    }
+    return originalFetch(input, options);
+  };
+})();
+
 /**
  * Загружает данные с API сервера.
  * @param {string} endpoint Например: "/api/accounts"

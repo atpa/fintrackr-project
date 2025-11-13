@@ -6,7 +6,11 @@
   "scripts": {
     "start": "node backend/server.js",
     "dev": "node backend/server.js",
-    "test": "echo \"No tests specified\" && exit 0"
+    "test": "npm run test:backend",
+    "test:backend": "cross-env FINTRACKR_DISABLE_PERSIST=true jest",
+    "test:e2e": "cross-env FINTRACKR_DISABLE_PERSIST=true playwright test",
+    "test:all": "npm run test:backend && npm run test:e2e",
+    "lint": "eslint backend --ext .js"
   },
   "keywords": [
     "finance",
@@ -21,11 +25,13 @@
   "engines": {
     "node": ">=14.0.0"
   },
-  "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.2"
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "cross-env": "^10.1.0",
+    "eslint": "^9.39.1",
+    "jest": "^30.2.0",
+    "supertest": "^7.1.4"
   },
-  "devDependencies": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/your-username/fintrackr.git"

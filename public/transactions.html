@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FinTrackr – Операции</title>
     <link rel="stylesheet" href="css/style.css" />
-  <script defer src="js/utils/auth.js"></script>
-  <script defer src="js/app.js"></script>
+    <script defer src="js/utils/auth.js"></script>
+    <script defer src="js/app.js"></script>
+    <script defer src="js/utils/ui.js"></script>
     <script defer src="js/transactions.js"></script>
   </head>
   <body>
@@ -191,43 +192,49 @@
       <section class="card">
         <h2>Добавить операцию</h2>
         <form id="addTransactionForm">
-          <div style="display: flex; flex-wrap: wrap; gap: 1rem">
-            <label style="flex: 1 1 150px">
-              Дата
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="txDate">Дата</label>
               <input type="date" id="txDate" required />
-            </label>
-            <label style="flex: 1 1 150px">
-              Счёт
+              <span class="form-error" data-error-for="txDate"></span>
+            </div>
+            <div class="form-field">
+              <label for="txAccount">Счёт</label>
               <select id="txAccount" required></select>
-            </label>
-            <label style="flex: 1 1 150px">
-              Категория
+              <span class="form-error" data-error-for="txAccount"></span>
+            </div>
+            <div class="form-field">
+              <label for="txCategory">Категория</label>
               <select id="txCategory" required></select>
-            </label>
-            <label style="flex: 1 1 150px">
-              Тип
+              <span class="form-error" data-error-for="txCategory"></span>
+            </div>
+            <div class="form-field">
+              <label for="txType">Тип</label>
               <select id="txType" required>
                 <option value="income">Доход</option>
                 <option value="expense">Расход</option>
               </select>
-            </label>
-            <label style="flex: 1 1 150px">
-              Сумма
+              <span class="form-error" data-error-for="txType"></span>
+            </div>
+            <div class="form-field">
+              <label for="txAmount">Сумма</label>
               <input type="number" id="txAmount" step="0.01" min="0" required />
-            </label>
-            <label style="flex: 1 1 150px">
-              Валюта
+              <span class="form-error" data-error-for="txAmount"></span>
+            </div>
+            <div class="form-field">
+              <label for="txCurrency">Валюта</label>
               <select id="txCurrency" required>
                 <option value="USD">USD</option>
                 <option value="EUR">EUR</option>
                 <option value="PLN">PLN</option>
                 <option value="RUB">RUB</option>
               </select>
-            </label>
-            <label style="flex: 1 1 200px">
-              Примечание
-              <input type="text" id="txNote" />
-            </label>
+              <span class="form-error" data-error-for="txCurrency"></span>
+            </div>
+            <div class="form-field" style="flex: 1 1 240px">
+              <label for="txNote">Примечание</label>
+              <input type="text" id="txNote" placeholder="Например, обед или бонус" />
+            </div>
           </div>
           <button type="submit" class="btn-primary" style="margin-top: 1rem">
             Добавить
@@ -239,36 +246,40 @@
       <section class="card">
         <h2>Фильтр операций</h2>
         <form id="filterTxForm">
-          <div style="display: flex; flex-wrap: wrap; gap: 1rem">
-            <label style="flex: 1 1 150px">
-              От
+          <div class="filter-grid">
+            <div class="form-field">
+              <label for="filterStart">От</label>
               <input type="date" id="filterStart" />
-            </label>
-            <label style="flex: 1 1 150px">
-              До
+            </div>
+            <div class="form-field">
+              <label for="filterEnd">До</label>
               <input type="date" id="filterEnd" />
-            </label>
-            <label style="flex: 1 1 150px">
-              Категория
+            </div>
+            <div class="form-field">
+              <label for="filterCategory">Категория</label>
               <select id="filterCategory">
                 <option value="">Все</option>
               </select>
-            </label>
-            <label style="flex: 1 1 150px">
-              Тип
+            </div>
+            <div class="form-field">
+              <label for="filterType">Тип</label>
               <select id="filterType">
                 <option value="">Все</option>
                 <option value="income">Доход</option>
                 <option value="expense">Расход</option>
               </select>
-            </label>
-            <button
-              type="submit"
-              class="btn-primary"
-              style="flex: 0 0 auto; align-self: flex-end"
-            >
-              Применить
-            </button>
+            </div>
+            <div class="form-field">
+              <label for="filterSearch">Поиск</label>
+              <input
+                type="text"
+                id="filterSearch"
+                placeholder="Название, примечание или сумма"
+              />
+            </div>
+            <div class="form-field" style="align-self: end; flex: 0 0 auto">
+              <button type="submit" class="btn-primary">Применить</button>
+            </div>
           </div>
         </form>
       </section>
@@ -293,6 +304,19 @@
             </tr>
           </tbody>
         </table>
+        <div class="table-controls">
+          <div>
+            <label style="display: flex; align-items: center; gap: 0.5rem">
+              <span>На странице:</span>
+              <select id="transactionsPageSize">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+              </select>
+            </label>
+          </div>
+          <div class="table-pagination" id="transactionsPagination"></div>
+        </div>
       </section>
     </main>
     <footer>
