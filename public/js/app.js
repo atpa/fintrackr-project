@@ -480,14 +480,19 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     });
 
-    // Handle logout buttons with stopPropagation to prevent conflicts
+    // Handle sidebar logout buttons
     document
-      .querySelectorAll(".sidebar .auth-link, .sidebar .logout-btn")
+      .querySelectorAll(".sidebar .logout-btn")
       .forEach((btn) => {
-        btn.addEventListener("click", (e) => {
-          e.stopPropagation(); // Prevent interference from toggle button
-          // Here you can add logout logic
-          console.log("Logout button clicked");
+        btn.addEventListener("click", async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          try {
+            await Auth.logout();
+          } catch (err) {
+            console.error("Logout error", err);
+          }
+          window.location.href = "landing.html";
         });
       });
 

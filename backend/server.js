@@ -168,6 +168,8 @@ function applyDataDefaults(target) {
   if (!Array.isArray(target.subscriptions)) target.subscriptions = [];
   if (!Array.isArray(target.rules)) target.rules = [];
   if (!Array.isArray(target.recurring)) target.recurring = [];
+  if (!Array.isArray(target.refreshTokens)) target.refreshTokens = [];
+  if (!Array.isArray(target.tokenBlacklist)) target.tokenBlacklist = [];
   return target;
 }
 
@@ -509,6 +511,106 @@ function handleApi(req, res) {
   const url = new URL(req.url, `http://${req.headers.host}`);
   cleanupTokenStores();
 
+  // Быстрые обработчики аутентификации (регистрация/вход/выход) до остальных маршрутов
+  if (req.method === "POST" && url.pathname === "/api/register") {
+    let body = "";
+    req.on("data", (c) => (body += c));
+    req.on("end", async () => {
+      let payload;
+      try {
+        payload = JSON.parse(body || "{}");
+      } catch (err) {
+        return sendJson(res, { error: "Invalid JSON" }, 400);
+      }
+      const { name, email, password } = payload || {};
+      if (!name || !email || !password) {
+        return sendJson(res, { error: "Missing registration parameters" }, 400);
+      }
+      const exists = data.users.find((u) => u.email && u.email.toLowerCase() === String(email).toLowerCase());
+      if (exists) {
+        return sendJson(res, { error: "User already exists" }, 400);
+      }
+      const saltRounds = 10;
+      let password_hash;
+      try {
+        password_hash = await bcrypt.hash(password, saltRounds);
+      } catch (e) {
+        return sendJson(res, { error: "Unable to hash password" }, 500);
+      }
+      const user = {
+        id: getNextId(data.users),
+        name: String(name),
+        email: String(email),
+        password_hash,
+      };
+      data.users.push(user);
+      persistData();
+      const tokens = issueTokensForUser(user);
+      setAuthCookies(res, tokens);
+      return sendJson(res, { user: sanitizeUser(user) }, 201);
+    });
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/login") {
+    let body = "";
+    req.on("data", (c) => (body += c));
+    req.on("end", async () => {
+      let payload;
+      try {
+        payload = JSON.parse(body || "{}");
+      } catch (err) {
+        return sendJson(res, { error: "Invalid JSON" }, 400);
+      }
+      const { email, password } = payload || {};
+      if (!email || !password) {
+        return sendJson(res, { error: "Missing login parameters" }, 400);
+      }
+      const user = data.users.find((u) => u.email && u.email.toLowerCase() === String(email).toLowerCase());
+      if (!user) return sendJson(res, { error: "Invalid email or password" }, 401);
+      let ok = false;
+      if (user.password_hash) {
+        try {
+          ok = await bcrypt.compare(password, user.password_hash);
+        } catch (e) {
+          ok = false;
+        }
+        if (!ok) {
+          // Фоллбэк: поддержка старых sha256-хэшей
+          const sha = crypto.createHash("sha256").update(password).digest("hex");
+          if (user.password_hash === sha) {
+            ok = true;
+            try {
+              user.password_hash = await bcrypt.hash(password, 10);
+              persistData();
+            } catch (e) {}
+          }
+        }
+      }
+      if (!ok) return sendJson(res, { error: "Invalid email or password" }, 401);
+      const tokens = issueTokensForUser(user);
+      setAuthCookies(res, tokens);
+      return sendJson(res, { user: sanitizeUser(user) }, 200);
+    });
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/logout") {
+    const cookies = parseCookies(req);
+    const access = cookies.access_token;
+    const refresh = cookies.refresh_token;
+    if (access) {
+      // Помечаем access токен как отозванный
+      addTokenToBlacklist(access);
+    }
+    if (refresh) {
+      // Уничтожаем refresh токен
+      consumeRefreshToken(refresh);
+    }
+    clearAuthCookies(res);
+    return sendJson(res, { success: true });
+  }
+
   if (req.method === "GET" && url.pathname === "/api/session") {
     const auth = authenticateRequest(req);
     if (auth.ok) {
@@ -535,11 +637,19 @@ function handleApi(req, res) {
   if (!currentUserId) {
     currentUserId = parseUserId(url.searchParams.get("userId"));
   }
-  const currentUser =
+  let currentUser =
     currentUserId != null
       ? data.users.find((u) => u.id === currentUserId)
       : null;
   const authRequired = !isPublicApiRequest(req.method, url.pathname);
+  // Если заголовок X-User-Id не пришёл, пробуем извлечь пользователя из JWT‑кук
+  if (authRequired && !currentUser) {
+    const auth = authenticateRequest(req);
+    if (auth && auth.ok) {
+      currentUser = auth.user;
+      currentUserId = auth.user.id;
+    }
+  }
   if (authRequired && !currentUser) {
     return sendJson(res, { error: "Unauthorized" }, 401);
   }
@@ -1790,7 +1900,20 @@ function handleStatic(req, res) {
     return res.end("Forbidden");
   }
 
-const server = http.createServer(app);
+  // Check if file exists
+  fs.stat(filePath, (err, stats) => {
+    if (err || !stats.isFile()) {
+      res.statusCode = 404;
+      return res.end("Not Found");
+    }
+
+    const ext = path.extname(filePath);
+    const mimeType = MIME_TYPES[ext] || "application/octet-stream";
+
+    res.setHeader("Content-Type", mimeType);
+    fs.createReadStream(filePath).pipe(res);
+  });
+}
 
 // Создание HTTP‑сервера
 function createServer() {
@@ -1815,7 +1938,7 @@ function createServer() {
 const server = createServer();
 
 if (require.main === module) {
-  const PORT = process.env.PORT || 8080;
+  const PORT = process.env.PORT || 3000;
   server.listen(PORT, () => {
     console.log(`FinTrackr server listening on http://localhost:${PORT}`);
   });

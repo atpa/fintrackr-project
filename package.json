@@ -5,6 +5,8 @@
   "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js",
+    "start:3000": "cross-env PORT=3000 node backend/server.js",
+    "start:8080": "cross-env PORT=8080 node backend/server.js",
     "dev": "node backend/server.js",
     "test": "npm run test:backend",
     "test:backend": "cross-env FINTRACKR_DISABLE_PERSIST=true jest",
@@ -39,5 +41,9 @@
   "homepage": "https://your-username.github.io/fintrackr",
   "bugs": {
     "url": "https://github.com/your-username/fintrackr/issues"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "jsonwebtoken": "^9.0.2"
   }
 }

@@ -27,6 +27,13 @@
       "currency": "PLN",
       "balance": 50,
       "user_id": 1
+    },
+    {
+      "id": 5,
+      "user_id": 2,
+      "name": "Сбер",
+      "currency": "RUB",
+      "balance": 95000
     }
   ],
   "categories": [
@@ -59,6 +66,12 @@
       "name": "Подарки",
       "kind": "expense",
       "user_id": 1
+    },
+    {
+      "id": 6,
+      "user_id": 2,
+      "name": "Продукты",
+      "kind": "expense"
     }
   ],
   "transactions": [
@@ -171,6 +184,17 @@
       "date": "2025-11-13",
       "note": "",
       "user_id": 1
+    },
+    {
+      "id": 11,
+      "user_id": 2,
+      "account_id": 5,
+      "category_id": 6,
+      "type": "expense",
+      "amount": 5000,
+      "currency": "RUB",
+      "date": "2025-11-13",
+      "note": "обед"
     }
   ],
   "budgets": [
@@ -221,10 +245,43 @@
       "limit": 0,
       "spent": 10000,
       "user_id": 1
+    },
+    {
+      "id": 7,
+      "user_id": 2,
+      "category_id": 6,
+      "month": "2025-11",
+      "limit": 1000,
+      "spent": 5000,
+      "type": "fixed",
+      "percent": null,
+      "currency": "USD"
     }
   ],
-  "goals": [],
-  "planned": [],
+  "goals": [
+    {
+      "id": 1,
+      "user_id": 2,
+      "title": "На машину",
+      "target_amount": 10000000,
+      "current_amount": 100000,
+      "deadline": "2027-02-13"
+    }
+  ],
+  "planned": [
+    {
+      "id": 1,
+      "user_id": 2,
+      "account_id": 5,
+      "category_id": 6,
+      "type": "expense",
+      "amount": 1000,
+      "currency": "RUB",
+      "start_date": "2025-11-13",
+      "frequency": "daily",
+      "note": ""
+    }
+  ],
   "users": [
     {
       "id": 1,
@@ -233,11 +290,45 @@
       "password_salt": "$2a$12$n8m.umtELd3m3MB9JP1xCu",
       "password_hash": "$2a$12$n8m.umtELd3m3MB9JP1xCuqFrzoiBNqCuPnn6Gl0uYBECwiQsR4.W",
       "created_at": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "name": "Александр",
+      "email": "atpagaming@mail.ru",
+      "password_hash": "$2b$10$Mu9SY6yoXn0IRq./Mo/jROtke5m3mWOVovxZtmUfMiyZPCaPwLH9W"
+    },
+    {
+      "id": 3,
+      "name": "CLI Test",
+      "email": "cli-test-45345@example.com",
+      "password_hash": "$2b$10$fL9Bgny1zkrarLTkI2.4m..9z9ukQb.kaQim8WbhtW5UjAQaXv4qK"
     }
   ],
   "bankConnections": [],
   "subscriptions": [],
   "rules": [],
-  "refreshTokens": [],
-  "tokenBlacklist": []
+  "refreshTokens": [
+    {
+      "token": "fff8f8c3490e51026044f625ad725a46b05c4d2ce7fb98b7927410c7fff66d45f9d8f0ee23f51e8e6afc42ec22f6129f",
+      "userId": 2,
+      "expiresAt": 1763649891183
+    },
+    {
+      "token": "7e092ba8552a760c00d009dda524f7ccf800d318b0cd79e4fd8419a632eddc799ac648f430cb7ab1c28ecafb57f5f996",
+      "userId": 3,
+      "expiresAt": 1763650878685
+    },
+    {
+      "token": "1ad03bea432f68898147e28e1346cf66afa0dbcef057480ed60d7d0ef84c5aa9383199075f11c3e453932d951902c2d1",
+      "userId": 2,
+      "expiresAt": 1763650962151
+    },
+    {
+      "token": "72e7d61311510ccaba78dae569ca9d519ba5b5804f9435b8425c3cc605db99964f9b412bb4c4099c1281834e448bef64",
+      "userId": 2,
+      "expiresAt": 1763650979635
+    }
+  ],
+  "tokenBlacklist": [],
+  "recurring": []
 }
