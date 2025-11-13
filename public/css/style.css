@@ -207,7 +207,7 @@ body.landing-page {
 }
 .landing-page .hero {
   text-align: center;
-  padding: 3rem 1rem 2rem;
+  padding: 2rem 1rem;
   max-width: 800px;
   margin: 0 auto;
   animation: fadeInDown 0.8s ease both;
@@ -232,18 +232,29 @@ body.landing-page {
 /* Fix landing-page layout: centered container and header offset */
 .landing-page main {
   max-width: 1200px;
-  margin: 0 auto;
+  margin: 0 auto !important;
   /* Reset sidebar-driven offsets and account for fixed header height */
-  padding-top: calc(var(--header-h, 64px) + 1rem);
-  padding-left: 16px;
-  padding-right: 16px;
+  padding: calc(var(--header-h, 64px) + 2rem) 2rem 2rem 2rem !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: calc(100vh - var(--header-h, 64px));
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .landing-page main {
+    padding: calc(var(--header-h, 64px) + 1rem) 1rem 1rem 1rem !important;
+  }
 }
 .landing-page .features {
   /* Responsive grid for feature cards (1–2–3 columns) */
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1.5rem;
-  margin: 2rem auto;
+  margin: 1rem auto;
+  width: 100%;
 }
 .landing-page .feature {
   background: white;
@@ -1329,21 +1340,23 @@ body.dark {
   margin: 0 auto;
   padding: 0 16px;
 }
+
 @media (max-width: 768px) {
   .grid-2 {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 1.5rem;
   }
   .card {
-    margin: 0 0 12px;
+    margin: 0 0 1.5rem;
   }
 }
+
 @media (min-width: 769px) {
   .grid-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    gap: 1.5rem;
   }
 }
 
@@ -1471,7 +1484,7 @@ footer {
 
 /* (Опционально) сужаем контент футера, оставляя фон на всю ширину */
 footer .footer-inner {
-  max-width: 1000px; /* подгони под ширину контентной колонки */
+  max-width: 1000px; /* подгон под ширину контентной колонки */
   margin: 0 auto;
 }
 /* === Исправление контраста в тёмной теме === */
@@ -1807,10 +1820,5 @@ body.collapsed-nav .main-nav .nav-item.active::before {
     padding-left: var(--sidebar-collapsed-width);
   }
   
-  /* Override: landing and auth pages must NOT have sidebar offset */
-  body.landing-page main,
-  body.auth-page main {
-    margin-left: 0;
-    padding-left: 1rem;
-  }
+  /* Override: landing and auth pages must NOT have sidebar offset - handled by .landing-page main */
 }

@@ -771,21 +771,33 @@ function handleApi(req, res) {
  * Защита от выхода за пределы директории.
  */
 function handleStatic(req, res) {
-  // Корневая страница
   let safePath = req.url;
+
+  // Отрезаем query (?...) и хэши (#...) — они могут быть от встроенного браузера VS Code
+  safePath = safePath.split("?")[0].split("#")[0];
+
+  // Корневая страница
   if (safePath === "/") {
-    // Главная страница показывает лендинг
     safePath = "/landing.html";
   }
-  // Нормализуем путь и ограничиваем директорию
+
   const publicDir = path.join(__dirname, "..", "public");
+
+  // Убираем ведущий /, чтобы path.join не попытался сделать абсолютный путь
+  if (safePath.startsWith("/")) {
+    safePath = safePath.slice(1);
+  }
+
+  // Нормализуем путь и ограничиваем директорию
   const filePath = path.normalize(
     path.join(publicDir, decodeURIComponent(safePath))
   );
+
   if (!filePath.startsWith(publicDir)) {
     res.statusCode = 403;
     return res.end("Forbidden");
   }
+
   fs.readFile(filePath, (err, content) => {
     if (err) {
       // Файл не найден
@@ -802,6 +814,9 @@ function handleStatic(req, res) {
 
 // Создание HTTP‑сервера
 const server = http.createServer((req, res) => {
+  // Логирование запросов для отладки
+  console.log("REQ:", req.method, req.url);
+  
   // Обрабатываем API‑запросы отдельно, независимо от HTTP‑метода
   if (req.url.startsWith("/api/")) {
     return handleApi(req, res);
