@@ -159,21 +159,9 @@
   "users": [
     {
       "id": 1,
-      "name": "Вероника",
-      "email": "veronika19161@mail.ru",
-      "password_hash": "c05516b0d47465d696ff8ade0924013c921564685c68402a106785c951743cea"
-    },
-    {
-      "id": 2,
-      "name": "123123",
-      "email": "atpagaming@mail.ru",
-      "password_hash": "96cae35ce8a9b0244178bf28e4966c2ce1b8385723a96a6b838858cdd6ca0a1e"
-    },
-    {
-      "id": 3,
-      "name": "Atpa",
+      "name": "Александр",
       "email": "atpagaming@gmail.com",
-      "password_hash": "15ce8b8b408320b2383f49857d40ec75115f3a33751b8b6e52e4575d0a22ae24"
+      "password_hash": "63f5f15ea9fee831529bf25d285cda810958200e43bdaaf303fe679d494693eb"
     }
   ],
   "bankConnections": [],
