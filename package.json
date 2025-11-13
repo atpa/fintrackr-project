@@ -1,0 +1,34 @@
+{
+  "name": "fintrackr",
+  "version": "1.0.0",
+  "description": "Personal Finance Tracker - MVP web application",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "node backend/server.js",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "keywords": [
+    "finance",
+    "tracker",
+    "budget",
+    "expenses",
+    "web-app",
+    "rest-api"
+  ],
+  "author": "FinTrackr Development Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-username/fintrackr.git"
+  },
+  "homepage": "https://your-username.github.io/fintrackr",
+  "bugs": {
+    "url": "https://github.com/your-username/fintrackr/issues"
+  }
+}
