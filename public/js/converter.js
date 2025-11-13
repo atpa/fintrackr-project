@@ -14,6 +14,12 @@ async function initConverter() {
         resultEl.textContent = 'Введите корректную сумму';
         return;
       }
+      // Если валюты совпадают — не обращаемся к серверу
+      if (from === to) {
+        const n = Number(amount) || 0;
+        resultEl.textContent = `${n.toFixed(2)} ${from} = ${n.toFixed(2)} ${to}`;
+        return;
+      }
       try {
         // Запрос на сервер для конвертации. Используем эндпоинт /api/convert с параметрами.
         const resp = await fetch(`/api/convert?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&amount=${encodeURIComponent(amount)}`);
@@ -25,7 +31,8 @@ async function initConverter() {
         const data = await resp.json();
         if (data && typeof data.result === 'number') {
           const converted = data.result;
-          resultEl.textContent = `${amount.toFixed(2)} ${from} = ${converted.toFixed(2)} ${to}`;
+          const n = Number(amount) || 0;
+          resultEl.textContent = `${n.toFixed(2)} ${from} = ${converted.toFixed(2)} ${to}`;
         } else {
           resultEl.textContent = 'Не удалось выполнить конвертацию';
         }

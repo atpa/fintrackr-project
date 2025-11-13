@@ -175,6 +175,192 @@ function handleApi(req, res) {
     // Фолбэк для неподдерживаемых DELETE
     return sendJson(res, { error: "Not found" }, 404);
   }
+  // Обработка PUT/PATCH‑запросов: частичное/полное обновление сущностей (без сложных пересчётов)
+  if (req.method === "PUT" || req.method === "PATCH") {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk;
+      if (body.length > 1e6) req.connection.destroy();
+    });
+    req.on("end", () => {
+      let payload;
+      try {
+        payload = JSON.parse(body || "{}");
+      } catch (err) {
+        return sendJson(res, { error: "Invalid JSON" }, 400);
+      }
+      // accounts update
+      let m;
+      m = url.pathname.match(/^\/api\/accounts\/(\d+)$/);
+      if (m) {
+        const id = Number(m[1]);
+        const acc = data.accounts.find((a) => a.id === id);
+        if (!acc) return sendJson(res, { error: "Account not found" }, 404);
+        const allowedCur = ["USD", "EUR", "PLN", "RUB"];
+        if (payload.name != null) acc.name = String(payload.name);
+        if (payload.currency != null) {
+          if (!allowedCur.includes(String(payload.currency))) {
+            return sendJson(res, { error: "Invalid currency" }, 400);
+          }
+          acc.currency = String(payload.currency);
+        }
+        if (payload.balance != null) {
+          const b = Number(payload.balance);
+          if (!isFinite(b)) return sendJson(res, { error: "Invalid balance" }, 400);
+          acc.balance = b;
+        }
+        persistData();
+        return sendJson(res, acc, 200);
+      }
+      // categories update
+      m = url.pathname.match(/^\/api\/categories\/(\d+)$/);
+      if (m) {
+        const id = Number(m[1]);
+        const cat = data.categories.find((c) => c.id === id);
+        if (!cat) return sendJson(res, { error: "Category not found" }, 404);
+        if (payload.name != null) cat.name = String(payload.name);
+        if (payload.kind != null) {
+          if (!["income", "expense"].includes(String(payload.kind))) {
+            return sendJson(res, { error: "Invalid category kind" }, 400);
+          }
+          cat.kind = String(payload.kind);
+        }
+        persistData();
+        return sendJson(res, cat, 200);
+      }
+      // budgets update
+      m = url.pathname.match(/^\/api\/budgets\/(\d+)$/);
+      if (m) {
+        const id = Number(m[1]);
+        const budget = data.budgets.find((b) => b.id === id);
+        if (!budget) return sendJson(res, { error: "Budget not found" }, 404);
+        const allowedCur = ["USD", "EUR", "PLN", "RUB"];
+        if (payload.limit != null) {
+          const l = Number(payload.limit);
+          if (!isFinite(l) || l < 0) return sendJson(res, { error: "Invalid limit" }, 400);
+          budget.limit = l;
+        }
+        if (payload.type != null) {
+          if (!["fixed", "percent"].includes(String(payload.type))) {
+            return sendJson(res, { error: "Invalid budget type" }, 400);
+          }
+          budget.type = String(payload.type);
+        }
+        if (payload.percent != null) {
+          const p = Number(payload.percent);
+          if (!isFinite(p) || p < 0 || p > 100) {
+            return sendJson(res, { error: "Invalid percent" }, 400);
+          }
+          budget.percent = p;
+        }
+        if (payload.currency != null) {
+          if (!allowedCur.includes(String(payload.currency))) {
+            return sendJson(res, { error: "Invalid currency" }, 400);
+          }
+          budget.currency = String(payload.currency);
+        }
+        // spent/month/category_id не меняем здесь
+        persistData();
+        return sendJson(res, budget, 200);
+      }
+      // goals update
+      m = url.pathname.match(/^\/api\/goals\/(\d+)$/);
+      if (m) {
+        const id = Number(m[1]);
+        const goal = data.goals.find((g) => g.id === id);
+        if (!goal) return sendJson(res, { error: "Goal not found" }, 404);
+        if (payload.title != null) goal.title = String(payload.title);
+        if (payload.target_amount != null) {
+          const t = Number(payload.target_amount);
+          if (!isFinite(t) || t < 0) return sendJson(res, { error: "Invalid target_amount" }, 400);
+          goal.target_amount = t;
+        }
+        if (payload.current_amount != null) {
+          const c = Number(payload.current_amount);
+          if (!isFinite(c) || c < 0) return sendJson(res, { error: "Invalid current_amount" }, 400);
+          goal.current_amount = c;
+        }
+        if (payload.deadline != null) goal.deadline = payload.deadline || null;
+        persistData();
+        return sendJson(res, goal, 200);
+      }
+      // planned update
+      m = url.pathname.match(/^\/api\/planned\/(\d+)$/);
+      if (m) {
+        const id = Number(m[1]);
+        const plan = data.planned.find((p) => p.id === id);
+        if (!plan) return sendJson(res, { error: "Planned not found" }, 404);
+        const allowedCur = ["USD", "EUR", "PLN", "RUB"];
+        if (payload.account_id != null) plan.account_id = Number(payload.account_id);
+        if (payload.category_id != null) plan.category_id = Number(payload.category_id);
+        if (payload.type != null) {
+          if (!["income", "expense"].includes(String(payload.type))) {
+            return sendJson(res, { error: "Invalid type" }, 400);
+          }
+          plan.type = String(payload.type);
+        }
+        if (payload.amount != null) {
+          const a = Number(payload.amount);
+          if (!isFinite(a) || a < 0) return sendJson(res, { error: "Invalid amount" }, 400);
+          plan.amount = a;
+        }
+        if (payload.currency != null) {
+          if (!allowedCur.includes(String(payload.currency))) {
+            return sendJson(res, { error: "Invalid currency" }, 400);
+          }
+          plan.currency = String(payload.currency);
+        }
+        if (payload.start_date != null) plan.start_date = payload.start_date || null;
+        if (payload.frequency != null) plan.frequency = String(payload.frequency);
+        if (payload.note != null) plan.note = String(payload.note);
+        persistData();
+        return sendJson(res, plan, 200);
+      }
+      // subscriptions update
+      m = url.pathname.match(/^\/api\/subscriptions\/(\d+)$/);
+      if (m) {
+        const id = Number(m[1]);
+        const sub = data.subscriptions.find((s) => s.id === id);
+        if (!sub) return sendJson(res, { error: "Subscription not found" }, 404);
+        const allowedCur = ["USD", "EUR", "PLN", "RUB"];
+        const allowedFreq = ["weekly", "monthly", "yearly"];
+        if (payload.title != null) sub.title = String(payload.title);
+        if (payload.amount != null) {
+          const a = Number(payload.amount);
+          if (!isFinite(a) || a < 0) return sendJson(res, { error: "Invalid amount" }, 400);
+          sub.amount = a;
+        }
+        if (payload.currency != null) {
+          if (!allowedCur.includes(String(payload.currency))) {
+            return sendJson(res, { error: "Invalid currency" }, 400);
+          }
+          sub.currency = String(payload.currency);
+        }
+        if (payload.frequency != null) {
+          if (!allowedFreq.includes(String(payload.frequency))) {
+            return sendJson(res, { error: "Invalid frequency" }, 400);
+          }
+          sub.frequency = String(payload.frequency);
+        }
+        if (payload.next_date !== undefined) sub.next_date = payload.next_date || null;
+        persistData();
+        return sendJson(res, sub, 200);
+      }
+      // rules update
+      m = url.pathname.match(/^\/api\/rules\/(\d+)$/);
+      if (m) {
+        const id = Number(m[1]);
+        const rule = data.rules.find((r) => r.id === id);
+        if (!rule) return sendJson(res, { error: "Rule not found" }, 404);
+        if (payload.keyword != null) rule.keyword = String(payload.keyword).toLowerCase();
+        if (payload.category_id != null) rule.category_id = Number(payload.category_id);
+        persistData();
+        return sendJson(res, rule, 200);
+      }
+      return sendJson(res, { error: "Not found" }, 404);
+    });
+    return;
+  }
   // Обработка GET‑запросов
   if (req.method === "GET") {
     // Специальные маршруты, обрабатываем до основного переключателя
@@ -287,54 +473,7 @@ function handleApi(req, res) {
       return sendJson(res, { base, quote, rate });
     }
 
-    // Возврат списка категорий
-    if (url.pathname === "/api/categories") {
-      return sendJson(res, data.categories || []);
-    }
-    if (url.pathname === "/api/sync") {
-      // TODO: Replace with real bank API integration
-      // MOCK: Симуляция синхронизации с банком - создает случайные транзакции
-      if (data.accounts.length === 0 || data.categories.length === 0) {
-        return sendJson(
-          res,
-          { message: "Нет счётов или категорий для синхронизации" },
-          400
-        );
-      }
-      const accountId = data.accounts[0].id;
-      const categoriesList = data.categories.filter(
-        (c) => c.kind === "expense" || !c.kind
-      );
-      const created = [];
-      const getNextId = (arr) =>
-        arr.reduce((max, item) => Math.max(max, item.id || 0), 0) + 1;
-      
-      // MOCK: Создание 3 случайных транзакций
-      // TODO: Заменить на реальные данные от банковского API
-      for (let i = 0; i < 3; i++) {
-        const randomCat =
-          categoriesList[Math.floor(Math.random() * categoriesList.length)];
-        const amount = Math.round(Math.random() * 100 + 10);
-        const dateStr = new Date().toISOString().slice(0, 10);
-        const newTx = {
-          id: getNextId(data.transactions),
-          account_id: accountId,
-          category_id: randomCat ? randomCat.id : null,
-          type: "expense",
-          amount,
-          currency: "USD",
-          date: dateStr,
-          note: "Синхронизация банка",
-        };
-        data.transactions.push(newTx);
-        // обновляем баланс счёта
-        const acc = data.accounts.find((a) => a.id === accountId);
-        if (acc) acc.balance = Number(acc.balance) - amount;
-        created.push(newTx);
-      }
-      persistData();
-      return sendJson(res, { synced: created.length, transactions: created });
-    }
+    // (удалено) /api/categories и /api/sync — см. switch ниже и POST /api/sync/transactions
     switch (url.pathname) {
       case "/api/accounts":
         return sendJson(res, data.accounts);
@@ -349,7 +488,8 @@ function handleApi(req, res) {
       case "/api/planned":
         return sendJson(res, data.planned);
       case "/api/forecast": {
-        // Простой прогноз: рассчитываем средние ежедневные доходы и расходы за последние 30 дней
+        // Простой прогноз: рассчитываем средние ежедневные доходы и расходы за последние 30 дней.
+        // Для согласованности все суммы приводим к единой базе (USD).
         const now = new Date();
         const cutoff = new Date(now);
         cutoff.setDate(cutoff.getDate() - 30);
@@ -361,10 +501,12 @@ function handleApi(req, res) {
           const txDate = new Date(tx.date);
           if (txDate >= cutoff && txDate <= now) {
             if (tx.type === "income") {
-              incomeSum += Number(tx.amount);
+              const amt = convertAmount(Number(tx.amount), tx.currency || "USD", "USD");
+              incomeSum += amt;
               incomeCount++;
             } else if (tx.type === "expense") {
-              expenseSum += Number(tx.amount);
+              const amt = convertAmount(Number(tx.amount), tx.currency || "USD", "USD");
+              expenseSum += amt;
               expenseCount++;
             }
           }
@@ -504,10 +646,19 @@ function handleApi(req, res) {
           if (isNaN(Number(payload.amount)) || Number(payload.amount) < 0) {
             return sendJson(res, { error: "Invalid amount" }, 400);
           }
+          // Валюта должна быть из допустимого списка
+          const allowedCur = ["USD", "EUR", "PLN", "RUB"];
+          if (!allowedCur.includes(String(payload.currency))) {
+            return sendJson(res, { error: "Invalid currency" }, 400);
+          }
           const acc = data.accounts.find((a) => a.id === Number(payload.account_id));
           if (!acc) return sendJson(res, { error: "Account not found" }, 404);
           const cat = data.categories.find((c) => c.id === Number(payload.category_id));
           if (!cat) return sendJson(res, { error: "Category not found" }, 404);
+          // Согласованность типа операции и типа категории
+          if ((cat.kind === "income" && payload.type !== "income") || (cat.kind === "expense" && payload.type !== "expense")) {
+            return sendJson(res, { error: "Transaction type does not match category kind" }, 400);
+          }
           const newId = getNextId(data.transactions);
           const newTx = {
             id: newId,
@@ -922,7 +1073,7 @@ const server = http.createServer((req, res) => {
   return handleStatic(req, res);
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
   console.log(`FinTrackr server listening on http://localhost:${PORT}`);
 });
