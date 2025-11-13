@@ -342,9 +342,7 @@ document.addEventListener("DOMContentLoaded", () => {
     "index.html",
     "login.html",
     "register.html",
-    "converter.html",
     "features.html",
-    "about.html",
     "benefits.html",
   ];
   const currentPage = window.location.pathname.split("/").pop().toLowerCase();

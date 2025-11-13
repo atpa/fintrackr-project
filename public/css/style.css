@@ -61,6 +61,7 @@ body {
   display: flex;
   gap: 1.5rem;
   list-style: none;
+  flex-wrap: wrap;
 }
 .landing-nav a {
   color: #fff;
@@ -196,18 +197,16 @@ body {
   font-size: 1rem;
   padding: 0.8rem 1.5rem;
 }
-.landing-page .features {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  max-width: 900px;
-  margin: 2rem auto;
+.landing-page main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
 }
-@media (min-width: 768px) {
-  .landing-page .features {
-    flex-direction: row;
-    justify-content: space-between;
-  }
+.landing-page .features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin: 2rem auto;
 }
 .landing-page .feature {
   background: white;
@@ -952,7 +951,6 @@ main {
 
   body:not(.landing-page):not(.auth-page) main {
     margin-left: var(--sidebar-width);
-    max-width: none;
     padding: calc(var(--header-h, 64px) + 1rem) 1rem 1rem 1rem;
   }
 }
@@ -976,6 +974,18 @@ footer {
     margin-left: var(--sidebar-width);
     width: calc(100% - var(--sidebar-width));
   }
+}
+
+/* Center internal content blocks within main */
+body:not(.landing-page):not(.auth-page) main > section,
+body:not(.landing-page):not(.auth-page) main > .grid-2,
+body:not(.landing-page):not(.auth-page) main > .grid-3,
+body:not(.landing-page):not(.auth-page) main > .card {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  box-sizing: border-box;
 }
 
 /* подстраховка от горизонтального скролла (опционально) */
