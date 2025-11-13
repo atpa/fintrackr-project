@@ -1,0 +1,57 @@
+---
+title: "FinTrackr \u2013 \u041f\u043e\u0434\u043f\u0438\u0441\u043a\u0438"
+showHeader: true
+scripts:
+  - subscriptions
+---
+
+<main>
+<section class="card">
+        <h2>Подписки</h2>
+        <p>
+          Отслеживайте регулярные подписки (Netflix, Spotify и другие сервисы).
+          Управляйте суммами, валютами и датами списания.
+        </p>
+        <form
+          id="subForm"
+          style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 1rem"
+        >
+          <label style="flex: 1 1 180px">
+            Название
+            <input type="text" id="subTitle" required />
+          </label>
+          <label style="flex: 1 1 120px">
+            Сумма
+            <input type="number" id="subAmount" step="0.01" min="0" required />
+          </label>
+          <label style="flex: 1 1 120px">
+            Валюта
+            <select id="subCurrency">
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="PLN">PLN</option>
+              <option value="RUB">RUB</option>
+            </select>
+          </label>
+          <label style="flex: 1 1 180px">
+            Периодичность
+            <select id="subFrequency">
+              <option value="monthly">Ежемесячная</option>
+              <option value="weekly">Еженедельная</option>
+              <option value="yearly">Ежегодная</option>
+            </select>
+          </label>
+          <label style="flex: 1 1 180px">
+            Следующая дата
+            <input type="date" id="subDate" />
+          </label>
+          <button type="submit" class="btn-primary" style="flex: 1 1 140px">
+            Добавить
+          </button>
+        </form>
+      </section>
+      <section class="card" style="margin-top: 1rem">
+        <h3>Список подписок</h3>
+        <div id="subscriptionsList" style="margin-top: 0.5rem"></div>
+      </section>
+</main>

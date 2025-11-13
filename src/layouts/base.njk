@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    {% if description %}
+    <meta name="description" content="{{ description }}" />
+    {% endif %}
+    <title>{{ title or "FinTrackr" }}</title>
+    <link rel="stylesheet" href="/assets/css/style.css" />
+    {% if headStyles %}
+      {{ headStyles | safe }}
+    {% endif %}
+  </head>
+  {% set bodyClasses = bodyClass or '' %}
+  {% if sidebarMode == 'hidden' %}
+    {% set bodyClasses = (bodyClasses + ' sidebar-hidden') | trim %}
+  {% endif %}
+  <body class="{{ bodyClasses }}">
+    {% if showHeader != false %}
+    <header class="app-header">
+      <div class="brand visually-hidden">
+        <a href="/dashboard.html">FinTrackr</a>
+      </div>
+      <button class="burger" aria-label="Меню" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </header>
+    {% endif %}
+    {% set sidebarClasses = 'sidebar' %}
+    {% if sidebarMode %}
+      {% set sidebarClasses = sidebarClasses + ' sidebar--' + sidebarMode %}
+    {% endif %}
+    <div class="app-shell">
+      {% set classes = sidebarClasses %}
+      {% include "../partials/sidebar.njk" %}
+      <div class="app-content">
+        {{ content | safe }}
+      </div>
+    </div>
+    {% if showFooter != false %}
+    <footer class="app-footer">
+      <p>&copy; {{ copyrightYear or '2025' }} FinTrackr. Все права защищены.</p>
+    </footer>
+    {% endif %}
+    {% if scripts %}
+      {% for script in scripts %}
+        <script type="module" src="/assets/js/{{ script }}.js"></script>
+      {% endfor %}
+    {% endif %}
+  </body>
+</html>

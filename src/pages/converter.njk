@@ -1,0 +1,42 @@
+---
+title: "FinTrackr \u2013 \u041a\u043e\u043d\u0432\u0435\u0440\u0442\u0435\u0440 \u0432\u0430\u043b\u044e\u0442"
+showHeader: true
+scripts:
+  - converter
+---
+
+<main>
+<section class="card">
+      <h2>Конвертер валют</h2>
+      <p>Рассчитайте сумму в другой валюте. Курсы фиксированы для демонстрации.</p>
+      <form id="converterForm">
+        <div style="display:flex; flex-wrap:wrap; gap:1rem;">
+          <label style="flex:1 1 150px;">
+            Сумма
+            <input type="number" id="convAmount" step="0.01" min="0" required />
+          </label>
+          <label style="flex:1 1 150px;">
+            Из
+            <select id="convFrom" required>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="PLN">PLN</option>
+              <option value="RUB">RUB</option>
+            </select>
+          </label>
+          <label style="flex:1 1 150px;">
+            В
+            <select id="convTo" required>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="PLN">PLN</option>
+              <option value="RUB">RUB</option>
+            </select>
+          </label>
+        </div>
+        <button type="submit" class="btn-primary" style="margin-top:1rem;">Конвертировать</button>
+      </form>
+      <p id="convResult" style="margin-top:1rem; font-weight:600;"></p>
+    </section>
+  </main>
+</main>

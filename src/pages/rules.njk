@@ -1,0 +1,46 @@
+---
+title: "FinTrackr \u2013 \u041f\u0440\u0430\u0432\u0438\u043b\u0430"
+showHeader: true
+scripts:
+  - rules
+---
+
+<main>
+<section class="card">
+        <h2>Добавить правило</h2>
+        <form id="addRuleForm">
+          <div style="display: flex; flex-wrap: wrap; gap: 1rem">
+            <label style="flex: 1 1 200px">
+              Ключевое слово
+              <input type="text" id="ruleKeyword" required />
+            </label>
+            <label style="flex: 1 1 180px">
+              Категория
+              <select id="ruleCategorySelect" required>
+                <option value="">Загрузка...</option>
+              </select>
+            </label>
+          </div>
+          <button type="submit" class="btn-primary" style="margin-top: 1rem">
+            Добавить
+          </button>
+        </form>
+      </section>
+      <section class="card">
+        <h2>Правила</h2>
+        <table id="rulesTable">
+          <thead>
+            <tr>
+              <th>Ключевое слово</th>
+              <th>Категория</th>
+              <th>Действие</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="3">Загрузка...</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+</main>
