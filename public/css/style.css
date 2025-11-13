@@ -63,6 +63,12 @@ body {
   list-style: none;
   flex-wrap: wrap;
 }
+
+/* Reset sidebar offset on landing-page to avoid left shift */
+body.landing-page {
+  margin: 0;
+  padding: 0;
+}
 .landing-nav a {
   color: #fff;
   font-weight: 500;
@@ -197,15 +203,20 @@ body {
   font-size: 1rem;
   padding: 0.8rem 1.5rem;
 }
+/* Fix landing-page layout: centered container and header offset */
 .landing-page main {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 1rem;
+  /* Reset sidebar-driven offsets and account for fixed header height */
+  padding-top: calc(var(--header-h, 64px) + 1rem);
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 .landing-page .features {
+  /* Responsive grid for feature cards (1–2–3 columns) */
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
   margin: 2rem auto;
 }
 .landing-page .feature {
