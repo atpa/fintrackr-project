@@ -1,0 +1,7 @@
+public/
+docs/
+_site/
+frontend/
+backend/
+node_modules/
+dist/assets/
