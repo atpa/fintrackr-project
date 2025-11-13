@@ -20,10 +20,12 @@ document.addEventListener('DOMContentLoaded', () => {
         alert(result.error || 'Ошибка входа');
         return;
       }
-      // Сохраняем пользователя в localStorage
-      localStorage.setItem('user', JSON.stringify(result));
-      // Перенаправляем на дэшборд
-      window.location.href = 'dashboard.html';
+      // Используем Auth утилиту для сохранения пользователя
+      if (Auth.login(result)) {
+        window.location.href = 'dashboard.html';
+      } else {
+        alert('Ошибка сохранения данных');
+      }
     } catch (err) {
       console.error(err);
       alert('Ошибка подключения к серверу');

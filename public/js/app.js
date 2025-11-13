@@ -357,13 +357,23 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // Links (login/register/logout) visibility
+  // Links (login/register/logout) visibility and profile update
   const loginLink = document.querySelector(".login-link");
   const regLink = document.querySelector(".register-link");
   const logoutLink = document.querySelector(".logout-link");
+  
   try {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
+      const user = JSON.parse(storedUser);
+      
+      // Update profile information
+      const profileName = document.querySelector(".profile-name");
+      const profileEmail = document.querySelector(".profile-email");
+      if (profileName) profileName.textContent = user.name || "Пользователь";
+      if (profileEmail) profileEmail.textContent = user.email || "";
+      
+      // Update auth links visibility
       if (loginLink) loginLink.style.display = "none";
       if (regLink) regLink.style.display = "none";
       if (logoutLink) {
@@ -466,6 +476,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // === Theme toggle (persisted) ===
 (function () {
+  // Check if theme toggle already exists
+  if (document.querySelector(".theme-toggle")) return;
+  
   try {
     const saved = localStorage.getItem("ft_theme");
     if (saved === "dark") {

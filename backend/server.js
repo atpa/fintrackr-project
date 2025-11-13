@@ -249,7 +249,8 @@ function handleApi(req, res) {
       return sendJson(res, data.categories || []);
     }
     if (url.pathname === "/api/sync") {
-      // Симуляция синхронизации с банком
+      // TODO: Replace with real bank API integration
+      // MOCK: Симуляция синхронизации с банком - создает случайные транзакции
       if (data.accounts.length === 0 || data.categories.length === 0) {
         return sendJson(
           res,
@@ -264,6 +265,9 @@ function handleApi(req, res) {
       const created = [];
       const getNextId = (arr) =>
         arr.reduce((max, item) => Math.max(max, item.id || 0), 0) + 1;
+      
+      // MOCK: Создание 3 случайных транзакций
+      // TODO: Заменить на реальные данные от банковского API
       for (let i = 0; i < 3; i++) {
         const randomCat =
           categoriesList[Math.floor(Math.random() * categoriesList.length)];

@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Навигация: переключение адаптивного меню для лендинга
-  const burger = document.querySelector('.landing-burger');
+  const burger = document.querySelector('.burger');
   const nav = document.querySelector('.landing-nav');
   const authLinks = document.querySelector('.auth-links');
   if (burger && nav) {

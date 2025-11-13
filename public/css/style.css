@@ -1,21 +1,37 @@
-/* Основные переменные цвета */
+/* ========== КОНСОЛИДИРОВАННЫЕ CSS ПЕРЕМЕННЫЕ ========== */
 :root {
   /* Основная цветовая палитра */
-  /* Используем сочетание спокойного синевато‑лавандового тона и тёплого золотистого акцента.
-     Это придаёт интерфейсу современность и лёгкость, сохраняя при этом энергию и яркость. */
-  --primary: #5a67d8; /* нежный сине‑лавандовый (основной акцент) */
-  --primary-light: #a3b7ff; /* светлый оттенок синего для градиентов и вторичных элементов */
-  --secondary: #f7f8fc; /* очень светлый серо‑голубой фон для страниц */
-  --accent: #f5a623; /* тёплый золотистый для кнопок и важных элементов */
-  --accent-light: #f7ce6a; /* светлый золотистый для наведения */
-  --text: #2d3748; /* тёмный серо‑синий для основного текста */
-  --text-light: #718096; /* приглушённый серый для второстепенного текста */
-  --danger: #e53e3e; /* насыщенный красный для негативных статусов */
-  --success: #38a169; /* зелёный для положительных значений (доходы) */
+  --primary: #5a67d8;
+  --primary-light: #a3b7ff;
+  --secondary: #f7f8fc;
+  --accent: #f5a623;
+  --accent-light: #f7ce6a;
+  --text: #2d3748;
+  --text-light: #718096;
+  --danger: #e53e3e;
+  --success: #38a169;
   --card-shadow: rgba(0, 0, 0, 0.05);
-  /* Цвета для навигационной панели (легчайший градиент) */
-  --nav-bg-start: #ffffff; /* практически белый, чтобы панель была воздушной */
-  --nav-bg-end: #fafafa; /* очень светлый серый для мягкого перехода */
+  
+  /* Навигация и header */
+  --nav-bg-start: #ffffff;
+  --nav-bg-end: #fafafa;
+  --header-h: 64px;
+  
+  /* Sidebar */
+  --sidebar-width: 280px;
+  --sidebar-collapsed-width: 80px;
+  --sidebar-transition: 320ms cubic-bezier(0.2, 0, 0.4, 1);
+  --sidebar-item-height: 44px;
+  --sidebar-focus-ring: 3px;
+  --nav-link-hover: rgba(90, 103, 216, 0.12);
+  --sidebar-start: #f2f5ff;
+  --sidebar-end: #e7ebfb;
+  --sidebar-border: rgba(0, 0, 0, 0.06);
+  --sidebar-shadow: rgba(0, 0, 0, 0.1);
+  
+  /* Charts */
+  --chart-text: #2d3748;
+  --chart-grid: rgba(0, 0, 0, 0.12);
 }
 
 /* Сброс и базовые стили */
@@ -24,6 +40,11 @@
   padding: 0;
   box-sizing: border-box;
 }
+
+html {
+  overflow-x: hidden;
+}
+
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     "Helvetica Neue", sans-serif;
@@ -34,6 +55,8 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 /* ---------- Landing Page Styles ---------- */
@@ -115,8 +138,8 @@ body.landing-page {
   background: rgba(255, 255, 255, 0.2);
   border-color: rgba(255, 255, 255, 0.9);
 }
-/* Кнопка‑бургер для лендинга */
-.landing-burger {
+/* Универсальная кнопка-бургер (для landing и internal pages) */
+.burger {
   display: none;
   flex-direction: column;
   gap: 5px;
@@ -125,8 +148,9 @@ body.landing-page {
   cursor: pointer;
   width: 24px;
   height: 18px;
+  padding: 0;
 }
-.landing-burger span {
+.burger span {
   display: block;
   width: 24px;
   height: 2px;
@@ -134,20 +158,22 @@ body.landing-page {
   border-radius: 2px;
   transition: transform 0.3s ease, opacity 0.3s ease;
 }
-.landing-burger.open span:nth-child(1) {
+.burger.open span:nth-child(1) {
   transform: rotate(45deg) translate(5px, 5px);
 }
-.landing-burger.open span:nth-child(2) {
+.burger.open span:nth-child(2) {
   opacity: 0;
 }
-.landing-burger.open span:nth-child(3) {
+.burger.open span:nth-child(3) {
   transform: rotate(-45deg) translate(5px, -5px);
 }
-/* Адаптивное меню для лендинга на мобильных устройствах */
-@media (max-width: 768px) {
-  .landing-burger {
+
+/* Адаптивное меню - показываем burger на мобильных */
+@media (max-width: 1023px) {
+  .burger {
     display: flex;
   }
+  
   .landing-nav {
     display: none;
     flex-direction: column;
@@ -451,18 +477,7 @@ header {
   text-decoration: none;
 }
 
-/* Hide header elements not needed (old burger will be hidden on desktop > 1024px) */
-.burger {
-  display: none;
-}
-
 /* ========== NEW SIDEBAR COMPONENT ========== */
-
-:root {
-  --sidebar-width: 280px;
-  --sidebar-collapsed-width: 78px;
-  --sidebar-transition: 320ms cubic-bezier(0.2, 0, 0.4, 1);
-}
 
 /* Sidebar container */
 .sidebar {
@@ -539,13 +554,6 @@ header {
   font-size: 1.1rem;
   letter-spacing: -0.3px;
   white-space: nowrap;
-}
-
-/* Скрываем кнопки toggle если они рендерятся динамически */
-.sidebar-toggle,
-.sidebar-toggle-btn,
-.toggle-btn {
-  display: none !important;
 }
 
 /* Navigation area */
@@ -693,10 +701,8 @@ body.dark .nav-link.active {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
 }
 
-/* Profile section (bottom - sticky) */
-.sidebar-bottom,
-.sidebar-footer,
-.sidebar-profile {
+/* Profile section (bottom - sticky) - unified class */
+.sidebar-footer {
   flex: 0 0 auto;
   position: sticky;
   bottom: 8px;
@@ -830,10 +836,8 @@ body.dark .nav-link.active {
   border-color: var(--danger);
 }
 
-/* Dark theme for sidebar bottom */
-body.dark .sidebar-bottom,
-body.dark .sidebar-footer,
-body.dark .sidebar-profile {
+/* Dark theme for sidebar footer */
+body.dark .sidebar-footer {
   background: rgba(22, 24, 30, 0.75);
   border-color: rgba(255, 255, 255, 0.08);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
@@ -882,51 +886,15 @@ body.dark .nav-link:hover {
     transform: translateX(0);
   }
 
-  /* Show mobile burger */
-  .burger {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    width: 24px;
-    height: 18px;
-    color: white;
-  }
-
-  .burger span {
-    display: block;
-    width: 24px;
-    height: 2px;
-    background-color: #fff;
-    border-radius: 2px;
-    transition: transform 0.3s ease, opacity 0.3s ease;
-  }
-
-  .burger.open span:nth-child(1) {
-    transform: rotate(45deg) translate(5px, 5px);
-  }
-  .burger.open span:nth-child(2) {
-    opacity: 0;
-  }
-  .burger.open span:nth-child(3) {
-    transform: rotate(-45deg) translate(5px, -5px);
-  }
-}
-
-/* Desktop: Always visible sidebar */
-@media (min-width: 1024px) {
+  /* Mobile: sidebar slides from left */
   .sidebar {
+    transform: translateX(-100%);
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .sidebar.open {
     transform: translateX(0);
-  }
-
-  .sidebar-backdrop {
-    display: none;
-  }
-
-  .burger {
-    display: none !important;
   }
 }
 
@@ -949,6 +917,7 @@ main {
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
+  overflow-x: hidden;
   transition: margin-left 320ms cubic-bezier(0.2, 0, 0.4, 1);
 }
 
@@ -1445,15 +1414,7 @@ footer {
   flex-shrink: 0;
 }
 
-/* CSS переменные для сайдбара */
-:root {
-  --nav-link-hover: rgba(90, 103, 216, 0.12);
-  --sidebar-start: #f2f5ff;
-  --sidebar-end: #e7ebfb;
-  --sidebar-border: rgba(0, 0, 0, 0.06);
-  --sidebar-shadow: rgba(0, 0, 0, 0.1);
-}
-
+/* CSS переменные темной темы */
 :root.dark {
   --primary: #93a7ff;
   --primary-light: #b6c4ff;
@@ -1467,9 +1428,12 @@ footer {
   --card-bg: #141c2e;
   --card-shadow: rgba(0, 0, 0, 0.55);
   --sidebar-border: rgba(255, 255, 255, 0.08);
-  --sidebar-shadow: rgba(0, 0, 0, 0.45);
+  --sidebar-shadow: rgba(0, 0, 0, 0.3);
   --nav-link-hover: rgba(255, 255, 255, 0.08);
+  --chart-text: #e2e8f0;
+  --chart-grid: rgba(255, 255, 255, 0.14);
 }
+
 /* Панель управления отчётом */
 .report-controls {
   margin-bottom: 1rem;
@@ -1527,7 +1491,7 @@ footer {
 }
 
 /* Адаптив: одна колонка на мобильных */
-@media (max-width: 900px) {
+@media (max-width: 768px) {
   .reports-section {
     grid-template-columns: 1fr;
   }
@@ -1654,17 +1618,6 @@ body.dark .chart-container {
   font-weight: 500;
 }
 
-/* Светлая тема */
-:root {
-  --chart-text: #2d3748; /* тёмно-серый: хорошо читается на светлом */
-  --chart-grid: rgba(0, 0, 0, 0.12); /* линии сетки/оси */
-}
-
-/* Тёмная тема */
-body.dark {
-  --chart-text: #e2e8f0; /* светлый текст на тёмном */
-  --chart-grid: rgba(255, 255, 255, 0.14);
-}
 /* Полное визуальное скрытие, но элемент остаётся в потоке для скриптов/селекторов */
 .visually-hidden {
   position: absolute !important;
@@ -1693,13 +1646,6 @@ body.dark {
 }
 
 /* ---------------- Improved Sidebar (overrides and new vars) ---------------- */
-:root {
-  --sidebar-width: 260px;
-  --sidebar-collapsed-width: 80px;
-  --sidebar-transition: 300ms;
-  --sidebar-item-height: 44px;
-  --sidebar-focus-ring: 3px;
-}
 
 /* Sidebar container base (desktop) */
 .main-nav {
@@ -1895,8 +1841,11 @@ body.collapsed-nav .main-nav .nav-item.active::before {
   body.collapsed-nav:not(.landing-page):not(.auth-page) main {
     padding-left: var(--sidebar-collapsed-width);
   }
-  /* Override: landing pages must NOT have sidebar offset */
-  body.landing-page main {
-    padding-left: 16px !important;
+  
+  /* Override: landing and auth pages must NOT have sidebar offset */
+  body.landing-page main,
+  body.auth-page main {
+    margin-left: 0;
+    padding-left: 1rem;
   }
 }

@@ -27,10 +27,12 @@ async function initRegisterPage() {
         return;
       }
       const created = await resp.json();
-      // Сохраняем пользователя в localStorage (для простоты)
-      localStorage.setItem('user', JSON.stringify(created));
-      // Перенаправляем на дэшборд
-      window.location.href = 'dashboard.html';
+      // Используем Auth утилиту для сохранения пользователя
+      if (Auth.login(created)) {
+        window.location.href = 'dashboard.html';
+      } else {
+        alert('Ошибка сохранения данных');
+      }
     } catch (err) {
       console.error(err);
       alert('Ошибка сети');

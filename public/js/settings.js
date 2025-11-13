@@ -10,12 +10,7 @@ function initSettingsPage() {
     settings = {};
   }
   // Текущий пользователь (если есть)
-  let currentUser;
-  try {
-    currentUser = JSON.parse(localStorage.getItem('user')) || {};
-  } catch (err) {
-    currentUser = {};
-  }
+  const currentUser = Auth.getUser() || {};
   // Элементы профиля
   const nameInput = document.getElementById('profileName');
   const currencySelect = document.getElementById('profileCurrency');
