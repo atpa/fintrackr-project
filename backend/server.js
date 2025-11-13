@@ -26,43 +26,54 @@ const BANKS = [
 
 // Загружаем данные из файла JSON; в реальном приложении здесь бы была БД
 const dataPath = path.join(__dirname, "data.json");
+
+function applyDataDefaults(target) {
+  if (!target || typeof target !== "object") {
+    target = {};
+  }
+  if (!Array.isArray(target.accounts)) target.accounts = [];
+  if (!Array.isArray(target.categories)) target.categories = [];
+  if (!Array.isArray(target.transactions)) target.transactions = [];
+  if (!Array.isArray(target.budgets)) target.budgets = [];
+  if (!Array.isArray(target.goals)) target.goals = [];
+  if (!Array.isArray(target.planned)) target.planned = [];
+  if (!Array.isArray(target.users)) target.users = [];
+  if (!Array.isArray(target.bankConnections)) target.bankConnections = [];
+  if (!Array.isArray(target.subscriptions)) target.subscriptions = [];
+  if (!Array.isArray(target.rules)) target.rules = [];
+  if (!Array.isArray(target.recurring)) target.recurring = [];
+  return target;
+}
+
 let data;
 try {
   data = JSON.parse(fs.readFileSync(dataPath, "utf8"));
-  // Дополняем недостающие разделы данными по умолчанию
-  if (!data.goals) data.goals = [];
-  if (!data.planned) data.planned = [];
-  if (!data.users) data.users = [];
-  // Подключённые банковские аккаунты. Используется для синхронизации.
-  if (!data.bankConnections) data.bankConnections = [];
-  // Подписки пользователей (используется для отслеживания подписок/сервисов).
-  if (!data.subscriptions) data.subscriptions = [];
-  // Правила автоматической категоризации (ключевое слово → id категории)
-  if (!data.rules) data.rules = [];
+  data = applyDataDefaults(data);
 } catch (err) {
   console.error("Ошибка чтения файла данных:", err);
-  data = {
-    accounts: [],
-    categories: [],
-    transactions: [],
-    budgets: [],
-    goals: [],
-    planned: [],
-    users: [],
-    bankConnections: [],
-    subscriptions: [],
-  };
+  data = applyDataDefaults({});
 }
 
 /**
  * Сохраняет текущее состояние `data` в файл. Если происходит ошибка, выводит её в консоль.
  */
 function persistData() {
+  if (process.env.FINTRACKR_DISABLE_PERSIST === "true") {
+    return;
+  }
   try {
     fs.writeFileSync(dataPath, JSON.stringify(data, null, 2), "utf8");
   } catch (err) {
     console.error("Ошибка записи файла данных:", err);
   }
+}
+
+function getData() {
+  return data;
+}
+
+function setData(nextData) {
+  data = applyDataDefaults(nextData);
 }
 
 /**
@@ -1056,24 +1067,44 @@ function handleStatic(req, res) {
 }
 
 // Создание HTTP‑сервера
-const server = http.createServer((req, res) => {
-  // Логирование запросов для отладки
-  console.log("REQ:", req.method, req.url);
-  
-  // Обрабатываем API‑запросы отдельно, независимо от HTTP‑метода
-  if (req.url.startsWith("/api/")) {
-    return handleApi(req, res);
-  }
-  // Для нестатических путей разрешаем только GET
-  if (req.method !== "GET") {
-    res.statusCode = 405;
-    return res.end("Method Not Allowed");
-  }
-  // Остальные запросы считаем статикой
-  return handleStatic(req, res);
-});
+function createServer() {
+  return http.createServer((req, res) => {
+    // Логирование запросов для отладки
+    console.log("REQ:", req.method, req.url);
 
-const PORT = process.env.PORT || 8080;
-server.listen(PORT, () => {
-  console.log(`FinTrackr server listening on http://localhost:${PORT}`);
-});
+    // Обрабатываем API‑запросы отдельно, независимо от HTTP‑метода
+    if (req.url.startsWith("/api/")) {
+      return handleApi(req, res);
+    }
+    // Для нестатических путей разрешаем только GET
+    if (req.method !== "GET") {
+      res.statusCode = 405;
+      return res.end("Method Not Allowed");
+    }
+    // Остальные запросы считаем статикой
+    return handleStatic(req, res);
+  });
+}
+
+const server = createServer();
+
+if (require.main === module) {
+  const PORT = process.env.PORT || 8080;
+  server.listen(PORT, () => {
+    console.log(`FinTrackr server listening on http://localhost:${PORT}`);
+  });
+}
+
+module.exports = {
+  BANKS,
+  RATE_MAP,
+  convertAmount,
+  createServer,
+  getData,
+  handleApi,
+  handleStatic,
+  persistData,
+  sendJson,
+  setData,
+  server,
+};
