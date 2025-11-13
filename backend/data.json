@@ -1,0 +1,176 @@
+{
+  "accounts": [
+    {
+      "id": 1,
+      "name": "Основной счёт",
+      "currency": "USD",
+      "balance": 2500
+    },
+    {
+      "id": 2,
+      "name": "Кредитная карта",
+      "currency": "USD",
+      "balance": -300
+    },
+    {
+      "id": 3,
+      "name": "Наличные",
+      "currency": "EUR",
+      "balance": 150
+    },
+    {
+      "id": 4,
+      "name": "Новый счёт",
+      "currency": "PLN",
+      "balance": 50
+    }
+  ],
+  "categories": [
+    {
+      "id": 1,
+      "name": "Продукты",
+      "kind": "expense"
+    },
+    {
+      "id": 2,
+      "name": "Зарплата",
+      "kind": "income"
+    },
+    {
+      "id": 3,
+      "name": "Транспорт",
+      "kind": "expense"
+    },
+    {
+      "id": 4,
+      "name": "Развлечения",
+      "kind": "expense"
+    },
+    {
+      "id": 5,
+      "name": "Подарки",
+      "kind": "expense"
+    }
+  ],
+  "transactions": [
+    {
+      "id": 1,
+      "account_id": 1,
+      "category_id": 2,
+      "type": "income",
+      "amount": 3200,
+      "currency": "USD",
+      "date": "2025-09-30",
+      "note": "Зарплата за сентябрь"
+    },
+    {
+      "id": 2,
+      "account_id": 1,
+      "category_id": 1,
+      "type": "expense",
+      "amount": 80.45,
+      "currency": "USD",
+      "date": "2025-10-01",
+      "note": "Продукты в супермаркете"
+    },
+    {
+      "id": 3,
+      "account_id": 1,
+      "category_id": 3,
+      "type": "expense",
+      "amount": 25,
+      "currency": "USD",
+      "date": "2025-10-02",
+      "note": "Такси"
+    },
+    {
+      "id": 4,
+      "account_id": 2,
+      "category_id": 4,
+      "type": "expense",
+      "amount": 120,
+      "currency": "USD",
+      "date": "2025-10-03",
+      "note": "Кино"
+    },
+    {
+      "id": 5,
+      "account_id": 3,
+      "category_id": 1,
+      "type": "expense",
+      "amount": 35.2,
+      "currency": "EUR",
+      "date": "2025-10-04",
+      "note": "Продуктовый рынок"
+    },
+    {
+      "id": 6,
+      "account_id": 1,
+      "category_id": 5,
+      "type": "expense",
+      "amount": 50,
+      "currency": "USD",
+      "date": "2025-10-05",
+      "note": "Подарок другу"
+    },
+    {
+      "id": 7,
+      "account_id": 4,
+      "category_id": 1,
+      "type": "expense",
+      "amount": 50,
+      "currency": "PLN",
+      "date": "2025-10-10",
+      "note": "тестовая"
+    }
+  ],
+  "budgets": [
+    {
+      "id": 1,
+      "category_id": 1,
+      "month": "2025-10",
+      "limit": 500,
+      "spent": 165.65
+    },
+    {
+      "id": 2,
+      "category_id": 3,
+      "month": "2025-10",
+      "limit": 100,
+      "spent": 25
+    },
+    {
+      "id": 3,
+      "category_id": 4,
+      "month": "2025-10",
+      "limit": 150,
+      "spent": 120
+    },
+    {
+      "id": 4,
+      "category_id": 5,
+      "month": "2025-10",
+      "limit": 100,
+      "spent": 50
+    }
+  ],
+  "goals": [],
+  "planned": [],
+  "users": [
+    {
+      "id": 1,
+      "name": "Вероника",
+      "email": "veronika19161@mail.ru",
+      "password_hash": "c05516b0d47465d696ff8ade0924013c921564685c68402a106785c951743cea"
+    },
+    {
+      "id": 2,
+      "name": "123123",
+      "email": "atpagaming@mail.ru",
+      "password_hash": "96cae35ce8a9b0244178bf28e4966c2ce1b8385723a96a6b838858cdd6ca0a1e"
+    }
+  ],
+  "bankConnections": [],
+  "subscriptions": [],
+  "rules": []
+}
