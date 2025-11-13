@@ -37,8 +37,6 @@ try {
   if (!data.bankConnections) data.bankConnections = [];
   // Подписки пользователей (используется для отслеживания подписок/сервисов).
   if (!data.subscriptions) data.subscriptions = [];
-  // Правила автоматической категоризации
-  if (!data.rules) data.rules = [];
   // Правила автоматической категоризации (ключевое слово → id категории)
   if (!data.rules) data.rules = [];
 } catch (err) {
@@ -74,6 +72,21 @@ function sendJson(res, obj, statusCode = 200) {
   res.statusCode = statusCode;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.end(JSON.stringify(obj));
+}
+
+// Простой серверный конвертер валют для согласованности с клиентом
+const RATE_MAP = {
+  USD: { USD: 1, EUR: 0.94, PLN: 4.5, RUB: 90 },
+  EUR: { USD: 1.06, EUR: 1, PLN: 4.8, RUB: 95 },
+  PLN: { USD: 0.22, EUR: 0.21, PLN: 1, RUB: 20 },
+  RUB: { USD: 0.011, EUR: 0.0105, PLN: 0.05, RUB: 1 },
+};
+
+function convertAmount(amount, from, to) {
+  if (!from || !to || from === to) return Number(amount) || 0;
+  const rates = RATE_MAP[from];
+  if (rates && rates[to]) return Number(amount) * rates[to];
+  return Number(amount) || 0;
 }
 
 /**
@@ -129,6 +142,36 @@ function handleApi(req, res) {
       persistData();
       return sendJson(res, { success: true }, 200);
     }
+    // Удаление транзакции: /api/transactions/:id (с обратной корректировкой баланса и бюджета)
+    const txMatch = url.pathname.match(/^\/api\/transactions\/(\d+)$/);
+    if (txMatch) {
+      const txId = Number(txMatch[1]);
+      const idx = data.transactions.findIndex((t) => t.id === txId);
+      if (idx === -1) return sendJson(res, { error: "Transaction not found" }, 404);
+      const tx = data.transactions[idx];
+      // Откат баланса счёта с учётом валюты счёта
+      const acc = data.accounts.find((a) => a.id === tx.account_id);
+      if (acc) {
+        const adj = convertAmount(Number(tx.amount), tx.currency || acc.currency || "USD", acc.currency || "USD");
+        if (tx.type === "income") acc.balance = Number(acc.balance) - adj;
+        else acc.balance = Number(acc.balance) + adj;
+      }
+      // Откат бюджета (если расход)
+      if (tx.type === "expense") {
+        const dt = new Date(tx.date);
+        const month = dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0");
+        const b = data.budgets.find((b) => b.category_id === tx.category_id && b.month === month);
+        if (b) {
+          const bCur = b.currency || "USD";
+          const dec = convertAmount(Number(tx.amount), tx.currency || "USD", bCur);
+          b.spent = Math.max(0, Number(b.spent) - Number(dec));
+        }
+      }
+      data.transactions.splice(idx, 1);
+      persistData();
+      return sendJson(res, { success: true }, 200);
+    }
+
     // Фолбэк для неподдерживаемых DELETE
     return sendJson(res, { error: "Not found" }, 404);
   }
@@ -336,7 +379,7 @@ function handleApi(req, res) {
         return sendJson(res, forecast);
       }
 
-      case "/api/recurring": {
+  case "/api/recurring": {
         // Выявление цикличных транзакций: ищем повторяющиеся платежи по описанию/категории с периодичностью ~7/14/30/31 дней
         const groupKey = (tx) =>
           (tx.merchant || tx.description || tx.note || tx.category || "unknown")
@@ -409,6 +452,9 @@ function handleApi(req, res) {
           if (!payload.name || !payload.currency) {
             return sendJson(res, { error: "Missing account parameters" }, 400);
           }
+          if (typeof payload.balance !== "undefined" && isNaN(Number(payload.balance))) {
+            return sendJson(res, { error: "Invalid balance" }, 400);
+          }
           const newAccount = {
             id: getNextId(data.accounts),
             name: payload.name,
@@ -423,6 +469,9 @@ function handleApi(req, res) {
           // payload: { name, kind }
           if (!payload.name || !payload.kind) {
             return sendJson(res, { error: "Missing category parameters" }, 400);
+          }
+          if (!["income", "expense"].includes(payload.kind)) {
+            return sendJson(res, { error: "Invalid category kind" }, 400);
           }
           const newCategory = {
             id: getNextId(data.categories),
@@ -439,7 +488,7 @@ function handleApi(req, res) {
             !payload.account_id ||
             !payload.category_id ||
             !payload.type ||
-            !payload.amount ||
+            payload.amount == null ||
             !payload.date ||
             !payload.currency
           ) {
@@ -449,6 +498,16 @@ function handleApi(req, res) {
               400
             );
           }
+          if (!["income", "expense"].includes(payload.type)) {
+            return sendJson(res, { error: "Invalid transaction type" }, 400);
+          }
+          if (isNaN(Number(payload.amount)) || Number(payload.amount) < 0) {
+            return sendJson(res, { error: "Invalid amount" }, 400);
+          }
+          const acc = data.accounts.find((a) => a.id === Number(payload.account_id));
+          if (!acc) return sendJson(res, { error: "Account not found" }, 404);
+          const cat = data.categories.find((c) => c.id === Number(payload.category_id));
+          if (!cat) return sendJson(res, { error: "Category not found" }, 404);
           const newId = getNextId(data.transactions);
           const newTx = {
             id: newId,
@@ -461,13 +520,17 @@ function handleApi(req, res) {
             note: payload.note || "",
           };
           data.transactions.push(newTx);
-          // Обновляем баланс счёта
-          const account = data.accounts.find((a) => a.id === newTx.account_id);
-          if (account) {
+          // Обновляем баланс счёта с учётом валюты счёта
+          if (acc) {
+            const adj = convertAmount(
+              Number(newTx.amount),
+              newTx.currency || acc.currency || "USD",
+              acc.currency || "USD"
+            );
             if (newTx.type === "income") {
-              account.balance = Number(account.balance) + newTx.amount;
+              acc.balance = Number(acc.balance) + adj;
             } else {
-              account.balance = Number(account.balance) - newTx.amount;
+              acc.balance = Number(acc.balance) - adj;
             }
           }
           // Обновляем бюджет по категории и месяцу (если тип расход)
@@ -488,20 +551,37 @@ function handleApi(req, res) {
                 month,
                 limit: 0,
                 spent: 0,
+                currency: "USD",
               };
               data.budgets.push(budget);
             }
-            budget.spent = Number(budget.spent) + newTx.amount;
+            // Если у бюджета задана валюта, конвертируем расход в валюту бюджета
+            const bCur = budget.currency || "USD";
+            const add = convertAmount(Number(newTx.amount), newTx.currency || "USD", bCur);
+            budget.spent = Number(budget.spent) + Number(add);
           }
           persistData();
           return sendJson(res, newTx, 201);
         }
         case "/api/budgets": {
-          // payload: { category_id, month, limit, type, percent }
+          // payload: { category_id, month, limit, type, percent, currency? }
           // type: 'fixed' | 'percent'. Если 'percent', то берётся процент от дохода.
           if (!payload.category_id || !payload.month) {
             return sendJson(res, { error: "Missing budget parameters" }, 400);
           }
+          if (payload.type && !["fixed", "percent"].includes(payload.type)) {
+            return sendJson(res, { error: "Invalid budget type" }, 400);
+          }
+          if (payload.percent != null) {
+            const p = Number(payload.percent);
+            if (isNaN(p) || p < 0 || p > 100) {
+              return sendJson(res, { error: "Invalid percent" }, 400);
+            }
+          }
+          const allowedCur = ["USD", "EUR", "PLN", "RUB"];
+          const bCurrency = allowedCur.includes(String(payload.currency))
+            ? String(payload.currency)
+            : "USD";
           let budget = data.budgets.find(
             (b) =>
               b.category_id === Number(payload.category_id) &&
@@ -513,22 +593,23 @@ function handleApi(req, res) {
               category_id: Number(payload.category_id),
               month: payload.month,
               limit: Number(payload.limit) || 0,
+              spent: 0,
               type: payload.type || "fixed",
               percent:
-                payload.percent !== undefined ? Number(payload.percent) : null,
-              spent: 0,
+                payload.percent != null ? Number(payload.percent) : null,
+              currency: bCurrency,
             };
             data.budgets.push(budget);
+            persistData();
+            return sendJson(res, budget, 201);
           } else {
-            // Обновляем лимит или проценты, если указаны
-            if (payload.limit !== undefined)
-              budget.limit = Number(payload.limit);
-            if (payload.type) budget.type = payload.type;
-            if (payload.percent !== undefined)
-              budget.percent = Number(payload.percent);
+            budget.limit = Number(payload.limit) || 0;
+            budget.type = payload.type || "fixed";
+            budget.percent = payload.percent != null ? Number(payload.percent) : null;
+            budget.currency = bCurrency;
+            persistData();
+            return sendJson(res, budget, 200);
           }
-          persistData();
-          return sendJson(res, budget, 201);
         }
         case "/api/goals": {
           // payload: { title, target_amount, current_amount, deadline }
@@ -547,12 +628,12 @@ function handleApi(req, res) {
           return sendJson(res, newGoal, 201);
         }
         case "/api/planned": {
-          // payload: { account_id, category_id, type, amount, currency, start_date, frequency }
+          // payload: { account_id, category_id, type, amount, currency, start_date, frequency, note? }
           if (
             !payload.account_id ||
             !payload.category_id ||
             !payload.type ||
-            !payload.amount ||
+            payload.amount == null ||
             !payload.currency ||
             !payload.frequency
           ) {
@@ -645,12 +726,23 @@ function handleApi(req, res) {
         case "/api/subscriptions": {
           // payload: { title, amount, currency, frequency, next_date }
           const { title, amount, currency, frequency, next_date } = payload;
-          if (!title || !amount || !currency || !frequency) {
+          if (!title || amount == null || !currency || !frequency) {
             return sendJson(
               res,
               { error: "Missing subscription parameters" },
               400
             );
+          }
+          if (isNaN(Number(amount)) || Number(amount) < 0) {
+            return sendJson(res, { error: "Invalid amount" }, 400);
+          }
+          const allowedCur = ["USD", "EUR", "PLN", "RUB"];
+          if (!allowedCur.includes(String(currency))) {
+            return sendJson(res, { error: "Invalid currency" }, 400);
+          }
+          const allowedFreq = ["weekly", "monthly", "yearly"];
+          if (!allowedFreq.includes(String(frequency))) {
+            return sendJson(res, { error: "Invalid frequency" }, 400);
           }
           const getNextId = (arr) =>
             arr.reduce((max, item) => Math.max(max, item.id || 0), 0) + 1;

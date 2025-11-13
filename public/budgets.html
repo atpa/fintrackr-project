@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FinTrackr – Бюджеты</title>
     <link rel="stylesheet" href="css/style.css" />
-    <script defer src="js/utils/auth.js"></script>`n    <script defer src="js/app.js"></script>
+  <script defer src="js/utils/auth.js"></script>
+  <script defer src="js/app.js"></script>
     <script defer src="js/budgets.js"></script>
   </head>
   <body>
@@ -110,7 +111,7 @@
             </li>
             <li class="nav-item">
               <a href="recurring.html" class="nav-link"
-                ><span class="nav-icon">�</span
+                ><span class="nav-icon">🔁</span
                 ><span class="nav-label">Регулярные</span></a
               >
             </li>
@@ -158,7 +159,7 @@
             </li>
             <li class="nav-item">
               <a href="settings.html" class="nav-link"
-                ><span class="nav-icon">�</span
+                ><span class="nav-icon">⚙️</span
                 ><span class="nav-label">Настройки</span></a
               >
             </li>
@@ -178,21 +179,9 @@
           </div>
         </div>
         <div class="sidebar-auth">
-          <a
-            href="login.html"
-            class="auth-link login-link"
-            style="display: block"
-            >Вход</a
-          >
-          <a
-            href="register.html"
-            class="auth-link register-link"
-            style="display: block"
-            >Регистрация</a
-          >
-          <a href="#" class="auth-link logout-link" style="display: none"
-            >Выход</a
-          >
+          <a href="login.html" class="auth-link login-link">Вход</a>
+          <a href="register.html" class="auth-link register-link">Регистрация</a>
+          <a href="#" class="auth-link logout-link">Выход</a>
         </div>
     </aside>
 
@@ -221,6 +210,15 @@
             <label style="flex: 1 1 150px">
               Лимит
               <input type="number" id="budgetLimit" step="0.01" />
+            </label>
+            <label style="flex: 1 1 150px">
+              Валюта бюджета
+              <select id="budgetCurrency">
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="PLN">PLN</option>
+                <option value="RUB">RUB</option>
+              </select>
             </label>
             <label style="flex: 1 1 150px; display: none" id="percentContainer">
               Процент (%)

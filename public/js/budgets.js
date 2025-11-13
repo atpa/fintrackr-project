@@ -2,7 +2,7 @@
  * Функции для управления бюджетами: отображение и установка лимитов.
  */
 
-function renderBudgets(budgets, categories, tbody) {
+function renderBudgets(budgets, categories, tbody, transactions) {
   tbody.innerHTML = '';
   budgets.forEach(budget => {
     const tr = document.createElement('tr');
@@ -15,18 +15,33 @@ function renderBudgets(budgets, categories, tbody) {
     const spentTd = document.createElement('td');
     const progressTd = document.createElement('td');
     let displayLimit;
-    let dynamicLimit = budget.limit;
-    // Если бюджет процентный, вычисляем фактический лимит исходя из суммы доходов
+    let dynamicLimit = Number(budget.limit) || 0;
+    const bCur = budget.currency || 'USD';
+    // Если бюджет процентный, вычисляем фактический лимит исходя из суммы доходов (конвертируем в валюту бюджета)
     if (budget.type === 'percent' && budget.percent != null) {
-      const incomes = window.incomesByMonth ? window.incomesByMonth[budget.month] || 0 : 0;
+      let incomes = 0;
+      if (Array.isArray(transactions)) {
+        transactions.forEach(tx => {
+          if (tx.type === 'income') {
+            const dt = new Date(tx.date);
+            const month = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0');
+            if (month === budget.month) {
+              const add = typeof convertAmount === 'function' ? convertAmount(Number(tx.amount), tx.currency || 'USD', bCur) : Number(tx.amount);
+              incomes += add;
+            }
+          }
+        });
+      }
       dynamicLimit = incomes * (Number(budget.percent) / 100);
-      displayLimit = `${Number(budget.percent).toFixed(1)}% (${dynamicLimit.toFixed(2)})`;
+      const limText = typeof formatCurrency === 'function' ? formatCurrency(dynamicLimit, bCur) : `${dynamicLimit.toFixed(2)} ${bCur}`;
+      displayLimit = `${Number(budget.percent).toFixed(1)}% (${limText})`;
     } else {
-      displayLimit = Number(budget.limit).toFixed(2);
+      displayLimit = typeof formatCurrency === 'function' ? formatCurrency(budget.limit, bCur) : `${Number(budget.limit).toFixed(2)} ${bCur}`;
     }
     limitTd.textContent = displayLimit;
-    spentTd.textContent = Number(budget.spent).toFixed(2);
-    const percentage = dynamicLimit > 0 ? Math.min(100, (budget.spent / dynamicLimit) * 100) : 0;
+    const spentText = typeof formatCurrency === 'function' ? formatCurrency(budget.spent, bCur) : `${Number(budget.spent).toFixed(2)} ${bCur}`;
+    spentTd.textContent = spentText;
+    const percentage = dynamicLimit > 0 ? Math.min(100, (Number(budget.spent) / dynamicLimit) * 100) : 0;
     const barContainer = document.createElement('div');
     barContainer.style.backgroundColor = '#e2e8f0';
     barContainer.style.borderRadius = '4px';
@@ -52,20 +67,7 @@ async function initBudgetsPage() {
     fetchData('/api/categories'),
     fetchData('/api/transactions')
   ]);
-  // Считаем суммарные доходы по месяцам для расчёта процентных бюджетов
-  const incomesByMonth = {};
-  if (Array.isArray(transactions)) {
-    transactions.forEach(tx => {
-      if (tx.type === 'income') {
-        const dt = new Date(tx.date);
-        const month = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0');
-        incomesByMonth[month] = (incomesByMonth[month] || 0) + Number(tx.amount);
-      }
-    });
-  }
-  // Делаем объект доходов глобальным, чтобы renderBudgets мог использовать
-  window.incomesByMonth = incomesByMonth;
-  renderBudgets(budgets, categories, tbody);
+  renderBudgets(budgets, categories, tbody, transactions);
   // Populate category dropdown for budget form
   const catSelect = document.getElementById('budgetCategory');
   if (catSelect) {
@@ -99,13 +101,54 @@ async function initBudgetsPage() {
     }
     form.addEventListener('submit', async e => {
       e.preventDefault();
+      const catSel = document.getElementById('budgetCategory');
+      const monthInput = document.getElementById('budgetMonth');
+      const typeSel = document.getElementById('budgetType');
+      const limitInput = document.getElementById('budgetLimit');
+      const percentInput = document.getElementById('budgetPercent');
+
       const payload = {
-        category_id: Number(document.getElementById('budgetCategory').value),
-        month: document.getElementById('budgetMonth').value,
-        limit: parseFloat(document.getElementById('budgetLimit').value),
-        type: document.getElementById('budgetType')?.value || 'fixed',
-        percent: document.getElementById('budgetPercent')?.value ? parseFloat(document.getElementById('budgetPercent').value) : null
+        category_id: Number(catSel.value),
+        month: monthInput.value,
+        limit: parseFloat(limitInput.value),
+        type: typeSel?.value || 'fixed',
+        percent: percentInput?.value ? parseFloat(percentInput.value) : null,
+        currency: document.getElementById('budgetCurrency')?.value || 'USD'
       };
+
+      // Клиентская валидация
+      if (!payload.month) {
+        monthInput.setCustomValidity('Выберите месяц');
+        monthInput.reportValidity();
+        setTimeout(() => monthInput.setCustomValidity(''), 1500);
+        return;
+      }
+      if (!payload.category_id) {
+        catSel.setCustomValidity('Выберите категорию');
+        catSel.reportValidity();
+        setTimeout(() => catSel.setCustomValidity(''), 1500);
+        return;
+      }
+      if (payload.type === 'percent') {
+        const p = Number(payload.percent);
+        if (!isFinite(p) || p < 0 || p > 100) {
+          percentInput.setCustomValidity('Процент должен быть числом от 0 до 100');
+          percentInput.reportValidity();
+          setTimeout(() => percentInput.setCustomValidity(''), 1500);
+          return;
+        }
+        // для процентного лимита поле limit можно игнорировать/очищать
+        payload.limit = 0;
+      } else {
+        const l = Number(payload.limit);
+        if (!isFinite(l) || l < 0) {
+          limitInput.setCustomValidity('Лимит должен быть числом 0 или больше');
+          limitInput.reportValidity();
+          setTimeout(() => limitInput.setCustomValidity(''), 1500);
+          return;
+        }
+        payload.percent = null;
+      }
       try {
         const resp = await fetch('/api/budgets', {
           method: 'POST',

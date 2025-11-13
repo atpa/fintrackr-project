@@ -809,6 +809,14 @@ body.dark .nav-link.active {
   background: inherit;
   pointer-events: auto;
 }
+/* Default visibility to avoid flicker before JS applies auth state */
+.sidebar-auth .login-link,
+.sidebar-auth .register-link {
+  display: inline-block;
+}
+.sidebar-auth .logout-link {
+  display: none;
+}
 
 .auth-link,
 .logout-btn {
@@ -973,7 +981,7 @@ body:not(.landing-page):not(.auth-page) main > .grid-2,
 body:not(.landing-page):not(.auth-page) main > .grid-3,
 body:not(.landing-page):not(.auth-page) main > .card {
   max-width: 1200px;
-  margin: 0 auto;
+  margin: 0 auto 1.5rem auto;
   padding-left: 0.5rem;
   padding-right: 0.5rem;
   box-sizing: border-box;

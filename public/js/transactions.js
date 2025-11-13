@@ -28,7 +28,14 @@ function appendTransactionRow(tx, accounts, categories, tbody, prepend = false) 
   amountTd.className = tx.type === 'income' ? 'status-income' : 'status-expense';
   const noteTd = document.createElement('td');
   noteTd.textContent = tx.note || '';
-  tr.append(dateTd, accountTd, categoryTd, typeTd, amountTd, noteTd);
+  const actionsTd = document.createElement('td');
+  const delBtn = document.createElement('button');
+  delBtn.className = 'btn-secondary tx-del';
+  delBtn.setAttribute('data-id', tx.id);
+  delBtn.textContent = 'Удалить';
+  actionsTd.appendChild(delBtn);
+
+  tr.append(dateTd, accountTd, categoryTd, typeTd, amountTd, noteTd, actionsTd);
   if (prepend && tbody.firstChild) {
     tbody.prepend(tr);
   } else {
@@ -79,7 +86,7 @@ async function initTransactionsPage() {
     if (!list.length) {
       const tr = document.createElement('tr');
       const td = document.createElement('td');
-      td.colSpan = 6;
+      td.colSpan = 7;
       td.textContent = 'Нет операций';
       tr.appendChild(td);
       tbody.appendChild(tr);
@@ -96,6 +103,8 @@ async function initTransactionsPage() {
   if (form) {
     form.addEventListener('submit', async e => {
       e.preventDefault();
+      const dateInput = document.getElementById('txDate');
+      const amountInput = document.getElementById('txAmount');
       const newTx = {
         account_id: Number(accountSelect.value),
         category_id: Number(categorySelect.value),
@@ -105,6 +114,19 @@ async function initTransactionsPage() {
         date: document.getElementById('txDate').value,
         note: document.getElementById('txNote').value
       };
+      // Простая клиентская валидация с подсказками браузера
+      if (!newTx.date) {
+        dateInput.setCustomValidity('Укажите дату операции');
+        dateInput.reportValidity();
+        setTimeout(() => dateInput.setCustomValidity(''), 1500);
+        return;
+      }
+      if (!isFinite(newTx.amount) || newTx.amount < 0) {
+        amountInput.setCustomValidity('Введите корректную сумму (0 или больше)');
+        amountInput.reportValidity();
+        setTimeout(() => amountInput.setCustomValidity(''), 1500);
+        return;
+      }
       // Автоматическая категоризация: если заметка содержит ключевое слово из правил, назначаем категорию
       if (newTx.note) {
         const noteLower = newTx.note.toLowerCase();
@@ -131,11 +153,12 @@ async function initTransactionsPage() {
         window.allTransactions.unshift(created);
         // Добавляем в таблицу в начало
         appendTransactionRow(created, accounts, categories, tbody, true);
-        // Обновляем балансы счетов
+        // Обновляем балансы счетов c учётом конвертации в валюту счёта
         accounts.forEach(acc => {
           if (acc.id === created.account_id) {
-            if (created.type === 'income') acc.balance += created.amount;
-            else acc.balance -= created.amount;
+            const adj = typeof convertAmount === 'function' ? convertAmount(Number(created.amount), created.currency || 'USD', acc.currency || 'USD') : Number(created.amount);
+            if (created.type === 'income') acc.balance += adj;
+            else acc.balance -= adj;
           }
         });
         form.reset();
@@ -186,6 +209,29 @@ async function initTransactionsPage() {
       }
     }
   }
+
+  // Делегирование кликов по кнопкам удаления
+  tbody.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.tx-del');
+    if (!btn) return;
+    const id = btn.getAttribute('data-id');
+    if (!id) return;
+    if (!confirm('Удалить операцию?')) return;
+    try {
+      const resp = await fetch(`/api/transactions/${id}`, { method: 'DELETE' });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        alert('Ошибка: ' + (err.error || 'не удалось удалить операцию'));
+        return;
+      }
+      // Удаляем из локального массива и перерисовываем
+      window.allTransactions = (window.allTransactions || []).filter(tx => String(tx.id) !== String(id));
+      renderTable(window.allTransactions);
+    } catch (err) {
+      console.error(err);
+      alert('Ошибка сети');
+    }
+  });
 }
 
 // Запуск инициализации после загрузки страницы

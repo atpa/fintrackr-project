@@ -4,7 +4,7 @@
       "id": 1,
       "name": "Основной счёт",
       "currency": "USD",
-      "balance": 2500
+      "balance": -18500
     },
     {
       "id": 2,
@@ -122,6 +122,36 @@
       "currency": "PLN",
       "date": "2025-10-10",
       "note": "тестовая"
+    },
+    {
+      "id": 8,
+      "account_id": 1,
+      "category_id": 1,
+      "type": "expense",
+      "amount": 1000,
+      "currency": "RUB",
+      "date": "2025-11-13",
+      "note": ""
+    },
+    {
+      "id": 9,
+      "account_id": 1,
+      "category_id": 1,
+      "type": "expense",
+      "amount": 10000,
+      "currency": "USD",
+      "date": "2025-11-13",
+      "note": ""
+    },
+    {
+      "id": 10,
+      "account_id": 1,
+      "category_id": 2,
+      "type": "expense",
+      "amount": 10000,
+      "currency": "RUB",
+      "date": "2025-11-13",
+      "note": ""
     }
   ],
   "budgets": [
@@ -152,6 +182,20 @@
       "month": "2025-10",
       "limit": 100,
       "spent": 50
+    },
+    {
+      "id": 5,
+      "category_id": 1,
+      "month": "2025-11",
+      "limit": 0,
+      "spent": 11000
+    },
+    {
+      "id": 6,
+      "category_id": 2,
+      "month": "2025-11",
+      "limit": 0,
+      "spent": 10000
     }
   ],
   "goals": [],

@@ -26,6 +26,17 @@ const RATE_MAP = {
 };
 
 /**
+ * Форматирование суммы и валюты для отображения.
+ * @param {number} amount
+ * @param {string} currency
+ * @returns {string}
+ */
+function formatCurrency(amount, currency) {
+  const n = Number(amount) || 0;
+  return `${n.toFixed(2)} ${currency || ''}`.trim();
+}
+
+/**
  * Возвращает выбранную пользователем валюту отчётов из настроек.
  * Пытается прочитать поле reportCurrency, затем падает назад на основную валюту профиля или 'USD'.
  * @returns {string}
