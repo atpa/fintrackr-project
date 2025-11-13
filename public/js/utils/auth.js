@@ -5,80 +5,99 @@
 
 const Auth = {
   /**
-   * Ключ для хранения данных пользователя в localStorage
+   * Ключ для хранения данных пользователя в sessionStorage
    */
   USER_KEY: 'user',
-  
+
   /**
    * Ключ для хранения темы
    */
   THEME_KEY: 'ft_theme',
 
-  /**
-   * Проверяет, авторизован ли пользователь
-   * @returns {boolean}
-   */
-  isLoggedIn() {
-    try {
-      return !!localStorage.getItem(this.USER_KEY);
-    } catch (e) {
-      console.error('Auth: localStorage недоступен', e);
-      return false;
-    }
-  },
+  _cache: null,
+  _sessionPromise: null,
 
-  /**
-   * Получает данные текущего пользователя
-   * @returns {Object|null}
-   */
-  getUser() {
+  _storage() {
     try {
-      const userData = localStorage.getItem(this.USER_KEY);
-      return userData ? JSON.parse(userData) : null;
-    } catch (e) {
-      console.error('Auth: Ошибка парсинга данных пользователя', e);
+      return window.sessionStorage;
+    } catch (err) {
+      console.error('Auth: sessionStorage недоступен', err);
       return null;
     }
   },
 
-  /**
-   * Сохраняет данные пользователя (вход в систему)
-   * @param {Object} user - объект пользователя {id, name, email}
-   * @returns {boolean} успех операции
-   */
-  login(user) {
+  _readUserFromStorage() {
+    const storage = this._storage();
+    if (!storage) return null;
     try {
-      if (!user || !user.email) {
-        console.error('Auth: Некорректные данные пользователя');
-        return false;
+      const raw = storage.getItem(this.USER_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (err) {
+      console.error('Auth: Ошибка чтения пользователя из sessionStorage', err);
+      return null;
+    }
+  },
+
+  _writeUserToStorage(user) {
+    const storage = this._storage();
+    if (!storage) return;
+    try {
+      if (user) {
+        storage.setItem(this.USER_KEY, JSON.stringify(user));
+      } else {
+        storage.removeItem(this.USER_KEY);
       }
-      localStorage.setItem(this.USER_KEY, JSON.stringify(user));
-      return true;
-    } catch (e) {
-      console.error('Auth: Ошибка сохранения пользователя', e);
-      return false;
+    } catch (err) {
+      console.error('Auth: Ошибка сохранения пользователя в sessionStorage', err);
     }
   },
 
-  /**
-   * Удаляет данные пользователя (выход из системы)
-   * @returns {boolean} успех операции
-   */
-  logout() {
+  isLoggedIn() {
+    return !!this.getUser();
+  },
+
+  getUser() {
+    if (this._cache) {
+      return this._cache;
+    }
+    const stored = this._readUserFromStorage();
+    if (stored) {
+      this._cache = stored;
+    }
+    return stored;
+  },
+
+  login(userPayload) {
+    const user = userPayload && userPayload.user ? userPayload.user : userPayload;
+    if (!user || !user.email) {
+      console.error('Auth: Некорректные данные пользователя');
+      return false;
+    }
+    this._cache = user;
+    this._writeUserToStorage(user);
+    return true;
+  },
+
+  clearUser() {
+    this._cache = null;
+    this._writeUserToStorage(null);
+  },
+
+  async logout() {
     try {
-      localStorage.removeItem(this.USER_KEY);
-      return true;
-    } catch (e) {
-      console.error('Auth: Ошибка удаления данных пользователя', e);
-      return false;
+      await fetch('/api/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+    } catch (err) {
+      console.error('Auth: Ошибка запроса выхода', err);
+    } finally {
+      this.clearUser();
     }
+    return true;
   },
 
-  /**
-   * Проверяет, требует ли текущая страница авторизации
-   * @param {string} currentPage - имя текущей страницы
-   * @returns {boolean}
-   */
   requiresAuth(currentPage) {
     const publicPages = [
       'landing.html',
@@ -89,24 +108,59 @@ const Auth = {
       'benefits.html',
       'about.html'
     ];
-    return !publicPages.includes(currentPage.toLowerCase());
+    return !publicPages.includes((currentPage || '').toLowerCase());
   },
 
-  /**
-   * Перенаправляет пользователя на страницу входа, если не авторизован
-   */
-  redirectIfNotAuthenticated() {
+  async redirectIfNotAuthenticated() {
     const currentPage = window.location.pathname.split('/').pop().toLowerCase() || 'index.html';
-    
-    if (this.requiresAuth(currentPage) && !this.isLoggedIn()) {
+    if (!this.requiresAuth(currentPage)) return;
+    try {
+      await this.syncSession();
+    } catch (err) {
+      this.clearUser();
       window.location.href = 'login.html';
     }
   },
 
-  /**
-   * Получает текущую тему
-   * @returns {string} 'dark' или 'light'
-   */
+  async syncSession(force = false) {
+    if (!force) {
+      const cached = this.getUser();
+      if (cached) return cached;
+    }
+    if (this._sessionPromise && !force) {
+      return this._sessionPromise;
+    }
+    this._sessionPromise = (async () => {
+      try {
+        const resp = await fetch('/api/session', { method: 'GET' });
+        if (!resp.ok) {
+          throw new Error('Unauthenticated');
+        }
+        const data = await resp.json();
+        if (data && data.user) {
+          this._cache = data.user;
+          this._writeUserToStorage(data.user);
+          return data.user;
+        }
+        throw new Error('Empty session');
+      } catch (err) {
+        this.clearUser();
+        throw err;
+      } finally {
+        this._sessionPromise = null;
+      }
+    })();
+    return this._sessionPromise;
+  },
+
+  async handleUnauthorized() {
+    this.clearUser();
+    const currentPage = window.location.pathname.split('/').pop().toLowerCase() || 'index.html';
+    if (this.requiresAuth(currentPage)) {
+      window.location.href = 'login.html';
+    }
+  },
+
   getTheme() {
     try {
       return localStorage.getItem(this.THEME_KEY) || 'light';
@@ -115,10 +169,6 @@ const Auth = {
     }
   },
 
-  /**
-   * Сохраняет тему
-   * @param {string} theme - 'dark' или 'light'
-   */
   setTheme(theme) {
     try {
       localStorage.setItem(this.THEME_KEY, theme);
@@ -127,6 +177,21 @@ const Auth = {
     }
   }
 };
+
+(function enforceFetchCredentials() {
+  if (typeof window === 'undefined' || !window.fetch || window.__authFetchWrapped) {
+    return;
+  }
+  const originalFetch = window.fetch.bind(window);
+  window.fetch = (input, init = {}) => {
+    const options = { ...init };
+    if (!Object.prototype.hasOwnProperty.call(options, 'credentials')) {
+      options.credentials = 'include';
+    }
+    return originalFetch(input, options);
+  };
+  window.__authFetchWrapped = true;
+})();
 
 // Экспортируем для использования в модулях
 if (typeof module !== 'undefined' && module.exports) {

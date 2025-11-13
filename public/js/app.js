@@ -9,6 +9,10 @@
  */
 async function fetchData(endpoint) {
   const resp = await fetch(endpoint);
+  if (resp.status === 401) {
+    await Auth.handleUnauthorized();
+    return [];
+  }
   if (!resp.ok) {
     console.error(`Ошибка запроса ${endpoint}:`, resp.status);
     return [];
@@ -214,15 +218,17 @@ function drawPieChart(canvas, labels, values) {
  * Инициализация дэшборда: загрузка данных и построение графика
  */
 async function initDashboard() {
-  // Если пользователь не авторизован, перенаправляем на страницу входа
-  try {
-    const stored = localStorage.getItem("user");
-    if (!stored) {
+  let currentUser = Auth.getUser();
+  if (!currentUser) {
+    try {
+      currentUser = await Auth.syncSession();
+    } catch (err) {
+      currentUser = null;
+    }
+    if (!currentUser) {
       window.location.href = "login.html";
       return;
     }
-  } catch (e) {
-    // если localStorage недоступен, просто продолжаем
   }
   const transactions = await fetchData("/api/transactions");
   const categories = await fetchData("/api/categories");
@@ -346,65 +352,48 @@ async function initDashboard() {
 }
 
 // Навигация и аутентификация: настройка бургер‑меню и ссылок входа/выхода
-document.addEventListener("DOMContentLoaded", () => {
-  // Проверяем авторизацию: для внутренних страниц требуется наличие пользователя.
-  const publicPages = [
-    "landing.html",
-    "index.html",
-    "login.html",
-    "register.html",
-    "features.html",
-    "benefits.html",
-  ];
-  const currentPage = window.location.pathname.split("/").pop().toLowerCase();
-  let isLoggedIn = false;
+document.addEventListener("DOMContentLoaded", async () => {
+  const currentPage =
+    window.location.pathname.split("/").pop().toLowerCase() || "index.html";
+  let user = null;
   try {
-    isLoggedIn = !!localStorage.getItem("user");
-  } catch (e) {
-    isLoggedIn = false;
+    user = await Auth.syncSession();
+  } catch (err) {
+    user = Auth.getUser();
   }
-  if (!isLoggedIn && !publicPages.includes(currentPage)) {
+
+  if (Auth.requiresAuth(currentPage) && !user) {
     window.location.href = "login.html";
     return;
   }
 
-  // Links (login/register/logout) visibility and profile update
   const loginLink = document.querySelector(".login-link");
   const regLink = document.querySelector(".register-link");
   const logoutLink = document.querySelector(".logout-link");
-  
-  try {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      const user = JSON.parse(storedUser);
-      
-      // Update profile information
-      const profileName = document.querySelector(".profile-name");
-      const profileEmail = document.querySelector(".profile-email");
-      if (profileName) profileName.textContent = user.name || "Пользователь";
-      if (profileEmail) profileEmail.textContent = user.email || "";
-      
-      // Update auth links visibility
-      if (loginLink) loginLink.style.display = "none";
-      if (regLink) regLink.style.display = "none";
-      if (logoutLink) {
-        logoutLink.style.display = "inline-block";
-        logoutLink.addEventListener("click", (e) => {
-          e.preventDefault();
-          localStorage.removeItem("user");
-          window.location.href = "landing.html";
-        });
-      }
-    } else {
-      if (logoutLink) logoutLink.style.display = "none";
-      if (loginLink) loginLink.style.display = "inline-block";
-      if (regLink) regLink.style.display = "inline-block";
+  const profileName = document.querySelector(".profile-name");
+  const profileEmail = document.querySelector(".profile-email");
+
+  if (user) {
+    if (profileName) profileName.textContent = user.name || "Пользователь";
+    if (profileEmail) profileEmail.textContent = user.email || "";
+    if (loginLink) loginLink.style.display = "none";
+    if (regLink) regLink.style.display = "none";
+    if (logoutLink) {
+      logoutLink.style.display = "inline-block";
+      logoutLink.addEventListener("click", async (e) => {
+        e.preventDefault();
+        await Auth.logout();
+        window.location.href = "landing.html";
+      });
     }
-  } catch (err) {
-    // ignore
+  } else {
+    if (profileName) profileName.textContent = "";
+    if (profileEmail) profileEmail.textContent = "";
+    if (logoutLink) logoutLink.style.display = "none";
+    if (loginLink) loginLink.style.display = "inline-block";
+    if (regLink) regLink.style.display = "inline-block";
   }
 
-  // Initialize dashboard if present
   if (document.getElementById("expenseChart")) {
     initDashboard();
   }

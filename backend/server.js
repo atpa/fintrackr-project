@@ -3,6 +3,13 @@ const https = require("https");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+
+const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change";
+const ACCESS_TOKEN_TTL_SECONDS = 15 * 60; // 15 минут
+const REFRESH_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 дней
+const COOKIE_SECURE = process.env.COOKIE_SECURE === "true";
 
 // Определяем MIME-типы для разных расширений
 const MIME_TYPES = {
@@ -39,6 +46,8 @@ try {
   if (!data.subscriptions) data.subscriptions = [];
   // Правила автоматической категоризации (ключевое слово → id категории)
   if (!data.rules) data.rules = [];
+  if (!data.refreshTokens) data.refreshTokens = [];
+  if (!data.tokenBlacklist) data.tokenBlacklist = [];
 } catch (err) {
   console.error("Ошибка чтения файла данных:", err);
   data = {
@@ -51,6 +60,8 @@ try {
     users: [],
     bankConnections: [],
     subscriptions: [],
+    refreshTokens: [],
+    tokenBlacklist: [],
   };
 }
 
@@ -74,6 +85,200 @@ function sendJson(res, obj, statusCode = 200) {
   res.end(JSON.stringify(obj));
 }
 
+function sanitizeUser(user) {
+  if (!user) return null;
+  const { password_hash, password_salt, ...rest } = user;
+  return rest;
+}
+
+function parseCookies(req) {
+  const header = req.headers.cookie;
+  if (!header) return {};
+  return header.split(/;\s*/).reduce((acc, part) => {
+    const [key, ...v] = part.split("=");
+    if (!key) return acc;
+    acc[decodeURIComponent(key)] = decodeURIComponent(v.join("="));
+    return acc;
+  }, {});
+}
+
+function buildCookie(name, value, options = {}) {
+  let cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
+  cookie += `; Path=${options.path || "/"}`;
+  if (options.httpOnly !== false) cookie += "; HttpOnly";
+  if (options.maxAge != null) cookie += `; Max-Age=${options.maxAge}`;
+  if (options.sameSite) cookie += `; SameSite=${options.sameSite}`;
+  if (options.secure) cookie += "; Secure";
+  return cookie;
+}
+
+function setAuthCookies(res, tokens, options = {}) {
+  const sameSite = options.sameSite || "Strict";
+  const secure =
+    options.secure !== undefined ? options.secure : COOKIE_SECURE;
+  const cookies = [
+    buildCookie("access_token", tokens.accessToken, {
+      maxAge: ACCESS_TOKEN_TTL_SECONDS,
+      sameSite,
+      secure,
+    }),
+    buildCookie("refresh_token", tokens.refreshToken, {
+      maxAge: REFRESH_TOKEN_TTL_SECONDS,
+      sameSite,
+      secure,
+    }),
+  ];
+  res.setHeader("Set-Cookie", cookies);
+}
+
+function clearAuthCookies(res, options = {}) {
+  const sameSite = options.sameSite || "Strict";
+  const secure =
+    options.secure !== undefined ? options.secure : COOKIE_SECURE;
+  const cookies = [
+    buildCookie("access_token", "", { maxAge: 0, sameSite, secure }),
+    buildCookie("refresh_token", "", { maxAge: 0, sameSite, secure }),
+  ];
+  res.setHeader("Set-Cookie", cookies);
+}
+
+function cleanupTokenStores() {
+  const now = Date.now();
+  const refreshBefore = data.refreshTokens.length;
+  data.refreshTokens = data.refreshTokens.filter((entry) => {
+    return entry && entry.expiresAt && entry.expiresAt > now;
+  });
+  const blacklistBefore = data.tokenBlacklist.length;
+  data.tokenBlacklist = data.tokenBlacklist.filter((entry) => {
+    return entry && entry.expiresAt && entry.expiresAt > now;
+  });
+  if (
+    refreshBefore !== data.refreshTokens.length ||
+    blacklistBefore !== data.tokenBlacklist.length
+  ) {
+    persistData();
+  }
+}
+
+function isTokenBlacklisted(token) {
+  return data.tokenBlacklist.some((entry) => entry.token === token);
+}
+
+function addTokenToBlacklist(token, expiresAt) {
+  if (!token) return;
+  const expMs = expiresAt ? expiresAt : Date.now() + ACCESS_TOKEN_TTL_SECONDS * 1000;
+  data.tokenBlacklist.push({ token, expiresAt: expMs });
+  persistData();
+}
+
+function issueTokensForUser(user) {
+  cleanupTokenStores();
+  const jwtId = crypto.randomBytes(16).toString("hex");
+  const accessToken = jwt.sign(
+    { sub: user.id, email: user.email },
+    JWT_SECRET,
+    { expiresIn: ACCESS_TOKEN_TTL_SECONDS, jwtid: jwtId }
+  );
+  const refreshToken = crypto.randomBytes(48).toString("hex");
+  const refreshExpiresAt = Date.now() + REFRESH_TOKEN_TTL_SECONDS * 1000;
+  data.refreshTokens.push({
+    token: refreshToken,
+    userId: user.id,
+    expiresAt: refreshExpiresAt,
+  });
+  persistData();
+  return {
+    accessToken,
+    refreshToken,
+    jwtId,
+    refreshExpiresAt,
+    accessExpiresAt: Date.now() + ACCESS_TOKEN_TTL_SECONDS * 1000,
+  };
+}
+
+function consumeRefreshToken(token) {
+  if (!token) return null;
+  cleanupTokenStores();
+  const idx = data.refreshTokens.findIndex((entry) => entry.token === token);
+  if (idx === -1) return null;
+  const entry = data.refreshTokens[idx];
+  if (!entry || entry.expiresAt < Date.now()) {
+    data.refreshTokens.splice(idx, 1);
+    persistData();
+    return null;
+  }
+  data.refreshTokens.splice(idx, 1);
+  persistData();
+  const user = data.users.find((u) => u.id === entry.userId);
+  if (!user) {
+    return null;
+  }
+  return { user, entry };
+}
+
+function authenticateRequest(req) {
+  try {
+    cleanupTokenStores();
+    const cookies = parseCookies(req);
+    let token = null;
+    const authHeader = req.headers.authorization || "";
+    if (authHeader.startsWith("Bearer ")) {
+      token = authHeader.slice(7).trim();
+    } else if (cookies.access_token) {
+      token = cookies.access_token;
+    }
+    if (!token) {
+      return {
+        ok: false,
+        statusCode: 401,
+        error: "Missing access token",
+      };
+    }
+    if (isTokenBlacklisted(token)) {
+      return {
+        ok: false,
+        statusCode: 401,
+        error: "Token revoked",
+      };
+    }
+    let payload;
+    try {
+      payload = jwt.verify(token, JWT_SECRET);
+    } catch (err) {
+      return {
+        ok: false,
+        statusCode: 401,
+        error: "Invalid or expired token",
+      };
+    }
+    const user = data.users.find((u) => u.id === payload.sub);
+    if (!user) {
+      return {
+        ok: false,
+        statusCode: 401,
+        error: "User not found",
+      };
+    }
+    return { ok: true, user, token, payload };
+  } catch (err) {
+    console.error("Ошибка проверки токена", err);
+    return {
+      ok: false,
+      statusCode: 500,
+      error: "Authentication error",
+    };
+  }
+}
+
+function requireAuth(req, res) {
+  const auth = authenticateRequest(req);
+  if (!auth.ok) {
+    sendJson(res, { error: auth.error }, auth.statusCode);
+    return null;
+  }
+  return auth;
+}
+
 // Простой серверный конвертер валют для согласованности с клиентом
 const RATE_MAP = {
   USD: { USD: 1, EUR: 0.94, PLN: 4.5, RUB: 90 },
@@ -94,9 +299,34 @@ function convertAmount(amount, from, to) {
  */
 function handleApi(req, res) {
   const url = new URL(req.url, `http://${req.headers.host}`);
+  cleanupTokenStores();
+
+  if (req.method === "GET" && url.pathname === "/api/session") {
+    const auth = authenticateRequest(req);
+    if (auth.ok) {
+      return sendJson(res, { user: sanitizeUser(auth.user) });
+    }
+    if (auth.statusCode === 500) {
+      return sendJson(res, { error: auth.error }, 500);
+    }
+    const cookies = parseCookies(req);
+    const refreshToken = cookies.refresh_token;
+    if (refreshToken) {
+      const refreshData = consumeRefreshToken(refreshToken);
+      if (refreshData && refreshData.user) {
+        const tokens = issueTokensForUser(refreshData.user);
+        setAuthCookies(res, tokens);
+        return sendJson(res, { user: sanitizeUser(refreshData.user) });
+      }
+    }
+    clearAuthCookies(res);
+    return sendJson(res, { error: "Not authenticated" }, 401);
+  }
 
   // Обработка DELETE‑запросов для API (удаление сущностей)
   if (req.method === "DELETE") {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
     // Удаление категории: /api/categories/:id
     const catMatch = url.pathname.match(/^\/api\/categories\/(\d+)$/);
     if (catMatch) {
@@ -177,6 +407,8 @@ function handleApi(req, res) {
   }
   // Обработка PUT/PATCH‑запросов: частичное/полное обновление сущностей (без сложных пересчётов)
   if (req.method === "PUT" || req.method === "PATCH") {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
     let body = "";
     req.on("data", (chunk) => {
       body += chunk;
@@ -363,6 +595,8 @@ function handleApi(req, res) {
   }
   // Обработка GET‑запросов
   if (req.method === "GET") {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
     // Специальные маршруты, обрабатываем до основного переключателя
     // Конвертация валют. Использует внешний сервис exchangerate.host, при недоступности
     // возвращает значения на основе фиксированных курсов как fallback.
@@ -588,6 +822,119 @@ function handleApi(req, res) {
       // Генерация следующего ID
       const getNextId = (arr) =>
         arr.reduce((max, item) => Math.max(max, item.id || 0), 0) + 1;
+      const cookies = parseCookies(req);
+
+      if (url.pathname === "/api/register") {
+        if (!payload.name || !payload.email || !payload.password) {
+          return sendJson(res, { error: "Missing registration parameters" }, 400);
+        }
+        const exists = data.users.find((u) => u.email === payload.email);
+        if (exists) {
+          return sendJson(res, { error: "User already exists" }, 400);
+        }
+        const salt = bcrypt.genSaltSync(12);
+        const hash = bcrypt.hashSync(payload.password, salt);
+        const newUser = {
+          id: getNextId(data.users),
+          name: payload.name,
+          email: payload.email,
+          password_salt: salt,
+          password_hash: hash,
+          created_at: new Date().toISOString(),
+        };
+        data.users.push(newUser);
+        const tokens = issueTokensForUser(newUser);
+        setAuthCookies(res, tokens);
+        persistData();
+        return sendJson(res, { user: sanitizeUser(newUser) }, 201);
+      }
+
+      if (url.pathname === "/api/login") {
+        if (!payload.email || !payload.password) {
+          return sendJson(res, { error: "Missing login parameters" }, 400);
+        }
+        const user = data.users.find((u) => u.email === payload.email);
+        if (!user) {
+          return sendJson(res, { error: "Invalid email or password" }, 401);
+        }
+        let passwordValid = false;
+        if (user.password_hash && user.password_salt) {
+          passwordValid = bcrypt.compareSync(payload.password, user.password_hash);
+        } else if (user.password_hash) {
+          const legacyHash = crypto
+            .createHash("sha256")
+            .update(payload.password)
+            .digest("hex");
+          if (legacyHash === user.password_hash) {
+            const salt = bcrypt.genSaltSync(12);
+            const hash = bcrypt.hashSync(payload.password, salt);
+            user.password_salt = salt;
+            user.password_hash = hash;
+            persistData();
+            passwordValid = true;
+          }
+        }
+        if (!passwordValid) {
+          return sendJson(res, { error: "Invalid email or password" }, 401);
+        }
+        const before = data.refreshTokens.length;
+        data.refreshTokens = data.refreshTokens.filter(
+          (entry) => entry.userId !== user.id
+        );
+        if (before !== data.refreshTokens.length) {
+          persistData();
+        }
+        const tokens = issueTokensForUser(user);
+        setAuthCookies(res, tokens);
+        return sendJson(res, { user: sanitizeUser(user) });
+      }
+
+      if (url.pathname === "/api/token/refresh") {
+        const refreshToken = payload.refresh_token || cookies.refresh_token;
+        if (!refreshToken) {
+          return sendJson(res, { error: "Missing refresh token" }, 401);
+        }
+        const refreshData = consumeRefreshToken(refreshToken);
+        if (!refreshData || !refreshData.user) {
+          clearAuthCookies(res);
+          return sendJson(res, { error: "Invalid refresh token" }, 401);
+        }
+        const tokens = issueTokensForUser(refreshData.user);
+        setAuthCookies(res, tokens);
+        return sendJson(res, {
+          user: sanitizeUser(refreshData.user),
+          accessTokenExpiresIn: ACCESS_TOKEN_TTL_SECONDS,
+        });
+      }
+
+      if (url.pathname === "/api/logout") {
+        const refreshToken = payload.refresh_token || cookies.refresh_token;
+        if (refreshToken) {
+          const before = data.refreshTokens.length;
+          data.refreshTokens = data.refreshTokens.filter(
+            (entry) => entry.token !== refreshToken
+          );
+          if (before !== data.refreshTokens.length) {
+            persistData();
+          }
+        }
+        let accessToken = cookies.access_token;
+        const authHeader = req.headers.authorization || "";
+        if (!accessToken && authHeader.startsWith("Bearer ")) {
+          accessToken = authHeader.slice(7).trim();
+        }
+        if (accessToken) {
+          const decoded = jwt.decode(accessToken);
+          const expMs = decoded && decoded.exp ? decoded.exp * 1000 : undefined;
+          addTokenToBlacklist(accessToken, expMs);
+        }
+        clearAuthCookies(res);
+        return sendJson(res, { success: true });
+      }
+
+      const auth = requireAuth(req, res);
+      if (!auth) return;
+
       switch (url.pathname) {
         case "/api/accounts": {
           // payload: { name, currency, balance }
@@ -824,55 +1171,6 @@ function handleApi(req, res) {
           data.rules.push(newRule);
           persistData();
           return sendJson(res, newRule, 201);
-        }
-        case "/api/register": {
-          // payload: { name, email, password }
-          if (!payload.name || !payload.email || !payload.password) {
-            return sendJson(
-              res,
-              { error: "Missing registration parameters" },
-              400
-            );
-          }
-          // Проверяем уникальность email
-          const exists = data.users.find((u) => u.email === payload.email);
-          if (exists) {
-            return sendJson(res, { error: "User already exists" }, 400);
-          }
-          const newUser = {
-            id: getNextId(data.users),
-            name: payload.name,
-            email: payload.email,
-            password_hash: crypto
-              .createHash("sha256")
-              .update(payload.password)
-              .digest("hex"),
-          };
-          data.users.push(newUser);
-          persistData();
-          // Возвращаем пользователя без хеша
-          const { password_hash, ...publicUser } = newUser;
-          return sendJson(res, publicUser, 201);
-        }
-        case "/api/login": {
-          // payload: { email, password }
-          if (!payload.email || !payload.password) {
-            return sendJson(res, { error: "Missing login parameters" }, 400);
-          }
-          const user = data.users.find((u) => u.email === payload.email);
-          if (!user) {
-            return sendJson(res, { error: "Invalid email or password" }, 401);
-          }
-          const hash = crypto
-            .createHash("sha256")
-            .update(payload.password)
-            .digest("hex");
-          if (hash !== user.password_hash) {
-            return sendJson(res, { error: "Invalid email or password" }, 401);
-          }
-          // Возвращаем пользователя без хеша
-          const { password_hash: pw, ...publicUser } = user;
-          return sendJson(res, publicUser, 200);
         }
         case "/api/subscriptions": {
           // payload: { title, amount, currency, frequency, next_date }

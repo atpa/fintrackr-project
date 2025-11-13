@@ -205,10 +205,14 @@
       "id": 1,
       "name": "Александр",
       "email": "atpagaming@gmail.com",
-      "password_hash": "63f5f15ea9fee831529bf25d285cda810958200e43bdaaf303fe679d494693eb"
+      "password_salt": "$2a$12$n8m.umtELd3m3MB9JP1xCu",
+      "password_hash": "$2a$12$n8m.umtELd3m3MB9JP1xCuqFrzoiBNqCuPnn6Gl0uYBECwiQsR4.W",
+      "created_at": "2024-01-01T00:00:00.000Z"
     }
   ],
   "bankConnections": [],
   "subscriptions": [],
-  "rules": []
+  "rules": [],
+  "refreshTokens": [],
+  "tokenBlacklist": []
 }
