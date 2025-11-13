@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FinTrackr – Счёта</title>
     <link rel="stylesheet" href="css/style.css" />
-  <script defer src="js/utils/auth.js"></script>
-  <script defer src="js/app.js"></script>
+    <script defer src="js/utils/auth.js"></script>
+    <script defer src="js/app.js"></script>
+    <script defer src="js/utils/ui.js"></script>
     <script defer src="js/accounts.js"></script>
   </head>
   <body>
@@ -191,24 +192,27 @@
       <section class="card">
         <h2>Добавить счёт</h2>
         <form id="addAccountForm">
-          <div style="display: flex; flex-wrap: wrap; gap: 1rem">
-            <label style="flex: 1 1 200px">
-              Название
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="accName">Название</label>
               <input type="text" id="accName" required />
-            </label>
-            <label style="flex: 1 1 150px">
-              Валюта
+              <span class="form-error" data-error-for="accName"></span>
+            </div>
+            <div class="form-field" style="flex: 0 0 200px">
+              <label for="accCurrency">Валюта</label>
               <select id="accCurrency" required>
                 <option value="USD">USD</option>
                 <option value="EUR">EUR</option>
                 <option value="PLN">PLN</option>
                 <option value="RUB">RUB</option>
               </select>
-            </label>
-            <label style="flex: 1 1 150px">
-              Начальный баланс
+              <span class="form-error" data-error-for="accCurrency"></span>
+            </div>
+            <div class="form-field" style="flex: 0 0 200px">
+              <label for="accBalance">Начальный баланс</label>
               <input type="number" id="accBalance" step="0.01" />
-            </label>
+              <span class="form-error" data-error-for="accBalance"></span>
+            </div>
           </div>
           <button type="submit" class="btn-primary" style="margin-top: 1rem">
             Добавить
@@ -218,6 +222,22 @@
       <!-- Таблица со счётами -->
       <section class="card">
         <h2>Мои счёта</h2>
+        <div class="filter-grid" style="margin-bottom: 1rem">
+          <div class="form-field">
+            <label for="accountSearch">Поиск</label>
+            <input type="text" id="accountSearch" placeholder="Название счёта" />
+          </div>
+          <div class="form-field" style="flex: 0 0 200px">
+            <label for="accountCurrencyFilter">Валюта</label>
+            <select id="accountCurrencyFilter">
+              <option value="">Все</option>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="PLN">PLN</option>
+              <option value="RUB">RUB</option>
+            </select>
+          </div>
+        </div>
         <table id="accountsTable">
           <thead>
             <tr>
@@ -232,6 +252,19 @@
             </tr>
           </tbody>
         </table>
+        <div class="table-controls">
+          <div>
+            <label style="display: flex; align-items: center; gap: 0.5rem">
+              <span>На странице:</span>
+              <select id="accountsPageSize">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+              </select>
+            </label>
+          </div>
+          <div class="table-pagination" id="accountsPagination"></div>
+        </div>
       </section>
     </main>
     <footer>

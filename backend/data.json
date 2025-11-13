@@ -4,52 +4,61 @@
       "id": 1,
       "name": "Основной счёт",
       "currency": "USD",
-      "balance": -18500
+      "balance": -18500,
+      "user_id": 1
     },
     {
       "id": 2,
       "name": "Кредитная карта",
       "currency": "USD",
-      "balance": -300
+      "balance": -300,
+      "user_id": 1
     },
     {
       "id": 3,
       "name": "Наличные",
       "currency": "EUR",
-      "balance": 150
+      "balance": 150,
+      "user_id": 1
     },
     {
       "id": 4,
       "name": "Новый счёт",
       "currency": "PLN",
-      "balance": 50
+      "balance": 50,
+      "user_id": 1
     }
   ],
   "categories": [
     {
       "id": 1,
       "name": "Продукты",
-      "kind": "expense"
+      "kind": "expense",
+      "user_id": 1
     },
     {
       "id": 2,
       "name": "Зарплата",
-      "kind": "income"
+      "kind": "income",
+      "user_id": 1
     },
     {
       "id": 3,
       "name": "Транспорт",
-      "kind": "expense"
+      "kind": "expense",
+      "user_id": 1
     },
     {
       "id": 4,
       "name": "Развлечения",
-      "kind": "expense"
+      "kind": "expense",
+      "user_id": 1
     },
     {
       "id": 5,
       "name": "Подарки",
-      "kind": "expense"
+      "kind": "expense",
+      "user_id": 1
     }
   ],
   "transactions": [
@@ -61,7 +70,8 @@
       "amount": 3200,
       "currency": "USD",
       "date": "2025-09-30",
-      "note": "Зарплата за сентябрь"
+      "note": "Зарплата за сентябрь",
+      "user_id": 1
     },
     {
       "id": 2,
@@ -71,7 +81,8 @@
       "amount": 80.45,
       "currency": "USD",
       "date": "2025-10-01",
-      "note": "Продукты в супермаркете"
+      "note": "Продукты в супермаркете",
+      "user_id": 1
     },
     {
       "id": 3,
@@ -81,7 +92,8 @@
       "amount": 25,
       "currency": "USD",
       "date": "2025-10-02",
-      "note": "Такси"
+      "note": "Такси",
+      "user_id": 1
     },
     {
       "id": 4,
@@ -91,7 +103,8 @@
       "amount": 120,
       "currency": "USD",
       "date": "2025-10-03",
-      "note": "Кино"
+      "note": "Кино",
+      "user_id": 1
     },
     {
       "id": 5,
@@ -101,7 +114,8 @@
       "amount": 35.2,
       "currency": "EUR",
       "date": "2025-10-04",
-      "note": "Продуктовый рынок"
+      "note": "Продуктовый рынок",
+      "user_id": 1
     },
     {
       "id": 6,
@@ -111,7 +125,8 @@
       "amount": 50,
       "currency": "USD",
       "date": "2025-10-05",
-      "note": "Подарок другу"
+      "note": "Подарок другу",
+      "user_id": 1
     },
     {
       "id": 7,
@@ -121,7 +136,8 @@
       "amount": 50,
       "currency": "PLN",
       "date": "2025-10-10",
-      "note": "тестовая"
+      "note": "тестовая",
+      "user_id": 1
     },
     {
       "id": 8,
@@ -131,7 +147,8 @@
       "amount": 1000,
       "currency": "RUB",
       "date": "2025-11-13",
-      "note": ""
+      "note": "",
+      "user_id": 1
     },
     {
       "id": 9,
@@ -141,7 +158,8 @@
       "amount": 10000,
       "currency": "USD",
       "date": "2025-11-13",
-      "note": ""
+      "note": "",
+      "user_id": 1
     },
     {
       "id": 10,
@@ -151,7 +169,8 @@
       "amount": 10000,
       "currency": "RUB",
       "date": "2025-11-13",
-      "note": ""
+      "note": "",
+      "user_id": 1
     }
   ],
   "budgets": [
@@ -160,42 +179,48 @@
       "category_id": 1,
       "month": "2025-10",
       "limit": 500,
-      "spent": 165.65
+      "spent": 165.65,
+      "user_id": 1
     },
     {
       "id": 2,
       "category_id": 3,
       "month": "2025-10",
       "limit": 100,
-      "spent": 25
+      "spent": 25,
+      "user_id": 1
     },
     {
       "id": 3,
       "category_id": 4,
       "month": "2025-10",
       "limit": 150,
-      "spent": 120
+      "spent": 120,
+      "user_id": 1
     },
     {
       "id": 4,
       "category_id": 5,
       "month": "2025-10",
       "limit": 100,
-      "spent": 50
+      "spent": 50,
+      "user_id": 1
     },
     {
       "id": 5,
       "category_id": 1,
       "month": "2025-11",
       "limit": 0,
-      "spent": 11000
+      "spent": 11000,
+      "user_id": 1
     },
     {
       "id": 6,
       "category_id": 2,
       "month": "2025-11",
       "limit": 0,
-      "spent": 10000
+      "spent": 10000,
+      "user_id": 1
     }
   ],
   "goals": [],
@@ -205,10 +230,14 @@
       "id": 1,
       "name": "Александр",
       "email": "atpagaming@gmail.com",
-      "password_hash": "63f5f15ea9fee831529bf25d285cda810958200e43bdaaf303fe679d494693eb"
+      "password_salt": "$2a$12$n8m.umtELd3m3MB9JP1xCu",
+      "password_hash": "$2a$12$n8m.umtELd3m3MB9JP1xCuqFrzoiBNqCuPnn6Gl0uYBECwiQsR4.W",
+      "created_at": "2024-01-01T00:00:00.000Z"
     }
   ],
   "bankConnections": [],
   "subscriptions": [],
-  "rules": []
+  "rules": [],
+  "refreshTokens": [],
+  "tokenBlacklist": []
 }
