@@ -228,6 +228,131 @@ function handleApi(req, res) {
         persistData();
         return sendJson(res, cat, 200);
       }
+      // transactions update
+      m = url.pathname.match(/^\/api\/transactions\/(\d+)$/);
+      if (m) {
+        const id = Number(m[1]);
+        const tx = data.transactions.find((t) => t.id === id);
+        if (!tx) return sendJson(res, { error: "Transaction not found" }, 404);
+        const allowedCur = ["USD", "EUR", "PLN", "RUB"];
+        const nextAccountId =
+          payload.account_id != null ? Number(payload.account_id) : tx.account_id;
+        const nextCategoryId =
+          payload.category_id != null ? Number(payload.category_id) : tx.category_id;
+        const nextType = payload.type != null ? String(payload.type) : tx.type;
+        const nextAmount =
+          payload.amount != null ? Number(payload.amount) : Number(tx.amount);
+        const nextCurrency =
+          payload.currency != null ? String(payload.currency) : tx.currency || "USD";
+        const nextDate = payload.date != null ? payload.date : tx.date;
+        const nextNote = payload.note != null ? String(payload.note) : tx.note || "";
+
+        if (!nextAccountId || !nextCategoryId || !nextDate) {
+          return sendJson(res, { error: "Missing transaction parameters" }, 400);
+        }
+        if (!isFinite(nextAmount) || nextAmount < 0) {
+          return sendJson(res, { error: "Invalid amount" }, 400);
+        }
+        if (!["income", "expense"].includes(nextType)) {
+          return sendJson(res, { error: "Invalid transaction type" }, 400);
+        }
+        if (!allowedCur.includes(nextCurrency)) {
+          return sendJson(res, { error: "Invalid currency" }, 400);
+        }
+        const nextAccount = data.accounts.find((a) => a.id === nextAccountId);
+        if (!nextAccount) {
+          return sendJson(res, { error: "Account not found" }, 404);
+        }
+        const nextCategory = data.categories.find((c) => c.id === nextCategoryId);
+        if (!nextCategory) {
+          return sendJson(res, { error: "Category not found" }, 404);
+        }
+        if (
+          (nextCategory.kind === "income" && nextType !== "income") ||
+          (nextCategory.kind === "expense" && nextType !== "expense")
+        ) {
+          return sendJson(res, { error: "Transaction type does not match category kind" }, 400);
+        }
+
+        // Откатываем влияние старой операции
+        const prevAccount = data.accounts.find((a) => a.id === tx.account_id);
+        if (prevAccount) {
+          const prevAdj = convertAmount(
+            Number(tx.amount),
+            tx.currency || prevAccount.currency || "USD",
+            prevAccount.currency || "USD"
+          );
+          if (tx.type === "income") {
+            prevAccount.balance = Number(prevAccount.balance) - prevAdj;
+          } else {
+            prevAccount.balance = Number(prevAccount.balance) + prevAdj;
+          }
+        }
+        if (tx.type === "expense") {
+          const prevDate = new Date(tx.date);
+          const prevMonth =
+            prevDate.getFullYear() + "-" + String(prevDate.getMonth() + 1).padStart(2, "0");
+          const prevBudget = data.budgets.find(
+            (b) => b.category_id === tx.category_id && b.month === prevMonth
+          );
+          if (prevBudget) {
+            const prevCur = prevBudget.currency || "USD";
+            const prevDec = convertAmount(Number(tx.amount), tx.currency || "USD", prevCur);
+            prevBudget.spent = Math.max(0, Number(prevBudget.spent) - Number(prevDec));
+          }
+        }
+
+        // Обновляем операцию новыми данными
+        tx.account_id = nextAccountId;
+        tx.category_id = nextCategoryId;
+        tx.type = nextType;
+        tx.amount = nextAmount;
+        tx.currency = nextCurrency;
+        tx.date = nextDate;
+        tx.note = nextNote;
+
+        // Применяем влияние обновлённой операции
+        const newAccount = data.accounts.find((a) => a.id === tx.account_id);
+        if (newAccount) {
+          const newAdj = convertAmount(
+            Number(tx.amount),
+            tx.currency || newAccount.currency || "USD",
+            newAccount.currency || "USD"
+          );
+          if (tx.type === "income") {
+            newAccount.balance = Number(newAccount.balance) + newAdj;
+          } else {
+            newAccount.balance = Number(newAccount.balance) - newAdj;
+          }
+        }
+        if (tx.type === "expense") {
+          const nextDt = new Date(tx.date);
+          const nextMonth =
+            nextDt.getFullYear() + "-" + String(nextDt.getMonth() + 1).padStart(2, "0");
+          let budget = data.budgets.find(
+            (b) => b.category_id === tx.category_id && b.month === nextMonth
+          );
+          if (!budget) {
+            const newBudgetId =
+              data.budgets.reduce((max, item) => Math.max(max, item.id || 0), 0) + 1;
+            budget = {
+              id: newBudgetId,
+              category_id: tx.category_id,
+              month: nextMonth,
+              limit: 0,
+              spent: 0,
+              currency: "USD",
+            };
+            data.budgets.push(budget);
+          }
+          const budgetCur = budget.currency || "USD";
+          const inc = convertAmount(Number(tx.amount), tx.currency || "USD", budgetCur);
+          budget.spent = Number(budget.spent) + Number(inc);
+        }
+
+        persistData();
+        return sendJson(res, tx, 200);
+      }
       // budgets update
       m = url.pathname.match(/^\/api\/budgets\/(\d+)$/);
       if (m) {
