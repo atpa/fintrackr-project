@@ -251,6 +251,13 @@ body {
   margin: 0;
   width: 100%;
 }
+/* Safety guard: hide any header/sidebar if present on auth pages */
+.auth-page header,
+.auth-page .main-nav,
+.auth-page .sidebar,
+.auth-page .sidebar-backdrop {
+  display: none !important;
+}
 /* Контейнер формы: используем анимацию и убираем внешний отступ сверху */
 .auth-container {
   width: 100%;
