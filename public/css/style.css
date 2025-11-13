@@ -1300,18 +1300,6 @@ textarea:focus {
   border-bottom: 1px solid #e2e8f0;
 }
 
-/* === Dark theme variables === */
-:root.dark {
-  --primary: #7fa2ff;
-  --primary-light: #c9d6ff;
-  --secondary: #0f172a; /* deep slate */
-  --accent: #00ffc6;
-  --accent-light: #66ffe0;
-  --text: #e2e8f0;
-  --text-light: #94a3b8;
-  --card-shadow: rgba(0, 0, 0, 0.35);
-}
-
 /* Theme helpers */
 body.dark {
   background: var(--secondary);
@@ -1389,29 +1377,6 @@ footer {
   font-size: 0.9rem;
   width: 100%;
   box-sizing: border-box;
-}
-
-/* Основная структура */
-html,
-body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-body:not(.landing-page):not(.auth-page) {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-body:not(.landing-page):not(.auth-page) main {
-  flex: 1 0 auto;
-  display: block;
-}
-
-footer {
-  flex-shrink: 0;
 }
 
 /* CSS переменные темной темы */
