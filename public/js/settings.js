@@ -1,7 +1,13 @@
 /**
  * Инициализация страницы настроек. Загружает и сохраняет параметры профиля и уведомлений.
  */
-function initSettingsPage() {
+async function initSettingsPage() {
+  await Auth.redirectIfNotAuthenticated();
+  try {
+    await Auth.syncSession();
+  } catch (err) {
+    // если не удалось синхронизироваться, перенаправление уже выполнено
+  }
   // Попытка загрузить сохранённые настройки
   let settings = {};
   try {
@@ -103,7 +109,9 @@ function initSettingsPage() {
 }
 
 if (document.readyState !== 'loading') {
-  initSettingsPage();
+  initSettingsPage().catch(err => console.error('Settings init error', err));
 } else {
-  document.addEventListener('DOMContentLoaded', initSettingsPage);
+  document.addEventListener('DOMContentLoaded', () => {
+    initSettingsPage().catch(err => console.error('Settings init error', err));
+  });
 }
