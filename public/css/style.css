@@ -238,6 +238,8 @@ body {
   flex-direction: column;
   min-height: 100vh;
   background: var(--secondary);
+  margin: 0;
+  padding: 0;
 }
 /* Основная область auth‑страниц центрирует содержимое */
 .auth-page main {
@@ -246,6 +248,8 @@ body {
   justify-content: center;
   align-items: center;
   padding: 2rem 1rem;
+  margin: 0;
+  width: 100%;
 }
 /* Контейнер формы: используем анимацию и убираем внешний отступ сверху */
 .auth-container {
