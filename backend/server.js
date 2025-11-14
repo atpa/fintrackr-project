@@ -595,41 +595,63 @@ function handleApi(req, res) {
     let body = "";
     req.on("data", (c) => (body += c));
     req.on("end", async () => {
-      let payload;
       try {
-        payload = JSON.parse(body || "{}");
-      } catch (err) {
-        return sendJson(res, { error: "Invalid JSON" }, 400);
-      }
-      const { email, password } = payload || {};
-      if (!email || !password) {
-        return sendJson(res, { error: "Missing login parameters" }, 400);
-      }
-      const user = data.users.find((u) => u.email && u.email.toLowerCase() === String(email).toLowerCase());
-      if (!user) return sendJson(res, { error: "Invalid email or password" }, 401);
-      let ok = false;
-      if (user.password_hash) {
+        let payload;
         try {
-          ok = await bcrypt.compare(password, user.password_hash);
-        } catch (e) {
-          ok = false;
+          payload = JSON.parse(body || "{}");
+        } catch (err) {
+          console.error("[LOGIN] Invalid JSON:", err.message);
+          return sendJson(res, { error: "Invalid JSON" }, 400);
         }
-        if (!ok) {
-          // Фоллбэк: поддержка старых sha256-хэшей
-          const sha = crypto.createHash("sha256").update(password).digest("hex");
-          if (user.password_hash === sha) {
-            ok = true;
-            try {
-              user.password_hash = await bcrypt.hash(password, 10);
-              persistData();
-            } catch (e) {}
+        const { email, password } = payload || {};
+        if (!email || !password) {
+          console.log("[LOGIN] Missing parameters");
+          return sendJson(res, { error: "Missing login parameters" }, 400);
+        }
+        console.log("[LOGIN] Attempting login for:", email);
+        const user = data.users.find((u) => u.email && u.email.toLowerCase() === String(email).toLowerCase());
+        if (!user) {
+          console.log("[LOGIN] User not found:", email);
+          return sendJson(res, { error: "Invalid email or password" }, 401);
+        }
+        let ok = false;
+        if (user.password_hash) {
+          try {
+            console.log("[LOGIN] Comparing password with bcrypt...");
+            ok = await bcrypt.compare(password, user.password_hash);
+            console.log("[LOGIN] bcrypt result:", ok);
+          } catch (e) {
+            console.error("[LOGIN] bcrypt.compare error:", e.message);
+            ok = false;
+          }
+          if (!ok) {
+            // Фоллбэк: поддержка старых sha256-хэшей
+            const sha = crypto.createHash("sha256").update(password).digest("hex");
+            if (user.password_hash === sha) {
+              console.log("[LOGIN] Fallback to SHA256 hash successful");
+              ok = true;
+              try {
+                user.password_hash = await bcrypt.hash(password, 10);
+                persistData();
+              } catch (e) {
+                console.error("[LOGIN] Failed to upgrade hash:", e.message);
+              }
+            }
           }
         }
+        if (!ok) {
+          console.log("[LOGIN] Authentication failed for:", email);
+          return sendJson(res, { error: "Invalid email or password" }, 401);
+        }
+        console.log("[LOGIN] Issuing tokens for:", email);
+        const tokens = issueTokensForUser(user);
+        setAuthCookies(res, tokens);
+        console.log("[LOGIN] Login successful for:", email);
+        return sendJson(res, { user: sanitizeUser(user) }, 200);
+      } catch (error) {
+        console.error("[LOGIN] Unhandled error:", error);
+        return sendJson(res, { error: "Internal server error" }, 500);
       }
-      if (!ok) return sendJson(res, { error: "Invalid email or password" }, 401);
-      const tokens = issueTokensForUser(user);
-      setAuthCookies(res, tokens);
-      return sendJson(res, { user: sanitizeUser(user) }, 200);
     });
     return;
   }
@@ -1950,11 +1972,15 @@ function handleStatic(req, res) {
 
 // Создание HTTP‑сервера
 function createServer() {
+  // Инициализируем CORS middleware один раз (фабрика возвращает функцию)
+  const corsHandler = corsMiddleware();
   return http.createServer(async (req, res) => {
-    // Apply CORS middleware
-    corsMiddleware(req, res, () => {});
-    
-    // Apply request logger (only in development)
+    console.log(`[SERVER] RAW REQUEST: ${req.method} ${req.url}`);
+
+    // Применяем CORS заголовки
+    corsHandler(req, res, () => {});
+
+    // Логирование запросов (только в dev среде)
     if (process.env.NODE_ENV !== "production") {
       requestLogger(req, res, () => {});
     }
@@ -1962,6 +1988,7 @@ function createServer() {
     try {
       // Обрабатываем API‑запросы через новый модульный роутер
       if (req.url.startsWith("/api/")) {
+        console.log(`[SERVER] Routing ${req.method} ${req.url} to handleApiRequest...`);
         // Use new modular API router (Phase 5)
         return await handleApiRequest(req, res);
       }

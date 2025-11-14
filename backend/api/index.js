@@ -99,69 +99,103 @@ function parseResourceId(pathname, pattern) {
  * Handle API request routing
  */
 async function handleApiRequest(req, res) {
-  // Parse URL and query parameters
-  const url = new URL(req.url, `http://${req.headers.host}`);
-  const pathname = url.pathname;
-  const method = req.method;
-  const routeKey = `${method} ${pathname}`;
+  console.log(`[API] START ${req.method} ${req.url}`);
+  try {
+    // Parse URL and query parameters
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const pathname = url.pathname;
+    const method = req.method;
+    const routeKey = `${method} ${pathname}`;
+    
+    console.log(`[API] Parsed: method=${method}, pathname=${pathname}, routeKey=${routeKey}`);
 
-  // Attach query params to request
-  req.query = Object.fromEntries(url.searchParams);
+    // Attach query params to request
+    req.query = Object.fromEntries(url.searchParams);
 
-  // Parse request body (for POST/PUT/PATCH)
-  await bodyParserMiddleware(req, res, () => {});
-
-  // Try exact route match first
-  const route = routes[routeKey];
-  if (route) {
-    if (route.auth) {
-      await authMiddleware(req, res, () => {});
+    // Parse request body (for POST/PUT/PATCH)
+    console.log(`[API] About to parse body for ${method} request...`);
+    try {
+      await bodyParserMiddleware(req, res, () => {});
+      console.log(`[API] Body parsed successfully:`, req.body);
+    } catch (bodyError) {
+      console.error(`[API] Body parse error:`, bodyError);
+      const statusCode = bodyError.statusCode || 400;
+      res.statusCode = statusCode;
+      res.setHeader("Content-Type", "application/json; charset=utf-8");
+      res.end(JSON.stringify({ error: bodyError.message || "Bad request" }));
+      return;
     }
-    return await asyncHandler(route.handler)(req, res);
-  }
 
-  // Try dynamic routes (with ID parameter)
-  const PUBLIC_DYNAMIC_METHODS = { categories: ["DELETE"] };
-  for (const dynamicRoute of dynamicRoutes) {
-    if (dynamicRoute.pattern.test(pathname)) {
-      const id = parseResourceId(pathname, dynamicRoute.pattern);
-      req.params = { id };
+    // Create error handler for asyncHandler
+    const errorHandler = (err) => {
+      if (err) {
+        const statusCode = err.statusCode || 500;
+        res.statusCode = statusCode;
+        res.setHeader("Content-Type", "application/json; charset=utf-8");
+        res.end(JSON.stringify({ error: err.message || "Internal server error" }));
+      }
+    };
 
-      // Conditionally apply auth (skip for declared public dynamic methods)
-      const methods = PUBLIC_DYNAMIC_METHODS[dynamicRoute.resource] || [];
-      if (!methods.includes(method)) {
+    // Try exact route match first
+    const route = routes[routeKey];
+    if (route) {
+      if (route.auth) {
         await authMiddleware(req, res, () => {});
       }
+      return await asyncHandler(route.handler)(req, res, errorHandler);
+    }
 
-      // Route to appropriate handler based on method
-      let handler;
-      const singularName = dynamicRoute.resource.replace(/s$/, ""); // Remove trailing 's'
-      
-      switch (method) {
-        case "GET":
-          handler = dynamicRoute.routes[`get${capitalize(singularName)}`];
-          break;
-        case "PUT":
-          handler = dynamicRoute.routes[`update${capitalize(singularName)}`];
-          break;
-        case "PATCH":
-          handler = dynamicRoute.routes[`update${capitalize(singularName)}`];
-          break;
-        case "DELETE":
-          handler = dynamicRoute.routes[`delete${capitalize(singularName)}`];
-          break;
-      }
+    // Try dynamic routes (with ID parameter)
+    const PUBLIC_DYNAMIC_METHODS = { categories: ["DELETE"] };
+    for (const dynamicRoute of dynamicRoutes) {
+      if (dynamicRoute.pattern.test(pathname)) {
+        const id = parseResourceId(pathname, dynamicRoute.pattern);
+        req.params = { id };
 
-      if (handler) {
-        return await asyncHandler(handler)(req, res);
+        // Conditionally apply auth (skip for declared public dynamic methods)
+        const methods = PUBLIC_DYNAMIC_METHODS[dynamicRoute.resource] || [];
+        if (!methods.includes(method)) {
+          await authMiddleware(req, res, () => {});
+        }
+
+        // Route to appropriate handler based on method
+        let handler;
+        const singularName = dynamicRoute.resource.replace(/s$/, ""); // Remove trailing 's'
+        
+        switch (method) {
+          case "GET":
+            handler = dynamicRoute.routes[`get${capitalize(singularName)}`];
+            break;
+          case "PUT":
+            handler = dynamicRoute.routes[`update${capitalize(singularName)}`];
+            break;
+          case "PATCH":
+            handler = dynamicRoute.routes[`update${capitalize(singularName)}`];
+            break;
+          case "DELETE":
+            handler = dynamicRoute.routes[`delete${capitalize(singularName)}`];
+            break;
+        }
+
+        if (handler) {
+          return await asyncHandler(handler)(req, res, errorHandler);
+        }
       }
     }
-  }
 
-  // No route found
-  res.statusCode = 404;
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.end(JSON.stringify({ error: "Not found" }));
+    // No route found
+    res.statusCode = 404;
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    res.end(JSON.stringify({ error: "Not found" }));
+  } catch (error) {
+    // Catch any unhandled errors
+    console.error("[API] Unhandled error:", error);
+    if (!res.headersSent) {
+      res.statusCode = 500;
+      res.setHeader("Content-Type", "application/json; charset=utf-8");
+      res.end(JSON.stringify({ error: "Internal server error" }));
+    }
+  }
 }
 
 /**

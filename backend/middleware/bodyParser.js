@@ -13,7 +13,7 @@ async function bodyParserMiddleware(req, res, next) {
   // Only parse body for methods that typically have one
   if (!["POST", "PUT", "PATCH"].includes(req.method)) {
     req.body = {};
-    return next();
+    return;
   }
 
   return new Promise((resolve, reject) => {
@@ -33,7 +33,6 @@ async function bodyParserMiddleware(req, res, next) {
     req.on("end", () => {
       try {
         req.body = body ? JSON.parse(body) : {};
-        next();
         resolve();
       } catch (error) {
         reject(new HttpError("Invalid JSON", 400));

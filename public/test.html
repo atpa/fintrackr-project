@@ -28,6 +28,10 @@
         background: #f8d7da;
         color: #721c24;
       }
+      .test-result.info {
+        background: #d1ecf1;
+        color: #0c5460;
+      }
       .btn-test {
         padding: 10px 20px;
         background: #007bff;
@@ -35,56 +39,176 @@
         border: none;
         border-radius: 4px;
         cursor: pointer;
-        margin: 10px 5px;
+        margin: 5px;
+        font-size: 14px;
       }
       .btn-test:hover {
         background: #0056b3;
+      }
+      .btn-test.danger {
+        background: #dc3545;
+      }
+      .btn-test.danger:hover {
+        background: #c82333;
+      }
+      .btn-test.success {
+        background: #28a745;
+      }
+      .btn-test.success:hover {
+        background: #218838;
+      }
+      code {
+        background: #f4f4f4;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: 'Courier New', monospace;
       }
     </style>
   </head>
   <body>
     <div class="test-container">
-      <h1>FinTrackr Test Page</h1>
-      <p>Эта страница работает БЕЗ Service Worker для отладки</p>
+      <h1>🧪 FinTrackr Test Page</h1>
+      <div class="test-result info">
+        <strong>ℹ️ Эта страница работает БЕЗ Service Worker</strong><br>
+        Service Worker настроен игнорировать запросы к <code>/test.html</code> и <code>/test-auth.html</code>
+      </div>
       
-      <h2>Тесты API</h2>
-      <button class="btn-test" onclick="testAccounts()">Тест /api/accounts</button>
-      <button class="btn-test" onclick="testRates()">Тест /api/rates</button>
-      <button class="btn-test" onclick="testDashboard()">Тест Dashboard</button>
+      <h2>Service Worker Control</h2>
+      <button class="btn-test danger" onclick="unregisterSW()">🗑️ Unregister SW</button>
+      <button class="btn-test danger" onclick="clearAllCaches()">🧹 Clear All Caches</button>
+      <button class="btn-test success" onclick="registerSW()">✅ Register SW</button>
+      <button class="btn-test" onclick="checkSWStatus()">🔍 Check SW Status</button>
+      <div id="sw-control-results"></div>
       
+      <h2>API Tests</h2>
+      <button class="btn-test" onclick="testAccounts()">📊 Test /api/accounts</button>
+      <button class="btn-test" onclick="testRates()">💱 Test /api/rates</button>
+      <button class="btn-test" onclick="testDashboard()">📄 Test /dashboard.html</button>
+      <button class="btn-test" onclick="runAllTests()">▶️ Run All Tests</button>
       <div id="results"></div>
       
-      <h2>Навигация</h2>
+      <h2>Navigation</h2>
       <ul>
-        <li><a href="/">Главная</a></li>
-        <li><a href="/dashboard.html">Dashboard</a></li>
-        <li><a href="/login.html">Login</a></li>
-        <li><a href="/transactions.html">Транзакции</a></li>
-        <li><a href="/accounts.html">Счета</a></li>
+        <li><a href="/" target="_blank">Главная (index.html)</a></li>
+        <li><a href="/dashboard.html" target="_blank">Dashboard</a></li>
+        <li><a href="/login.html" target="_blank">Login</a></li>
+        <li><a href="/transactions.html" target="_blank">Транзакции</a></li>
+        <li><a href="/accounts.html" target="_blank">Счета</a></li>
       </ul>
       
-      <h2>Информация</h2>
-      <div class="test-result">
-        <strong>Сервер:</strong> <span id="server-status">Проверка...</span><br>
-        <strong>Service Worker:</strong> <span id="sw-status">Отключен на этой странице</span><br>
-        <strong>PWA Manifest:</strong> <span id="manifest-status">Проверка...</span>
+      <h2>System Information</h2>
+      <div id="system-info" class="test-result info">
+        <strong>🖥️ Сервер:</strong> <span id="server-status">Проверка...</span><br>
+        <strong>⚙️ Service Worker:</strong> <span id="sw-status">Проверка...</span><br>
+        <strong>📱 PWA Manifest:</strong> <span id="manifest-status">Проверка...</span><br>
+        <strong>🌐 Online:</strong> <span id="online-status">Проверка...</span>
       </div>
     </div>
     
     <script>
       const resultsDiv = document.getElementById('results');
+      const swControlDiv = document.getElementById('sw-control-results');
       
-      // Проверка сервера при загрузке
-      fetch('/api/accounts')
-        .then(r => r.ok ? '✅ Работает' : '❌ Ошибка')
-        .then(status => document.getElementById('server-status').textContent = status)
-        .catch(() => document.getElementById('server-status').textContent = '❌ Недоступен');
+      // Проверка статуса при загрузке
+      window.addEventListener('load', () => {
+        checkSystemStatus();
+        checkSWStatus();
+      });
       
-      fetch('/manifest.json')
-        .then(r => r.ok ? '✅ Доступен' : '❌ Ошибка')
-        .then(status => document.getElementById('manifest-status').textContent = status)
-        .catch(() => document.getElementById('manifest-status').textContent = '❌ Недоступен');
+      // Проверка системы
+      async function checkSystemStatus() {
+        // Online status
+        document.getElementById('online-status').textContent = navigator.onLine ? '✅ Online' : '❌ Offline';
+        
+        // Server status
+        try {
+          const response = await fetch('/api/accounts');
+          document.getElementById('server-status').textContent = response.ok ? '✅ Работает' : '❌ Ошибка';
+        } catch {
+          document.getElementById('server-status').textContent = '❌ Недоступен';
+        }
+        
+        // Manifest status
+        try {
+          const response = await fetch('/manifest.json');
+          document.getElementById('manifest-status').textContent = response.ok ? '✅ Доступен' : '❌ Ошибка';
+        } catch {
+          document.getElementById('manifest-status').textContent = '❌ Недоступен';
+        }
+      }
       
+      // Проверка Service Worker
+      async function checkSWStatus() {
+        if (!('serviceWorker' in navigator)) {
+          document.getElementById('sw-status').textContent = '❌ Not supported';
+          return;
+        }
+        
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (registration) {
+          document.getElementById('sw-status').textContent = `✅ Registered (${registration.active ? 'Active' : 'Installing'})`;
+        } else {
+          document.getElementById('sw-status').textContent = '⚪ Not registered';
+        }
+      }
+      
+      // SW Control Functions
+      async function unregisterSW() {
+        swControlDiv.innerHTML = '';
+        if (!('serviceWorker' in navigator)) {
+          addSWResult('Unregister SW', 'fail', 'Service Worker not supported');
+          return;
+        }
+        
+        try {
+          const registration = await navigator.serviceWorker.getRegistration();
+          if (registration) {
+            await registration.unregister();
+            addSWResult('Unregister SW', 'pass', '✅ Service Worker unregistered');
+          } else {
+            addSWResult('Unregister SW', 'info', 'No Service Worker registered');
+          }
+          checkSWStatus();
+        } catch (error) {
+          addSWResult('Unregister SW', 'fail', `❌ ${error.message}`);
+        }
+      }
+      
+      async function clearAllCaches() {
+        swControlDiv.innerHTML = '';
+        try {
+          const cacheNames = await caches.keys();
+          await Promise.all(cacheNames.map(name => caches.delete(name)));
+          addSWResult('Clear Caches', 'pass', `✅ Cleared ${cacheNames.length} caches`);
+        } catch (error) {
+          addSWResult('Clear Caches', 'fail', `❌ ${error.message}`);
+        }
+      }
+      
+      async function registerSW() {
+        swControlDiv.innerHTML = '';
+        if (!('serviceWorker' in navigator)) {
+          addSWResult('Register SW', 'fail', 'Service Worker not supported');
+          return;
+        }
+        
+        try {
+          const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+          addSWResult('Register SW', 'pass', '✅ Service Worker registered');
+          checkSWStatus();
+        } catch (error) {
+          addSWResult('Register SW', 'fail', `❌ ${error.message}`);
+        }
+      }
+      
+      function addSWResult(test, status, message) {
+        const div = document.createElement('div');
+        div.className = `test-result ${status}`;
+        div.innerHTML = `<strong>${test}:</strong> ${message}`;
+        swControlDiv.appendChild(div);
+      }
+      
+      // Test Functions
       function addResult(test, status, message) {
         const div = document.createElement('div');
         div.className = `test-result ${status}`;
@@ -118,11 +242,31 @@
           const response = await fetch('/dashboard.html');
           const ok = response.ok;
           addResult('GET /dashboard.html', ok ? 'pass' : 'fail', 
-            ok ? '✅ Страница доступна' : '❌ Ошибка загрузки');
+            ok ? '✅ Страница доступна' : `❌ Ошибка ${response.status}`);
         } catch (error) {
           addResult('GET /dashboard.html', 'fail', `❌ ${error.message}`);
         }
       }
+      
+      async function runAllTests() {
+        resultsDiv.innerHTML = '<div class="test-result info">⏳ Running all tests...</div>';
+        await new Promise(r => setTimeout(r, 500));
+        resultsDiv.innerHTML = '';
+        await testAccounts();
+        await testRates();
+        await testDashboard();
+        addResult('All Tests', 'pass', '✅ Tests completed');
+      }
+      
+      // Network status monitoring
+      window.addEventListener('online', () => {
+        document.getElementById('online-status').textContent = '✅ Online';
+        checkSystemStatus();
+      });
+      
+      window.addEventListener('offline', () => {
+        document.getElementById('online-status').textContent = '❌ Offline';
+      });
     </script>
   </body>
 </html>

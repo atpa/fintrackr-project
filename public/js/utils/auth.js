@@ -137,10 +137,11 @@ const Auth = {
           throw new Error('Unauthenticated');
         }
         const data = await resp.json();
-        if (data && data.user) {
-          this._cache = data.user;
-          this._writeUserToStorage(data.user);
-          return data.user;
+        const user = data && (data.user || data);
+        if (user && (user.id || user.email)) {
+          this._cache = user;
+          this._writeUserToStorage(user);
+          return user;
         }
         throw new Error('Empty session');
       } catch (err) {

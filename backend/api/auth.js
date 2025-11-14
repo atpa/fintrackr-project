@@ -38,7 +38,7 @@ async function register(req, res) {
 
   res.statusCode = 201;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.end(JSON.stringify(sanitized));
+  res.end(JSON.stringify({ user: sanitized }));
 }
 
 /**
@@ -87,7 +87,8 @@ async function login(req, res) {
 
   res.statusCode = 200;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.end(JSON.stringify(sanitized));
+  res.end(JSON.stringify({ user: sanitized }));
+  return;
 }
 
 /**
@@ -120,6 +121,11 @@ async function checkSession(req, res) {
   const accessToken = cookies.access_token;
   const refreshToken = cookies.refresh_token;
 
+  // Проверяем, не внесён ли access токен в blacklist (после logout)
+  if (accessToken && authService.isTokenBlacklisted(accessToken)) {
+    throw new HttpError("Invalid session", 401);
+  }
+
   // Try to verify access token
   let payload = authService.verifyAccessToken(accessToken);
 
@@ -143,7 +149,8 @@ async function checkSession(req, res) {
   }
 
   // Get user
-  const user = usersRepo.findById(payload.userId);
+  const userId = payload.userId || payload.sub;
+  const user = usersRepo.findById(userId);
   if (!user) {
     throw new HttpError("User not found", 404);
   }
@@ -152,7 +159,7 @@ async function checkSession(req, res) {
 
   res.statusCode = 200;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.end(JSON.stringify(sanitized));
+  res.end(JSON.stringify({ user: sanitized }));
 }
 
 module.exports = {

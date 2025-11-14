@@ -273,7 +273,12 @@ function saveRefreshToken(userId, token) {
 function verifyAccessToken(token) {
   if (!token) return null;
   try {
-    return jwt.verify(token, ENV.JWT_SECRET);
+    const decoded = jwt.verify(token, ENV.JWT_SECRET);
+    // Нормализуем поле userId для единообразия с refresh токеном
+    if (!decoded.userId && decoded.sub) {
+      decoded.userId = decoded.sub;
+    }
+    return decoded;
   } catch (err) {
     return null;
   }
