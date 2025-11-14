@@ -450,7 +450,9 @@ function authenticateRequest(req) {
       error: "Authentication error",
     };
   }
-}function requireAuth(req, res) {
+}
+
+function requireAuth(req, res) {
   const auth = authenticateRequest(req);
   if (!auth.ok) {
     sendJson(res, { error: auth.error }, auth.statusCode);
@@ -478,15 +480,6 @@ function parseUserId(raw) {
   const value = Array.isArray(raw) ? raw[0] : raw;
   const num = Number(value);
   return Number.isInteger(num) && num > 0 ? num : null;
-}
-
-function ensureCollectionUserId(collection, fallbackUserId = null) {
-  if (!Array.isArray(collection)) return;
-  collection.forEach((item) => {
-    if (item && typeof item === "object" && item.user_id == null) {
-      item.user_id = fallbackUserId;
-    }
-  });
 }
 
 function isPublicApiRequest(method, pathname) {

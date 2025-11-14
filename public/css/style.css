@@ -43,13 +43,13 @@
 }
 
 .alert-banner-text {
-  margin: 4px 0 0;
+  margin: var(--space-1) 0 0;
   color: var(--text-secondary);
 }
 
 .btn-pill {
   border-radius: var(--radius-full);
-  padding: 8px 18px;
+  padding: var(--space-2) var(--space-4-5);
   font-weight: 600;
 }
 
@@ -177,7 +177,7 @@
 .pill {
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
+  padding: var(--space-1) var(--space-2-5);
   border-radius: var(--radius-full);
   font-size: var(--font-xs);
   font-weight: 700;
@@ -250,7 +250,7 @@
 }
 
 .reminder-meta {
-  margin: 2px 0 0;
+  margin: var(--space-0-5) 0 0;
   color: var(--text-muted);
   font-size: var(--font-sm);
 }
@@ -287,11 +287,16 @@
   --shadow-lg: 0 16px 32px rgba(15, 23, 42, 0.12);
   --shadow-xl: 0 24px 48px rgba(15, 23, 42, 0.16);
 
-  /* Spacing (4px scale) */
+  /* Spacing (4px scale + часто используемые) */
+  --space-0-5: 2px;
   --space-1: 4px;
+  --space-1-5: 6px;
   --space-2: 8px;
+  --space-2-5: 10px;
   --space-3: 12px;
+  --space-3-5: 14px;
   --space-4: 16px;
+  --space-4-5: 18px;
   --space-5: 20px;
   --space-6: 24px;
   --space-8: 32px;
@@ -446,7 +451,7 @@ a {
   }
 
   .btn-sm {
-    padding: 6px 12px;
+    padding: var(--space-1-5) var(--space-3);
     font-size: var(--font-xs);
     min-height: auto;
   }
@@ -649,7 +654,7 @@ header {
 
 .header-eyebrow {
   font-size: var(--font-xs);
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-full);
   font-size: var(--font-xs);
   font-weight: 600;
@@ -671,7 +676,7 @@ header {
 .header-badge-soft {
   font-size: var(--font-xs);
   font-weight: 600;
-  padding: 4px 10px;
+  padding: var(--space-1) var(--space-2-5);
   border-radius: var(--radius-full);
   background: var(--primary-ultra-light);
   color: var(--primary);
@@ -694,7 +699,7 @@ header {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding: 8px 14px;
+  padding: var(--space-2) var(--space-3-5);
   background: #fff;
   border-radius: var(--radius-full);
   border: 1px solid var(--border-color);
@@ -724,7 +729,7 @@ header {
 }
 
 .header-pill {
-  padding: 8px 14px;
+  padding: var(--space-2) var(--space-3-5);
   border-radius: var(--radius-full);
   background: rgba(99, 102, 241, 0.08);
   color: var(--primary);
@@ -761,7 +766,7 @@ header {
 .header-quick {
   border-radius: var(--radius-full);
   font-weight: 600;
-  padding: 9px 16px;
+  padding: var(--space-2-5) var(--space-4);
   border: none;
   text-decoration: none;
   font-size: var(--font-sm);
@@ -813,7 +818,7 @@ header {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding: 6px 12px;
+  padding: var(--space-1-5) var(--space-3);
   border-radius: var(--radius-full);
   border: 1px solid var(--border-color);
   background: #fff;
@@ -872,7 +877,7 @@ header {
   z-index: 350;
 }
 .header-dropdown-info { display: flex; flex-direction: column; gap: 4px; margin-bottom: var(--space-2); }
-.dropdown-item { width: 100%; padding: 10px 12px; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-subtle); cursor: pointer; text-align: left; }
+.dropdown-item { width: 100%; padding: var(--space-2-5) var(--space-3); border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-subtle); cursor: pointer; text-align: left; }
 .dropdown-item:hover { background: var(--bg-muted); border-color: var(--primary); }
 
 .burger {
@@ -1050,7 +1055,7 @@ header {
   flex: 1;
   min-width: 120px;
   text-align: center;
-  padding: 10px 14px;
+  padding: var(--space-2-5) var(--space-3-5);
   border-radius: var(--radius-full);
   font-size: var(--font-sm);
   font-weight: 600;
@@ -1089,7 +1094,7 @@ header {
 }
 
 .plan-card-pill {
-  padding: 4px 10px;
+  padding: var(--space-1) var(--space-2-5);
   border-radius: var(--radius-full);
   background: var(--bg-subtle);
   display: flex;
@@ -1615,7 +1620,7 @@ footer {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) auto;
   align-items: center;
-  padding: 10px 14px;
+  padding: var(--space-2-5) var(--space-3-5);
   border-radius: var(--radius-md);
   background: #ffffff;
   border: 1px solid var(--border-light);
@@ -1630,7 +1635,7 @@ footer {
 .chip {
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
+  padding: var(--space-1) var(--space-2-5);
   border-radius: var(--radius-full);
   font-size: var(--font-xs);
   border: 1px solid var(--border-light);
@@ -1643,7 +1648,7 @@ footer {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
+  padding: var(--space-1) var(--space-2-5);
   border-radius: var(--radius-full);
   font-size: var(--font-xs);
   font-weight: 600;
@@ -1663,7 +1668,7 @@ footer {
 /* ========== ALERTS / TOASTS ========== */
 .alert {
   border-radius: var(--radius-md);
-  padding: 10px 12px;
+  padding: var(--space-2-5) var(--space-3);
   font-size: var(--font-sm);
   display: flex;
   align-items: flex-start;

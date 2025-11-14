@@ -1,52 +1,26 @@
 const accountState = {
   all: [],
   filtered: [],
-  currentPage: 1,
-  pageSize: 10,
 };
 
-function setFieldError(input, message) {
-  if (!input) return;
-  const field = input.closest('.form-field');
-  const errorEl = field ? field.querySelector('.form-error') : null;
-  if (errorEl) errorEl.textContent = message || '';
-  if (message) {
-    input.classList.add('has-error');
-  } else {
-    input.classList.remove('has-error');
+// Инициализация пагинации с помощью утилиты
+const pagination = new Pagination({
+  currentPage: 1,
+  pageSize: 10,
+  containerId: 'accountsPagination',
+  onPageChange: (page) => {
+    pagination.currentPage = page;
+    renderAccounts();
   }
-}
+});
 
-function paginate(list) {
-  const start = (accountState.currentPage - 1) * accountState.pageSize;
-  return list.slice(start, start + accountState.pageSize);
-}
+// Функция setFieldError заменена на утилиту validation.js
 
-function renderPagination(total) {
-  const container = document.getElementById('accountsPagination');
-  if (!container) return;
-  container.innerHTML = '';
-  const pages = Math.max(1, Math.ceil(total / accountState.pageSize));
-  if (pages <= 1) return;
-  for (let i = 1; i <= pages; i += 1) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'btn-ghost btn-sm';
-    btn.textContent = i;
-    if (i === accountState.currentPage) {
-      btn.classList.add('active');
-    }
-    btn.addEventListener('click', () => {
-      accountState.currentPage = i;
-      renderAccounts();
-    });
-    container.appendChild(btn);
-  }
-}
+// Функции пагинации заменены на утилиту Pagination (см. строки 6-13)
 
 function renderAccounts() {
   const list = document.getElementById('accountsList');
-  const items = paginate(accountState.filtered);
+  const items = pagination.paginate(accountState.filtered);
 
   if (!list) return;
   list.innerHTML = '';
@@ -56,7 +30,7 @@ function renderAccounts() {
     empty.className = 'empty-state';
     empty.innerHTML = '<div class="empty-icon">💼</div><p class="empty-text">Пока нет кошельков</p><p class="empty-hint">Добавьте первый счёт выше</p>';
     list.appendChild(empty);
-    renderPagination(accountState.filtered.length);
+    pagination.render(accountState.filtered.length);
     return;
   }
   
@@ -65,21 +39,36 @@ function renderAccounts() {
     card.className = 'wallet-card';
     const balance = Number(acc.balance) || 0;
     const balanceClass = balance < 0 ? 'negative' : '';
-    card.innerHTML = `
-      <div class="wallet-header">
-        <div class="wallet-icon">💳</div>
-        <div class="wallet-name">${acc.name || 'Без названия'}</div>
-      </div>
-      <div class="wallet-balance ${balanceClass}">${balance.toFixed(2)} <span class="currency">${acc.currency || 'USD'}</span></div>
-      <div class="wallet-meta">ID: ${acc.id || '—'}</div>
-    `;
+    
+    // XSS FIX: Use textContent for user-provided data (acc.name)
+    const header = document.createElement('div');
+    header.className = 'wallet-header';
+    const icon = document.createElement('div');
+    icon.className = 'wallet-icon';
+    icon.textContent = '💳';
+    const name = document.createElement('div');
+    name.className = 'wallet-name';
+    name.textContent = acc.name || 'Без названия';
+    header.append(icon, name);
+    
+    const balanceDiv = document.createElement('div');
+    balanceDiv.className = `wallet-balance ${balanceClass}`;
+    balanceDiv.textContent = `${balance.toFixed(2)} `;
+    const currencySpan = document.createElement('span');
+    currencySpan.className = 'currency';
+    currencySpan.textContent = acc.currency || 'USD';
+    balanceDiv.appendChild(currencySpan);
+    
+    const meta = document.createElement('div');
+    meta.className = 'wallet-meta';
+    meta.textContent = `ID: ${acc.id || '—'}`;
+    
+    card.append(header, balanceDiv, meta);
     list.appendChild(card);
   });
-  
-  renderPagination(accountState.filtered.length);
-}
 
-function applyFilters() {
+  pagination.render(accountState.filtered.length);
+}function applyFilters() {
   const search = document.getElementById('accountSearch')?.value.trim().toLowerCase() || '';
   const currency = document.getElementById('accountCurrencyFilter')?.value || '';
   accountState.filtered = accountState.all.filter((acc) => {
@@ -87,7 +76,7 @@ function applyFilters() {
     const matchesCurrency = !currency || acc.currency === currency;
     return matchesSearch && matchesCurrency;
   });
-  accountState.currentPage = 1;
+  pagination.goToPage(1);
   renderAccounts();
 }
 
@@ -96,16 +85,15 @@ function bindFilters() {
   const currencySelect = document.getElementById('accountCurrencyFilter');
   const pageSizeSelect = document.getElementById('accountsPageSize');
   searchInput?.addEventListener('input', () => {
-    accountState.currentPage = 1;
+    pagination.goToPage(1);
     applyFilters();
   });
   currencySelect?.addEventListener('change', () => {
-    accountState.currentPage = 1;
+    pagination.goToPage(1);
     applyFilters();
   });
   pageSizeSelect?.addEventListener('change', () => {
-    accountState.pageSize = Number(pageSizeSelect.value) || 10;
-    accountState.currentPage = 1;
+    pagination.setPageSize(Number(pageSizeSelect.value) || 10);
     renderAccounts();
   });
 }

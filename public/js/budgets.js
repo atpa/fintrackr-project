@@ -2,8 +2,39 @@
  * Функции для управления бюджетами: отображение и установка лимитов.
  */
 
+/**
+ * Предварительно вычислить доходы по месяцам для оптимизации
+ * @param {Array} transactions - Массив транзакций
+ * @param {string} targetCurrency - Целевая валюта
+ * @returns {Map} - Map месяц → общая сумма доходов
+ */
+function calculateMonthlyIncomes(transactions, targetCurrency = 'USD') {
+  const incomesByMonth = new Map();
+  
+  if (!Array.isArray(transactions)) return incomesByMonth;
+  
+  transactions.forEach(tx => {
+    if (tx.type === 'income') {
+      const dt = new Date(tx.date);
+      const month = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0');
+      
+      const amount = typeof convertAmount === 'function' 
+        ? convertAmount(Number(tx.amount), tx.currency || 'USD', targetCurrency)
+        : Number(tx.amount);
+      
+      incomesByMonth.set(month, (incomesByMonth.get(month) || 0) + amount);
+    }
+  });
+  
+  return incomesByMonth;
+}
+
 function renderBudgets(budgets, categories, tbody, transactions) {
   tbody.innerHTML = '';
+  
+  // Предварительно вычисляем доходы по месяцам для всех валют
+  const incomesCacheByCur = new Map();
+  
   budgets.forEach(budget => {
     const tr = document.createElement('tr');
     const cat = categories.find(c => c.id === budget.category_id);
@@ -17,22 +48,17 @@ function renderBudgets(budgets, categories, tbody, transactions) {
     let displayLimit;
     let dynamicLimit = Number(budget.limit) || 0;
     const bCur = budget.currency || 'USD';
-    // Если бюджет процентный, вычисляем фактический лимит исходя из суммы доходов (конвертируем в валюту бюджета)
+    
+    // Если бюджет процентный, используем кэшированные доходы
     if (budget.type === 'percent' && budget.percent != null) {
-      let incomes = 0;
-      if (Array.isArray(transactions)) {
-        transactions.forEach(tx => {
-          if (tx.type === 'income') {
-            const dt = new Date(tx.date);
-            const month = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0');
-            if (month === budget.month) {
-              const add = typeof convertAmount === 'function' ? convertAmount(Number(tx.amount), tx.currency || 'USD', bCur) : Number(tx.amount);
-              incomes += add;
-            }
-          }
-        });
+      // Получаем или создаем кэш доходов для этой валюты
+      if (!incomesCacheByCur.has(bCur)) {
+        incomesCacheByCur.set(bCur, calculateMonthlyIncomes(transactions, bCur));
       }
-      dynamicLimit = incomes * (Number(budget.percent) / 100);
+      const incomesMap = incomesCacheByCur.get(bCur);
+      const monthlyIncome = incomesMap.get(budget.month) || 0;
+      
+      dynamicLimit = monthlyIncome * (Number(budget.percent) / 100);
       const limText = typeof formatCurrency === 'function' ? formatCurrency(dynamicLimit, bCur) : `${dynamicLimit.toFixed(2)} ${bCur}`;
       displayLimit = `${Number(budget.percent).toFixed(1)}% (${limText})`;
     } else {

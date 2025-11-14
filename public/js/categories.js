@@ -1,52 +1,27 @@
 const categoryState = {
   categories: [],
   filtered: [],
-  currentPage: 1,
-  pageSize: 10,
 };
 
-function setFieldError(input, message) {
-  if (!input) return;
-  const field = input.closest('.form-field');
-  const errorEl = field ? field.querySelector('.form-error') : null;
-  if (errorEl) errorEl.textContent = message || '';
-  if (message) {
-    input.classList.add('has-error');
-  } else {
-    input.classList.remove('has-error');
+const pagination = new Pagination({
+  currentPage: 1,
+  pageSize: 10,
+  containerId: 'categoriesPagination',
+  onPageChange: (page) => {
+    pagination.currentPage = page;
+    renderCategories();
   }
-}
+});
 
-function paginate(list) {
-  const start = (categoryState.currentPage - 1) * categoryState.pageSize;
-  return list.slice(start, start + categoryState.pageSize);
-}
+// Функция setFieldError заменена на утилиту validation.js
 
-function renderPagination(total) {
-  const container = document.getElementById('categoriesPagination');
-  if (!container) return;
-  container.innerHTML = '';
-  const pages = Math.max(1, Math.ceil(total / categoryState.pageSize));
-  for (let i = 1; i <= pages; i += 1) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.textContent = i;
-    if (i === categoryState.currentPage) {
-      btn.classList.add('active');
-    }
-    btn.addEventListener('click', () => {
-      categoryState.currentPage = i;
-      renderCategories();
-    });
-    container.appendChild(btn);
-  }
-}
+// Функции пагинации заменены на утилиту Pagination (см. строки 6-14)
 
 function renderCategories() {
   const tbody = document.querySelector('#categoriesTable tbody');
   if (!tbody) return;
   tbody.innerHTML = '';
-  const pageItems = paginate(categoryState.filtered);
+  const pageItems = pagination.paginate(categoryState.filtered);
   if (!pageItems.length) {
     const emptyRow = document.createElement('tr');
     const emptyCell = document.createElement('td');
@@ -55,7 +30,7 @@ function renderCategories() {
       '<div class="table-empty-state">Категории ещё не созданы. Добавьте первую категорию, чтобы начать классифицировать операции.</div>';
     emptyRow.appendChild(emptyCell);
     tbody.appendChild(emptyRow);
-    renderPagination(categoryState.filtered.length);
+    pagination.render(categoryState.filtered.length);
     return;
   }
 
@@ -86,7 +61,7 @@ function renderCategories() {
     tbody.appendChild(tr);
   });
 
-  renderPagination(categoryState.filtered.length);
+  pagination.render(categoryState.filtered.length);
 }
 
 function applyFilters() {
@@ -97,7 +72,7 @@ function applyFilters() {
     const matchesKind = !kindFilter || cat.kind === kindFilter;
     return matchesSearch && matchesKind;
   });
-  categoryState.currentPage = 1;
+  pagination.goToPage(1);
   renderCategories();
 }
 
@@ -113,20 +88,19 @@ function bindFilters() {
   const pageSizeSelect = document.getElementById('categoriesPageSize');
   if (searchInput) {
     searchInput.addEventListener('input', () => {
-      categoryState.currentPage = 1;
+      pagination.goToPage(1);
       applyFilters();
     });
   }
   if (kindSelect) {
     kindSelect.addEventListener('change', () => {
-      categoryState.currentPage = 1;
+      pagination.goToPage(1);
       applyFilters();
     });
   }
   if (pageSizeSelect) {
     pageSizeSelect.addEventListener('change', () => {
-      categoryState.pageSize = Number(pageSizeSelect.value) || 10;
-      categoryState.currentPage = 1;
+      pagination.setPageSize(Number(pageSizeSelect.value) || 10);
       renderCategories();
     });
   }

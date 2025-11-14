@@ -3,51 +3,26 @@ const transactionsState = {
   filtered: [],
   accounts: [],
   categories: [],
-  currentPage: 1,
-  pageSize: 10,
 };
 
-function setFieldError(input, message) {
-  if (!input) return;
-  const field = input.closest('.form-field');
-  const errorEl = field ? field.querySelector('.form-error') : null;
-  if (errorEl) errorEl.textContent = message || '';
-  if (message) {
-    input.classList.add('has-error');
-  } else {
-    input.classList.remove('has-error');
+const pagination = new Pagination({
+  currentPage: 1,
+  pageSize: 10,
+  containerId: 'transactionsPagination',
+  onPageChange: (page) => {
+    pagination.currentPage = page;
+    renderTransactionsCards();
   }
-}
+});
 
-function paginate(list) {
-  const start = (transactionsState.currentPage - 1) * transactionsState.pageSize;
-  return list.slice(start, start + transactionsState.pageSize);
-}
+// Функция setFieldError заменена на утилиту validation.js
 
-function renderPagination(total) {
-  const container = document.getElementById('transactionsPagination');
-  if (!container) return;
-  container.innerHTML = '';
-  const pages = Math.max(1, Math.ceil(total / transactionsState.pageSize));
-  for (let i = 1; i <= pages; i += 1) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.textContent = i;
-    if (i === transactionsState.currentPage) {
-      btn.classList.add('active');
-    }
-    btn.addEventListener('click', () => {
-      transactionsState.currentPage = i;
-      renderTransactions();
-    });
-    container.appendChild(btn);
-  }
-}
+// Функции пагинации заменены на утилиту Pagination (см. строки 8-17)
 
 function renderTransactions() {
   const listEl = document.getElementById('transactionsList');
   const tableBody = document.querySelector('#transactionsTable tbody');
-  const items = paginate(transactionsState.filtered);
+  const items = pagination.paginate(transactionsState.filtered);
 
   // Card list rendering if container exists
   if (listEl) {
@@ -57,7 +32,7 @@ function renderTransactions() {
       empty.className = 'tx-item';
       empty.innerHTML = '<div class="tx-main"><span class="tx-title">Пока нет операций</span><span class="tx-meta">Добавьте первую транзакцию</span></div>';
       listEl.appendChild(empty);
-      renderPagination(transactionsState.filtered.length);
+      pagination.render(transactionsState.filtered.length);
       return;
     }
     items.forEach((tx) => {
@@ -113,7 +88,7 @@ function renderTransactions() {
       item.appendChild(actions);
       listEl.appendChild(item);
     });
-    renderPagination(transactionsState.filtered.length);
+    pagination.render(transactionsState.filtered.length);
     return;
   }
 
@@ -127,7 +102,7 @@ function renderTransactions() {
     cell.innerHTML = '<div class="table-empty-state">Операций пока нет. Добавьте первую транзакцию, чтобы увидеть её здесь.</div>';
     row.appendChild(cell);
     tableBody.appendChild(row);
-    renderPagination(transactionsState.filtered.length);
+    pagination.render(transactionsState.filtered.length);
     return;
   }
   items.forEach((tx) => {
@@ -168,7 +143,7 @@ function renderTransactions() {
     tr.append(dateTd, accTd, catTd, typeTd, amountTd, noteTd, actionsTd);
     tableBody.appendChild(tr);
   });
-  renderPagination(transactionsState.filtered.length);
+  pagination.render(transactionsState.filtered.length);
 }
 
 function applyFilters() {
@@ -211,7 +186,7 @@ function applyFilters() {
     })
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  transactionsState.currentPage = 1;
+  pagination.goToPage(1);
   window.allTransactions = transactionsState.all.slice();
   renderTransactions();
 }
@@ -251,8 +226,7 @@ function attachPaginationControls() {
   const pageSizeSelect = document.getElementById('transactionsPageSize');
   if (pageSizeSelect) {
     pageSizeSelect.addEventListener('change', () => {
-      transactionsState.pageSize = Number(pageSizeSelect.value) || 10;
-      transactionsState.currentPage = 1;
+      pagination.setPageSize(Number(pageSizeSelect.value) || 10);
       renderTransactions();
     });
   }
@@ -267,7 +241,7 @@ function bindFilterForm() {
     });
   }
   document.getElementById('filterSearch')?.addEventListener('input', () => {
-    transactionsState.currentPage = 1;
+    pagination.goToPage(1);
     applyFilters();
   });
   // Quick period buttons (Today / Week / Month)
@@ -288,7 +262,7 @@ function bindFilterForm() {
       const toISO = (d) => d.toISOString().slice(0, 10);
       if (start) start.value = toISO(from);
       if (end) end.value = toISO(today);
-      transactionsState.currentPage = 1;
+      pagination.goToPage(1);
       applyFilters();
     });
   });

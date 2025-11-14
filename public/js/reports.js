@@ -85,10 +85,25 @@ async function generateReport() {
       if (tx.type === 'income') totalIncome += converted;
       else if (tx.type === 'expense') totalExpense += converted;
     });
-    let summaryHtml = '';
     const reportCurrency = (typeof getReportCurrency === 'function') ? getReportCurrency() : 'USD';
-    summaryHtml += `<p><strong>Суммарный доход:</strong> ${totalIncome.toFixed(2)} ${reportCurrency}</p>`;
-    summaryHtml += `<p><strong>Суммарный расход:</strong> ${totalExpense.toFixed(2)} ${reportCurrency}</p>`;
+    
+    // XSS FIX: Build summary with textContent instead of innerHTML
+    summaryEl.innerHTML = '';
+    
+    const incomeP = document.createElement('p');
+    const incomeStrong = document.createElement('strong');
+    incomeStrong.textContent = 'Суммарный доход:';
+    incomeP.appendChild(incomeStrong);
+    incomeP.appendChild(document.createTextNode(` ${totalIncome.toFixed(2)} ${reportCurrency}`));
+    summaryEl.appendChild(incomeP);
+    
+    const expenseP = document.createElement('p');
+    const expenseStrong = document.createElement('strong');
+    expenseStrong.textContent = 'Суммарный расход:';
+    expenseP.appendChild(expenseStrong);
+    expenseP.appendChild(document.createTextNode(` ${totalExpense.toFixed(2)} ${reportCurrency}`));
+    summaryEl.appendChild(expenseP);
+    
     if (combinedLabels.length > 0) {
       const maxCat = combinedLabels[0];
       const maxVal = combinedValues[0];
