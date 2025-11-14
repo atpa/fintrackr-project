@@ -226,7 +226,9 @@ function authenticateRequest(req) {
  * Hash password using bcrypt
  */
 async function hashPassword(password) {
-  return await bcrypt.hash(password, 10);
+  // Use fewer rounds in test environment for performance
+  const rounds = ENV.NODE_ENV === 'test' ? 1 : 10;
+  return await bcrypt.hash(password, rounds);
 }
 
 /**

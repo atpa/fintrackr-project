@@ -5,6 +5,7 @@
 
 // Environment configuration
 const ENV = {
+  NODE_ENV: process.env.NODE_ENV || "development",
   JWT_SECRET: process.env.JWT_SECRET || "dev-secret-change",
   PORT: process.env.PORT || 3000,
   COOKIE_SECURE: process.env.COOKIE_SECURE === "true",

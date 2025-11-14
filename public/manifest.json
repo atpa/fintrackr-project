@@ -1,0 +1,65 @@
+{
+  "name": "FinTrackr - Personal Finance Tracker",
+  "short_name": "FinTrackr",
+  "description": "Track your finances, budgets, and expenses with ease",
+  "start_url": "/dashboard.html",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#16213e",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "productivity"],
+  "screenshots": [
+    {
+      "src": "/assets/screenshot-dashboard.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/assets/screenshot-mobile.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Add Transaction",
+      "short_name": "New Transaction",
+      "description": "Quickly add a new transaction",
+      "url": "/transactions.html?action=add",
+      "icons": [{ "src": "/assets/icon-add.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "View Dashboard",
+      "short_name": "Dashboard",
+      "description": "View financial overview",
+      "url": "/dashboard.html",
+      "icons": [{ "src": "/assets/icon-dashboard.png", "sizes": "96x96" }]
+    }
+  ],
+  "share_target": {
+    "action": "/transactions.html",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "description",
+      "text": "notes",
+      "url": "receipt_url"
+    }
+  }
+}

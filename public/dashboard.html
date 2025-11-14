@@ -2,8 +2,15 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="FinTrackr - Personal Finance Tracker Dashboard" />
+    <meta name="theme-color" content="#16213e" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="FinTrackr" />
     <title>FinTrackr – Дэшборд</title>
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/assets/icon-192.png" />
     <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="css/layout-components.css" />
   </head>
@@ -180,9 +187,23 @@
       </main>
     </div>
 
+    <!-- PWA Install Button (скрывается после установки) -->
+    <button id="install-button" class="btn-primary" style="display: none; position: fixed; bottom: 20px; right: 20px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+      📱 Установить приложение
+    </button>
+
+    <!-- Network Status Indicator -->
+    <div id="network-status" class="network-status" style="display: none;"></div>
+
     <footer>
       <p>&copy; 2025 FinTrackr. Все права защищены.</p>
     </footer>
+
+    <!-- PWA Registration -->
+    <script type="module">
+      import { initPWA } from './js/pwa.js';
+      initPWA();
+    </script>
 
     <!-- New Architecture: ES6 Modules -->
     <script type="module">

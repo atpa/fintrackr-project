@@ -32,6 +32,10 @@ const inputs = {
   api: 'frontend/src/modules/api.js',
   validation: 'frontend/src/modules/validation.js',
   
+  // PWA modules
+  pwa: 'frontend/modules/pwa.js',
+  offlineQueue: 'frontend/modules/offlineQueue.js',
+  
   // Компоненты
   cardAccount: 'frontend/src/components/CardAccount.js',
   cardTransaction: 'frontend/src/components/CardTransaction.js',
