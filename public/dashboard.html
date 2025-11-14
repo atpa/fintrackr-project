@@ -8,8 +8,8 @@
   <script defer src="js/utils/auth.js"></script>
   <script defer src="js/app.js"></script>
   </head>
-  <body>
-    <header>
+  <body class="workspace-page" data-page-title="Дэшборд" data-page-subtitle="Прогнозы, бюджеты и уведомления в едином месте">
+    <header data-page-title="Дэшборд" data-page-subtitle="Прогнозы, бюджеты и уведомления в едином месте">
       <div class="brand visually-hidden">
         <a href="dashboard.html">FinTrackr</a>
       </div>
@@ -26,20 +26,7 @@
       aria-label="Боковая навигация"
     >
     <div class="sidebar-top">
-      <div class="sidebar-header">
-        <a
-          href="dashboard.html"
-          class="logo"
-          aria-label="FinTrackr — на главную"
-        >
-          <svg
-            class="logo-icon"
-            width="32"
-            height="32"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
+      <!-- sidebar-footer удалён: профиль и auth вынесены в header dropdown -->
             focusable="false"
           >
             <rect width="24" height="24" rx="6" fill="var(--primary)"></rect>
@@ -166,119 +153,154 @@
         </div>
       </nav>
     </div>
-
-    <div class="sidebar-footer">
-      <div class="profile-section">
-          <div class="profile-avatar">
-            <span class="avatar-placeholder">�</span>
-          </div>
-          <div class="profile-info">
-            <p class="profile-name">Пользователь</p>
-            <p class="profile-email">user@example.com</p>
-          </div>
-        </div>
-
-        <div class="sidebar-auth">
-          <a href="login.html" class="auth-link login-link">Вход</a>
-          <a href="register.html" class="auth-link register-link">Регистрация</a>
-          <a href="#" class="auth-link logout-link">Выход</a>
-        </div>
     </aside>
 
     <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
 
-    <main>
-      <section class="grid-3">
-        <article class="card">
-          <h2>Баланс</h2>
-          <p>
+    <main class="workspace-main">
+      <section class="alert-banner alert-banner--info" aria-live="polite">
+        <div>
+          <p class="alert-banner-title">AI ассистент</p>
+          <p class="alert-banner-text">Последние операции синхронизированы. Добавьте бюджет, чтобы получать прогноз экономии.</p>
+        </div>
+        <button class="btn-secondary btn-pill" onclick="location.href='budgets.html'">Создать бюджет</button>
+      </section>
+
+      <section class="stats-grid">
+        <article class="stat-card stat-card--balance">
+          <div class="stat-card-label">Баланс</div>
+          <div class="stat-card-value">
             <strong id="totalBalance">0.00</strong>
             <span class="currency-code">USD</span>
-          </p>
+          </div>
+          <p class="stat-card-note">Консолидировано по всем счетам</p>
         </article>
-        <article class="card">
-          <h2>Сумма доходов</h2>
-          <p class="status-income">
+        <article class="stat-card stat-card--income">
+          <div class="stat-card-label">Сумма доходов</div>
+          <div class="stat-card-value">
             <strong id="totalIncome">0.00</strong>
             <span class="currency-code">USD</span>
-          </p>
+          </div>
+          <p class="stat-card-note">Обновлено сегодня</p>
         </article>
-        <article class="card">
-          <h2>Сумма расходов</h2>
-          <p class="status-expense">
+        <article class="stat-card stat-card--expense">
+          <div class="stat-card-label">Сумма расходов</div>
+          <div class="stat-card-value">
             <strong id="totalExpense">0.00</strong>
             <span class="currency-code">USD</span>
-          </p>
+          </div>
+          <p class="stat-card-note">Включая регулярные платежи</p>
         </article>
-      </section>
-
-      <section class="card">
-        <h2>Расходы по категориям (текущий месяц)</h2>
-        <div class="chart-container">
-          <canvas
-            id="expenseChart"
-            width="600"
-            height="300"
-            aria-label="График расходов"
-            role="img"
-          ></canvas>
-        </div>
-      </section>
-
-      <section class="grid-2">
-        <article class="card">
-          <h2>Структура расходов</h2>
-          <canvas
-            id="expensePie"
-            width="300"
-            height="300"
-            aria-label="Круговая диаграмма расходов"
-            role="img"
-          ></canvas>
-        </article>
-        <article class="card">
-          <h2>Топ расходов</h2>
-          <ul id="topCategories" style="list-style: none; padding-left: 0">
-            <li>Нет данных</li>
-          </ul>
-        </article>
-      </section>
-
-      <section class="grid-2">
-        <article class="card">
-          <h2>Финансовое здоровье</h2>
-          <p id="financialHealth">0%</p>
-          <div
-            class="progress-bar"
-            style="
-              background: #f5f5f5;
-              border-radius: 4px;
-              height: 8px;
-              width: 100%;
-              overflow: hidden;
-            "
-          >
-            <div
-              id="healthProgress"
-              style="
-                width: 0%;
-                height: 100%;
-                background: var(--primary-light);
-                border-radius: 4px;
-              "
-            ></div>
+        <article class="stat-card stat-card--neutral">
+          <div class="stat-card-label">Финансовое здоровье</div>
+          <div class="stat-card-value">
+            <strong id="financialHealth">0%</strong>
+          </div>
+          <div class="progress-bar">
+            <div id="healthProgress" class="progress" style="width:0%"></div>
           </div>
         </article>
+      </section>
+
+      <section class="panel-grid">
+        <article class="card card--wide">
+          <div class="card-header">
+            <div>
+              <h2>Расходы по категориям</h2>
+              <p class="card-subtitle">Текущий месяц, обновление ежедневно</p>
+            </div>
+            <button class="btn-secondary btn-pill">Экспорт</button>
+          </div>
+          <div class="chart-container">
+            <canvas
+              id="expenseChart"
+              width="600"
+              height="300"
+              aria-label="График расходов"
+              role="img"
+            ></canvas>
+          </div>
+        </article>
+
+        <article class="card card--wide">
+          <div class="card-header">
+            <div>
+              <h2>Структура расходов</h2>
+              <p class="card-subtitle">Узнайте, какие категории тянут бюджет вниз</p>
+            </div>
+            <a class="link-ghost" href="categories.html">Управлять категориями →</a>
+          </div>
+          <div class="chart-container chart-container--split">
+            <canvas
+              id="expensePie"
+              width="300"
+              height="300"
+              aria-label="Круговая диаграмма расходов"
+              role="img"
+            ></canvas>
+            <div class="top-list">
+              <h3>Топ расходов</h3>
+              <ul id="topCategories" class="list-compact">
+                <li>Нет данных</li>
+              </ul>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="insight-grid">
         <article class="card">
-          <h2>AI-прогноз (30 дней)</h2>
-          <p>
-            Доход: <strong id="aiIncome">0.00</strong>
-            <span class="currency-code">USD</span>
-          </p>
-          <p>
-            Расход: <strong id="aiExpense">0.00</strong>
-            <span class="currency-code">USD</span>
-          </p>
+          <div class="card-header">
+            <div>
+              <h2>AI-прогноз (30 дней)</h2>
+              <p class="card-subtitle">Ключевые показатели в валюте баланса</p>
+            </div>
+            <span class="pill pill--accent">Beta</span>
+          </div>
+          <div class="ai-grid">
+            <div>
+              <p class="muted-label">Доход</p>
+              <p class="ai-value">
+                <strong id="aiIncome">0.00</strong>
+                <span class="currency-code">USD</span>
+              </p>
+            </div>
+            <div>
+              <p class="muted-label">Расход</p>
+              <p class="ai-value">
+                <strong id="aiExpense">0.00</strong>
+                <span class="currency-code">USD</span>
+              </p>
+            </div>
+          </div>
+          <p class="card-note">Алгоритм анализирует тренды операций и уведомит, если траты выходят за рамки бюджета.</p>
+        </article>
+
+        <article class="card">
+          <div class="card-header">
+            <div>
+              <h2>Напоминания</h2>
+              <p class="card-subtitle">Подключите банковские связи, чтобы получать больше инсайтов</p>
+            </div>
+          </div>
+          <ul class="list-reminders">
+            <li>
+              <span class="pill pill--warning">Счета</span>
+              <div>
+                <p class="reminder-title">Добавьте хотя бы один бюджет</p>
+                <p class="reminder-meta">Это поможет AI точнее прогнозировать траты.</p>
+              </div>
+              <button class="link-ghost" onclick="location.href='budgets.html'">Открыть</button>
+            </li>
+            <li>
+              <span class="pill pill--neutral">Цели</span>
+              <div>
+                <p class="reminder-title">Назначьте цель накоплений</p>
+                <p class="reminder-meta">Следите за прогрессом прямо в дэшборде.</p>
+              </div>
+              <button class="link-ghost" onclick="location.href='goals.html'">Создать</button>
+            </li>
+          </ul>
         </article>
       </section>
     </main>

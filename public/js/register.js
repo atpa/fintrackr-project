@@ -27,13 +27,10 @@ async function initRegisterPage() {
         return;
       }
       const created = await resp.json();
+      // Сохранение текущего пользователя
       const user = created.user || created;
       if (Auth.login(user)) {
-        try {
-          await Auth.syncSession(true);
-        } catch (err) {
-          // продолжаем даже если синхронизация не удалась
-        }
+        // Редирект в личный кабинет
         window.location.href = 'dashboard.html';
       } else {
         alert('Ошибка сохранения данных');

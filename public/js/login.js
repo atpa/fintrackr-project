@@ -20,13 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
         alert(result.error || 'Ошибка входа');
         return;
       }
+      // Сохранение текущего пользователя
       const user = result.user || result;
       if (Auth.login(user)) {
-        try {
-          await Auth.syncSession(true);
-        } catch (err) {
-          // Если синхронизация не удалась, продолжаем с локальными данными
-        }
+        // Редирект в личный кабинет
         window.location.href = 'dashboard.html';
       } else {
         alert('Ошибка сохранения данных');

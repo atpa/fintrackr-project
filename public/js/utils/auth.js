@@ -193,6 +193,11 @@ const Auth = {
   window.__authFetchWrapped = true;
 })();
 
+// Экспортируем для использования в браузере
+if (typeof window !== 'undefined') {
+  window.Auth = Auth;
+}
+
 // Экспортируем для использования в модулях
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = Auth;

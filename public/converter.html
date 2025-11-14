@@ -18,20 +18,7 @@
   </header>
 
   <aside class="sidebar" id="sidebar" role="navigation" aria-label="Боковая навигация">
-    <div class="sidebar-header">
-      <a href="dashboard.html" class="logo" aria-label="FinTrackr — на главную">
-        <svg class="logo-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-          <rect width="24" height="24" rx="6" fill="var(--primary)"></rect>
-          <path d="M6 12h12M6 8h12M6 16h12" stroke="#fff" stroke-width="1.2" stroke-linecap="round"></path>
-        </svg>
-        <span class="logo-text">FinTrackr</span>
-      </a>
-      
-    </div>
-
-    <nav class="sidebar-nav" aria-label="Меню приложения">
-      <div class="nav-section">
-        <h3 class="nav-section-title">Основное</h3>
+      <!-- sidebar-footer удалён: профиль и auth вынесены в header dropdown -->
         <ul class="nav-list">
           <li class="nav-item"><a href="dashboard.html" class="nav-link"><span class="nav-icon">🏠</span><span class="nav-label">Дэшборд</span></a></li>
           <li class="nav-item"><a href="accounts.html" class="nav-link"><span class="nav-icon">💼</span><span class="nav-label">Счёта</span></a></li>
@@ -68,21 +55,6 @@
         </ul>
       </div>
     </nav>
-
-    <div class="sidebar-footer">
-      <div class="profile-section">
-        <div class="profile-avatar"><span class="avatar-placeholder">👤</span></div>
-        <div class="profile-info">
-          <p class="profile-name">Пользователь</p>
-          <p class="profile-email">user@example.com</p>
-        </div>
-      </div>
-      <div class="sidebar-auth">
-        <a href="login.html" class="auth-link login-link">Вход</a>
-        <a href="register.html" class="auth-link register-link">Регистрация</a>
-        <a href="#" class="auth-link logout-link">Выход</a>
-      </div>
-    </div>
   </aside>
 
   <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>

@@ -27,9 +27,11 @@ function renderPagination(total) {
   if (!container) return;
   container.innerHTML = '';
   const pages = Math.max(1, Math.ceil(total / accountState.pageSize));
+  if (pages <= 1) return;
   for (let i = 1; i <= pages; i += 1) {
     const btn = document.createElement('button');
     btn.type = 'button';
+    btn.className = 'btn-ghost btn-sm';
     btn.textContent = i;
     if (i === accountState.currentPage) {
       btn.classList.add('active');
@@ -43,36 +45,37 @@ function renderPagination(total) {
 }
 
 function renderAccounts() {
-  const tbody = document.querySelector('#accountsTable tbody');
-  if (!tbody) return;
-  tbody.innerHTML = '';
+  const list = document.getElementById('accountsList');
   const items = paginate(accountState.filtered);
+
+  if (!list) return;
+  list.innerHTML = '';
+  
   if (!items.length) {
-    const row = document.createElement('tr');
-    const cell = document.createElement('td');
-    cell.colSpan = 3;
-    cell.innerHTML =
-      '<div class="table-empty-state">Пока что счёта не добавлены. Создайте первый счёт, чтобы отслеживать баланс.</div>';
-    row.appendChild(cell);
-    tbody.appendChild(row);
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.innerHTML = '<div class="empty-icon">💼</div><p class="empty-text">Пока нет кошельков</p><p class="empty-hint">Добавьте первый счёт выше</p>';
+    list.appendChild(empty);
     renderPagination(accountState.filtered.length);
     return;
   }
-
+  
   items.forEach((acc) => {
-    const tr = document.createElement('tr');
-    const nameTd = document.createElement('td');
-    nameTd.textContent = acc.name;
-    const currencyTd = document.createElement('td');
-    currencyTd.textContent = acc.currency;
-    const balanceTd = document.createElement('td');
-    const balanceValue = Number(acc.balance) || 0;
-    balanceTd.textContent = balanceValue.toFixed(2);
-    balanceTd.className = balanceValue < 0 ? 'status-expense' : 'status-income';
-    tr.append(nameTd, currencyTd, balanceTd);
-    tbody.appendChild(tr);
+    const card = document.createElement('div');
+    card.className = 'wallet-card';
+    const balance = Number(acc.balance) || 0;
+    const balanceClass = balance < 0 ? 'negative' : '';
+    card.innerHTML = `
+      <div class="wallet-header">
+        <div class="wallet-icon">💳</div>
+        <div class="wallet-name">${acc.name || 'Без названия'}</div>
+      </div>
+      <div class="wallet-balance ${balanceClass}">${balance.toFixed(2)} <span class="currency">${acc.currency || 'USD'}</span></div>
+      <div class="wallet-meta">ID: ${acc.id || '—'}</div>
+    `;
+    list.appendChild(card);
   });
-
+  
   renderPagination(accountState.filtered.length);
 }
 
@@ -163,14 +166,22 @@ function bindForm() {
 }
 
 async function initAccountsPage() {
-  const tableBody = document.querySelector('#accountsTable tbody');
-  if (!tableBody) return;
-  const accounts = await fetchData('/api/accounts');
-  accountState.all = Array.isArray(accounts) ? accounts : [];
-  accountState.filtered = accountState.all.slice();
-  bindFilters();
-  bindForm();
-  applyFilters();
+  const list = document.getElementById('accountsList');
+  if (!list) return;
+  
+  try {
+    const accounts = await fetchData('/api/accounts');
+    accountState.all = Array.isArray(accounts) ? accounts : [];
+    accountState.filtered = accountState.all.slice();
+    bindFilters();
+    bindForm();
+    applyFilters();
+  } catch (error) {
+    console.error('Не удалось загрузить счета:', error);
+    if (list) {
+      list.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><p class="empty-text">Ошибка загрузки данных</p></div>';
+    }
+  }
 }
 
 if (document.readyState !== 'loading') {

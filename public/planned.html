@@ -7,9 +7,10 @@
     <link rel="stylesheet" href="css/style.css" />
   <script defer src="js/utils/auth.js"></script>
   <script defer src="js/app.js"></script>
-    <script defer src="js/planned.js"></script>
+  <script defer src="js/utils/ui.js"></script>
+  <script defer src="js/planned.js"></script>
   </head>
-  <body>
+  <body class="workspace-page" data-page-title="Планируемые" data-page-subtitle="Запланируйте будущие транзакции">
     <header>
       <div class="brand visually-hidden">
         <a href="dashboard.html">FinTrackr</a>
@@ -26,20 +27,7 @@
       aria-label="Боковая навигация"
     >
     <div class="sidebar-top">
-      <div class="sidebar-header">
-        <a
-          href="dashboard.html"
-          class="logo"
-          aria-label="FinTrackr — на главную"
-        >
-          <svg
-            class="logo-icon"
-            width="32"
-            height="32"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
+      <!-- sidebar-footer удалён: профиль и auth вынесены в header dropdown -->
             focusable="false"
           >
             <rect width="24" height="24" rx="6" fill="var(--primary)"></rect>
@@ -167,22 +155,6 @@
         </div>
       </nav>
     </div>
-
-    <div class="sidebar-footer">
-      <div class="profile-section">
-          <div class="profile-avatar">
-            <span class="avatar-placeholder">👤</span>
-          </div>
-          <div class="profile-info">
-            <p class="profile-name">Пользователь</p>
-            <p class="profile-email">user@example.com</p>
-          </div>
-        </div>
-        <div class="sidebar-auth">
-          <a href="login.html" class="auth-link login-link">Вход</a>
-          <a href="register.html" class="auth-link register-link">Регистрация</a>
-          <a href="#" class="auth-link logout-link">Выход</a>
-        </div>
     </aside>
 
     <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>

@@ -45,72 +45,117 @@ function renderPagination(total) {
 }
 
 function renderTransactions() {
-  const tbody = document.querySelector('#transactionsTable tbody');
-  if (!tbody) return;
-  tbody.innerHTML = '';
+  const listEl = document.getElementById('transactionsList');
+  const tableBody = document.querySelector('#transactionsTable tbody');
   const items = paginate(transactionsState.filtered);
-  if (!items.length) {
-    const row = document.createElement('tr');
-    const cell = document.createElement('td');
-    cell.colSpan = 7;
-    cell.innerHTML =
-      '<div class="table-empty-state">Операций пока нет. Добавьте первую транзакцию, чтобы увидеть её здесь.</div>';
-    row.appendChild(cell);
-    tbody.appendChild(row);
+
+  // Card list rendering if container exists
+  if (listEl) {
+    listEl.innerHTML = '';
+    if (!items.length) {
+      const empty = document.createElement('div');
+      empty.className = 'tx-item';
+      empty.innerHTML = '<div class="tx-main"><span class="tx-title">Пока нет операций</span><span class="tx-meta">Добавьте первую транзакцию</span></div>';
+      listEl.appendChild(empty);
+      renderPagination(transactionsState.filtered.length);
+      return;
+    }
+    items.forEach((tx) => {
+      const account = transactionsState.accounts.find((a) => a.id === tx.account_id);
+      const category = transactionsState.categories.find((c) => c.id === tx.category_id);
+      const amountStr = typeof formatCurrency === 'function'
+        ? formatCurrency(Number(tx.amount), tx.currency)
+        : `${Number(tx.amount).toFixed(2)} ${tx.currency}`;
+
+      const item = document.createElement('div');
+      item.className = 'tx-item';
+      item.innerHTML = `
+        <div class="tx-main">
+          <span class="tx-title">${category ? category.name : '—'} — ${account ? account.name : '—'}</span>
+          <span class="tx-meta">${tx.date}${tx.note ? ' • ' + tx.note : ''}</span>
+        </div>
+        <div class="tx-category">
+          <span class="chip">${tx.type === 'income' ? 'Доход' : 'Расход'}</span>
+        </div>
+        <div class="tx-amount ${tx.type === 'income' ? 'tx-amount--income' : 'tx-amount--expense'}">${amountStr}</div>
+      `;
+      const actions = document.createElement('div');
+      actions.style.display = 'flex';
+      actions.style.gap = '8px';
+      actions.style.gridColumn = '1 / -1';
+      actions.style.justifyContent = 'flex-end';
+      actions.style.marginTop = '6px';
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'btn-secondary';
+      editBtn.textContent = 'Редактировать';
+      editBtn.dataset.action = 'edit';
+      editBtn.dataset.id = tx.id;
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'btn-danger';
+      delBtn.textContent = 'Удалить';
+      delBtn.dataset.action = 'delete';
+      delBtn.dataset.id = tx.id;
+      actions.append(editBtn, delBtn);
+      item.appendChild(actions);
+      listEl.appendChild(item);
+    });
     renderPagination(transactionsState.filtered.length);
     return;
   }
 
+  // Fallback: legacy table rendering
+  if (!tableBody) return;
+  tableBody.innerHTML = '';
+  if (!items.length) {
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
+    cell.colSpan = 7;
+    cell.innerHTML = '<div class="table-empty-state">Операций пока нет. Добавьте первую транзакцию, чтобы увидеть её здесь.</div>';
+    row.appendChild(cell);
+    tableBody.appendChild(row);
+    renderPagination(transactionsState.filtered.length);
+    return;
+  }
   items.forEach((tx) => {
     const tr = document.createElement('tr');
     const dateTd = document.createElement('td');
     dateTd.textContent = tx.date;
-
     const accTd = document.createElement('td');
     const account = transactionsState.accounts.find((a) => a.id === tx.account_id);
     accTd.textContent = account ? account.name : '—';
-
     const catTd = document.createElement('td');
     const category = transactionsState.categories.find((c) => c.id === tx.category_id);
     catTd.textContent = category ? category.name : '—';
-
     const typeTd = document.createElement('td');
     typeTd.textContent = tx.type === 'income' ? 'Доход' : 'Расход';
     typeTd.className = tx.type === 'income' ? 'status-income' : 'status-expense';
-
     const amountTd = document.createElement('td');
-    const amount = typeof formatCurrency === 'function'
-      ? formatCurrency(Number(tx.amount), tx.currency)
-      : `${Number(tx.amount).toFixed(2)} ${tx.currency}`;
+    const amount = typeof formatCurrency === 'function' ? formatCurrency(Number(tx.amount), tx.currency) : `${Number(tx.amount).toFixed(2)} ${tx.currency}`;
     amountTd.textContent = amount;
     amountTd.className = tx.type === 'income' ? 'status-income' : 'status-expense';
-
     const noteTd = document.createElement('td');
     noteTd.textContent = tx.note || '';
-
     const actionsTd = document.createElement('td');
     actionsTd.style.display = 'flex';
     actionsTd.style.gap = '0.5rem';
-
     const editBtn = document.createElement('button');
     editBtn.type = 'button';
     editBtn.className = 'btn-secondary';
     editBtn.textContent = 'Редактировать';
     editBtn.dataset.action = 'edit';
     editBtn.dataset.id = tx.id;
-
     const deleteBtn = document.createElement('button');
     deleteBtn.type = 'button';
     deleteBtn.className = 'btn-danger';
     deleteBtn.textContent = 'Удалить';
     deleteBtn.dataset.action = 'delete';
     deleteBtn.dataset.id = tx.id;
-
     actionsTd.append(editBtn, deleteBtn);
     tr.append(dateTd, accTd, catTd, typeTd, amountTd, noteTd, actionsTd);
-    tbody.appendChild(tr);
+    tableBody.appendChild(tr);
   });
-
   renderPagination(transactionsState.filtered.length);
 }
 
@@ -212,6 +257,28 @@ function bindFilterForm() {
   document.getElementById('filterSearch')?.addEventListener('input', () => {
     transactionsState.currentPage = 1;
     applyFilters();
+  });
+  // Quick period buttons (Today / Week / Month)
+  document.querySelectorAll('[data-quick-period]')?.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const p = btn.getAttribute('data-quick-period');
+      const start = document.getElementById('filterStart');
+      const end = document.getElementById('filterEnd');
+      const today = new Date();
+      let from = new Date(today);
+      if (p === 'today') {
+        from = new Date(today);
+      } else if (p === 'week') {
+        from.setDate(today.getDate() - 7);
+      } else if (p === 'month') {
+        from.setMonth(today.getMonth() - 1);
+      }
+      const toISO = (d) => d.toISOString().slice(0, 10);
+      if (start) start.value = toISO(from);
+      if (end) end.value = toISO(today);
+      transactionsState.currentPage = 1;
+      applyFilters();
+    });
   });
 }
 
@@ -477,19 +544,35 @@ function openTransactionModal(tx) {
 
 function bindTableActions() {
   const tbody = document.querySelector('#transactionsTable tbody');
-  if (!tbody) return;
-  tbody.addEventListener('click', (event) => {
-    const button = event.target.closest('button');
-    if (!button?.dataset.action) return;
-    const id = button.dataset.id;
-    if (!id) return;
-    if (button.dataset.action === 'delete') {
-      handleDeleteTransaction(id);
-    } else if (button.dataset.action === 'edit') {
-      const tx = transactionsState.all.find((item) => String(item.id) === String(id));
-      if (tx) openTransactionModal(tx);
-    }
-  });
+  if (tbody) {
+    tbody.addEventListener('click', (event) => {
+      const button = event.target.closest('button');
+      if (!button?.dataset.action) return;
+      const id = button.dataset.id;
+      if (!id) return;
+      if (button.dataset.action === 'delete') {
+        handleDeleteTransaction(id);
+      } else if (button.dataset.action === 'edit') {
+        const tx = transactionsState.all.find((item) => String(item.id) === String(id));
+        if (tx) openTransactionModal(tx);
+      }
+    });
+  }
+  const listEl = document.getElementById('transactionsList');
+  if (listEl) {
+    listEl.addEventListener('click', (event) => {
+      const button = event.target.closest('button');
+      if (!button?.dataset.action) return;
+      const id = button.dataset.id;
+      if (!id) return;
+      if (button.dataset.action === 'delete') {
+        handleDeleteTransaction(id);
+      } else if (button.dataset.action === 'edit') {
+        const tx = transactionsState.all.find((item) => String(item.id) === String(id));
+        if (tx) openTransactionModal(tx);
+      }
+    });
+  }
 }
 
 function bindAddForm() {
@@ -566,8 +649,9 @@ function bindAddForm() {
 }
 
 async function initTransactionsPage() {
-  const tbody = document.querySelector('#transactionsTable tbody');
-  if (!tbody) return;
+  const hasList = document.getElementById('transactionsList');
+  const hasTable = document.querySelector('#transactionsTable tbody');
+  if (!hasList && !hasTable) return;
   const [transactions, accounts, categories, rules] = await Promise.all([
     fetchData('/api/transactions'),
     fetchData('/api/accounts'),

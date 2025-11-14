@@ -6,9 +6,10 @@
   <title>FinTrackr – Отчёты</title>
   <link rel="stylesheet" href="css/style.css" />
   <script defer src="js/utils/auth.js"></script>
+  <script defer src="js/app.js"></script>
   <script defer src="js/reports.js"></script>
 </head>
-<body>
+<body class="workspace-page" data-page-title="Отчёты" data-page-subtitle="Аналитика доходов и расходов">
   <header>
     <div class="brand visually-hidden">
       <a href="dashboard.html">FinTrackr</a>
@@ -19,20 +20,7 @@
 
   <aside class="sidebar" id="sidebar" role="navigation" aria-label="Боковая навигация">
     <div class="sidebar-top">
-      <div class="sidebar-header">
-      <a href="dashboard.html" class="logo" aria-label="FinTrackr — на главную">
-        <svg class="logo-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-          <rect width="24" height="24" rx="6" fill="var(--primary)"></rect>
-          <path d="M6 12h12M6 8h12M6 16h12" stroke="#fff" stroke-width="1.2" stroke-linecap="round"></path>
-        </svg>
-        <span class="logo-text">FinTrackr</span>
-      </a>
-      
-    </div>
-    </div>
-
-    <div class="sidebar-scroll">
-      <nav class="sidebar-nav" aria-label="Меню приложения">
+      <!-- sidebar-footer удалён: профиль и auth вынесены в header dropdown -->
       <div class="nav-section">
         <h3 class="nav-section-title">Основное</h3>
         <ul class="nav-list">
@@ -71,24 +59,6 @@
         </ul>
       </div>
     </nav>
-    </div>
-
-    <div class="sidebar-footer">
-      <div class="profile-section">
-        <div class="user-info">
-          <div class="user-avatar">👤</div>
-          <div class="user-meta">
-            <span class="user-name">Пользователь</span>
-            <span class="user-email">user@example.com</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="sidebar-auth">
-        <a href="login.html" class="auth-link login-link">Вход</a>
-        <a href="register.html" class="auth-link register-link">Регистрация</a>
-        <a href="#" class="auth-link logout-link">Выход</a>
-      </div>
     </div>
   </aside>
 

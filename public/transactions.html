@@ -10,7 +10,7 @@
     <script defer src="js/utils/ui.js"></script>
     <script defer src="js/transactions.js"></script>
   </head>
-  <body>
+  <body class="workspace-page" data-page-title="Операции" data-page-subtitle="Все доходы и расходы в одном месте">
     <header>
       <div class="brand visually-hidden">
         <a href="dashboard.html">FinTrackr</a>
@@ -27,20 +27,7 @@
       aria-label="Боковая навигация"
     >
     <div class="sidebar-top">
-      <div class="sidebar-header">
-        <a
-          href="dashboard.html"
-          class="logo"
-          aria-label="FinTrackr — на главную"
-        >
-          <svg
-            class="logo-icon"
-            width="32"
-            height="32"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
+      <!-- sidebar-footer удалён: профиль и auth вынесены в header dropdown -->
             focusable="false"
           >
             <rect width="24" height="24" rx="6" fill="var(--primary)"></rect>
@@ -169,21 +156,6 @@
       </nav>
     </div>
 
-    <div class="sidebar-footer">
-      <div class="profile-section">
-          <div class="profile-avatar">
-            <span class="avatar-placeholder">👤</span>
-          </div>
-          <div class="profile-info">
-            <p class="profile-name">Пользователь</p>
-            <p class="profile-email">user@example.com</p>
-          </div>
-        </div>
-        <div class="sidebar-auth">
-          <a href="login.html" class="auth-link login-link">Вход</a>
-          <a href="register.html" class="auth-link register-link">Регистрация</a>
-          <a href="#" class="auth-link logout-link">Выход</a>
-        </div>
     </aside>
 
     <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
@@ -283,28 +255,28 @@
           </div>
         </form>
       </section>
-      <!-- Таблица операций -->
+      <!-- Список операций (карточки) -->
       <section class="card">
         <h2>Список операций</h2>
-        <table id="transactionsTable">
-          <thead>
-            <tr>
-              <th>Дата</th>
-              <th>Счёт</th>
-              <th>Категория</th>
-              <th>Тип</th>
-              <th>Сумма</th>
-              <th>Примечание</th>
-              <th>Действия</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td colspan="7">Загрузка...</td>
-            </tr>
-          </tbody>
-        </table>
-        <div class="table-controls">
+        <div class="filter-grid" style="margin-bottom: 1rem">
+          <div class="form-field" style="flex:0 0 200px">
+            <label>Быстрый период</label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap">
+              <button type="button" class="btn-secondary" data-quick-period="today">Today</button>
+              <button type="button" class="btn-secondary" data-quick-period="week">Week</button>
+              <button type="button" class="btn-secondary" data-quick-period="month">Month</button>
+            </div>
+          </div>
+        </div>
+        <div id="transactionsList" class="tx-list" aria-live="polite">
+          <div class="tx-item" role="status">
+            <div class="tx-main">
+              <span class="tx-title">Загрузка...</span>
+              <span class="tx-meta">Пожалуйста, подождите</span>
+            </div>
+          </div>
+        </div>
+        <div class="table-controls" style="margin-top: 12px; display:flex; justify-content: space-between; align-items:center; gap: 12px;">
           <div>
             <label style="display: flex; align-items: center; gap: 0.5rem">
               <span>На странице:</span>

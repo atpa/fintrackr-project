@@ -1,17 +1,36 @@
+/**
+ * FinTrackr Server
+ * 
+ * NOTE: This file is currently monolithic (~2000 lines) and needs refactoring.
+ * Modular services have been created in:
+ * - config/constants.js - Application constants
+ * - services/authService.js - Authentication and JWT
+ * - services/dataService.js - Data persistence
+ * - services/currencyService.js - Currency conversion
+ * - utils/http.js - HTTP utilities
+ * 
+ * See server.refactored.js for the target architecture.
+ * Migration in progress - use services where imported below.
+ */
+
 const http = require("http");
 const https = require("https");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+
+// Note: Modular services created but not yet fully integrated
+// Keeping original implementation for stability
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+const dataPath = path.join(__dirname, "data.json");
+
 const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change";
-const ACCESS_TOKEN_TTL_SECONDS = 15 * 60; // 15 минут
-const REFRESH_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 дней
+const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
+const REFRESH_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60;
 const COOKIE_SECURE = process.env.COOKIE_SECURE === "true";
 
-// Определяем MIME-типы для разных расширений
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -23,7 +42,6 @@ const MIME_TYPES = {
   ".svg": "image/svg+xml",
 };
 
-// Список поддерживаемых банков. В реальном приложении это получалось бы из внешнего сервиса.
 const BANKS = [
   { id: 1, name: "Тинькофф" },
   { id: 2, name: "Сбербанк" },
@@ -150,39 +168,57 @@ const MOCK_BANK_TRANSACTIONS = {
   ],
 };
 
-// Загружаем данные из файла JSON; в реальном приложении здесь бы была БД
-const dataPath = path.join(__dirname, "data.json");
-
+/**
+ * Apply default structure to data object
+ */
 function applyDataDefaults(target) {
-  if (!target || typeof target !== "object") {
-    target = {};
-  }
-  if (!Array.isArray(target.accounts)) target.accounts = [];
-  if (!Array.isArray(target.categories)) target.categories = [];
-  if (!Array.isArray(target.transactions)) target.transactions = [];
-  if (!Array.isArray(target.budgets)) target.budgets = [];
-  if (!Array.isArray(target.goals)) target.goals = [];
-  if (!Array.isArray(target.planned)) target.planned = [];
-  if (!Array.isArray(target.users)) target.users = [];
-  if (!Array.isArray(target.bankConnections)) target.bankConnections = [];
-  if (!Array.isArray(target.subscriptions)) target.subscriptions = [];
-  if (!Array.isArray(target.rules)) target.rules = [];
-  if (!Array.isArray(target.recurring)) target.recurring = [];
-  if (!Array.isArray(target.refreshTokens)) target.refreshTokens = [];
-  if (!Array.isArray(target.tokenBlacklist)) target.tokenBlacklist = [];
+  if (!target.users) target.users = [];
+  if (!target.accounts) target.accounts = [];
+  if (!target.categories) target.categories = [];
+  if (!target.transactions) target.transactions = [];
+  if (!target.budgets) target.budgets = [];
+  if (!target.goals) target.goals = [];
+  if (!target.planned) target.planned = [];
+  if (!target.subscriptions) target.subscriptions = [];
+  if (!target.rules) target.rules = [];
+  if (!target.recurring) target.recurring = [];
+  if (!target.refreshTokens) target.refreshTokens = [];
+  if (!target.tokenBlacklist) target.tokenBlacklist = [];
+  if (!target.bankConnections) target.bankConnections = [];
   return target;
 }
 
-let data;
-try {
-  data = JSON.parse(fs.readFileSync(dataPath, "utf8"));
-  data = applyDataDefaults(data);
-} catch (err) {
-  console.error("Ошибка чтения файла данных:", err);
-  data = applyDataDefaults({});
+/**
+ * Load data from JSON file
+ */
+function loadData() {
+  try {
+    if (!fs.existsSync(dataPath)) {
+      return applyDataDefaults({});
+    }
+    const raw = fs.readFileSync(dataPath, "utf-8");
+    const parsed = JSON.parse(raw);
+    return applyDataDefaults(parsed);
+  } catch (err) {
+    console.error("Error loading data:", err);
+    return applyDataDefaults({});
+  }
 }
 
-const defaultUserId = data.users && data.users.length > 0 ? data.users[0].id : null;
+let data = loadData();
+const defaultUserId =
+  data.users && data.users.length > 0 ? data.users[0].id : null;
+
+// Ensure collections have user IDs
+function ensureCollectionUserId(collection, fallbackUserId = null) {
+  if (!Array.isArray(collection)) return;
+  collection.forEach((item) => {
+    if (item && typeof item === "object" && item.user_id == null) {
+      item.user_id = fallbackUserId;
+    }
+  });
+}
+
 ensureCollectionUserId(data.accounts, defaultUserId);
 ensureCollectionUserId(data.categories, defaultUserId);
 ensureCollectionUserId(data.transactions, defaultUserId);
@@ -252,7 +288,7 @@ function buildCookie(name, value, options = {}) {
 }
 
 function setAuthCookies(res, tokens, options = {}) {
-  const sameSite = options.sameSite || "Strict";
+  const sameSite = options.sameSite || "Lax";
   const secure =
     options.secure !== undefined ? options.secure : COOKIE_SECURE;
   const cookies = [
@@ -271,7 +307,7 @@ function setAuthCookies(res, tokens, options = {}) {
 }
 
 function clearAuthCookies(res, options = {}) {
-  const sameSite = options.sameSite || "Strict";
+  const sameSite = options.sameSite || "Lax";
   const secure =
     options.secure !== undefined ? options.secure : COOKIE_SECURE;
   const cookies = [

@@ -122,6 +122,149 @@ function convertAmount(amount, from, to) {
   return Number(amount) || 0;
 }
 
+const workspaceDataState = {
+  collectionsPromise: null,
+};
+
+function formatMonthLabel(dateObj = new Date()) {
+  try {
+    return dateObj.toLocaleString("ru-RU", { month: "long", year: "numeric" });
+  } catch (error) {
+    return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}`;
+  }
+}
+
+async function loadWorkspaceCollections() {
+  if (workspaceDataState.collectionsPromise) {
+    return workspaceDataState.collectionsPromise;
+  }
+  workspaceDataState.collectionsPromise = (async () => {
+    const [accounts, transactions, budgets, subscriptions] = await Promise.all([
+      fetchData("/api/accounts"),
+      fetchData("/api/transactions"),
+      fetchData("/api/budgets"),
+      fetchData("/api/subscriptions"),
+    ]);
+    return {
+      accounts: Array.isArray(accounts) ? accounts : [],
+      transactions: Array.isArray(transactions) ? transactions : [],
+      budgets: Array.isArray(budgets) ? budgets : [],
+      subscriptions: Array.isArray(subscriptions) ? subscriptions : [],
+    };
+  })().catch((error) => {
+    console.error("Не удалось загрузить данные рабочего пространства", error);
+    return { accounts: [], transactions: [], budgets: [], subscriptions: [] };
+  });
+  return workspaceDataState.collectionsPromise;
+}
+
+function computeWorkspaceMetrics(collections) {
+  const now = new Date();
+  const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const balanceCurrency = getBalanceCurrency();
+  let totalBalance = 0;
+  collections.accounts.forEach((account) => {
+    const balance = convertAmount(
+      Number(account.balance) || 0,
+      account.currency || balanceCurrency,
+      balanceCurrency
+    );
+    totalBalance += balance;
+  });
+
+  let monthExpense = 0;
+  let monthIncome = 0;
+  collections.transactions.forEach((tx) => {
+    if (!tx.date || !tx.date.startsWith(monthKey)) return;
+    const converted = convertAmount(
+      Number(tx.amount) || 0,
+      tx.currency || balanceCurrency,
+      balanceCurrency
+    );
+    if (tx.type === "expense") monthExpense += converted;
+    if (tx.type === "income") monthIncome += converted;
+  });
+
+  const monthBudgets = collections.budgets.filter((budget) => budget.month === monthKey);
+  const budgetLimit = monthBudgets.reduce((sum, budget) => sum + (Number(budget.limit) || 0), 0);
+  const budgetSpent = monthBudgets.reduce((sum, budget) => sum + (Number(budget.spent) || 0), 0);
+
+  const activePlan = collections.subscriptions.find(
+    (sub) => !sub.status || sub.status === "active"
+  );
+
+  return {
+    balanceCurrency,
+    totalBalance,
+    monthExpense,
+    monthIncome,
+    budgetLimit,
+    budgetSpent,
+    monthLabel: formatMonthLabel(now),
+    planTitle: activePlan ? activePlan.title : "Free",
+  };
+}
+
+function updateHeaderMetrics(metrics) {
+  const currencyChip = document.getElementById("headerCurrencyChip");
+  const periodChip = document.getElementById("headerPeriodChip");
+  if (currencyChip) currencyChip.textContent = `Валюта: ${metrics.balanceCurrency}`;
+  if (periodChip) periodChip.textContent = `Период: ${metrics.monthLabel}`;
+}
+
+function updateSidebarSnapshot(user, metrics) {
+  const heroName = document.querySelector(".sidebar-hero-name");
+  if (heroName) {
+    heroName.textContent = user?.name ? `Привет, ${user.name.split(" ")[0]}` : "Добро пожаловать";
+  }
+  const heroSubtitle = document.querySelector(".sidebar-hero-subtitle");
+  if (heroSubtitle) {
+    heroSubtitle.textContent = `Расходы за месяц: ${formatCurrency(
+      metrics.monthExpense,
+      metrics.balanceCurrency
+    )}`;
+  }
+  const heroEyebrow = document.querySelector(".sidebar-hero-eyebrow");
+  if (heroEyebrow) {
+    heroEyebrow.textContent = metrics.planTitle === "Free" ? "Базовый план" : metrics.planTitle;
+  }
+  const planValue = document.getElementById("planCardValue");
+  if (planValue) {
+    if (metrics.budgetLimit > 0) {
+      planValue.textContent = `${metrics.budgetSpent.toFixed(0)} / ${metrics.budgetLimit.toFixed(
+        0
+      )} ${metrics.balanceCurrency}`;
+    } else {
+      planValue.textContent = `${metrics.monthExpense.toFixed(0)} ${metrics.balanceCurrency}`;
+    }
+  }
+  const planHint = document.getElementById("planCardHint");
+  if (planHint) {
+    planHint.textContent = metrics.budgetLimit
+      ? "Все бюджеты активны и обновляются автоматически"
+      : "Добавьте первый бюджет, чтобы контролировать траты";
+  }
+  const progressBar = document.getElementById("planProgressBar");
+  if (progressBar) {
+    const progress = metrics.budgetLimit
+      ? Math.min(100, Math.round((metrics.budgetSpent / metrics.budgetLimit) * 100))
+      : Math.min(100, Math.round((metrics.monthExpense / Math.max(metrics.totalBalance, 1)) * 100));
+    progressBar.style.width = `${isFinite(progress) ? progress : 0}%`;
+  }
+}
+
+async function hydrateWorkspaceShell(user) {
+  if (!user || !isWorkspacePage()) return;
+  try {
+    const collections = await loadWorkspaceCollections();
+    const metrics = computeWorkspaceMetrics(collections);
+    updateHeaderMetrics(metrics);
+    updateSidebarSnapshot(user, metrics);
+  } catch (error) {
+    console.error("Не удалось обновить состояние личного кабинета", error);
+  }
+}
+
 /**
  * Строит простой столбчатый график на элементе canvas
  * @param {HTMLCanvasElement} canvas
@@ -245,6 +388,225 @@ function drawPieChart(canvas, labels, values) {
     ctx.fill();
     startAngle = endAngle;
   }
+}
+
+function getUserInitials(name) {
+  if (!name) return "👤";
+  const parts = String(name)
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!parts.length) return "👤";
+  const initials = parts
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+  return initials || "👤";
+}
+
+function isWorkspacePage() {
+  const body = document.body;
+  if (!body) return false;
+  return body.classList.contains("workspace-page") || 
+         (!body.classList.contains("landing-page") && !body.classList.contains("auth-page"));
+}
+
+function renderAppHeader(user) {
+  const header = document.querySelector("header");
+  if (!header || !isWorkspacePage()) return;
+  if (header.dataset.enhanced === "true") return;
+
+  const pageTitle =
+    header.dataset.pageTitle ||
+    (document.body && document.body.dataset.pageTitle) ||
+    (document.title || "FinTrackr")
+      .replace(/FinTrackr\s?[–-]\s?/i, "")
+      .trim() ||
+    "FinTrackr";
+
+  const pageSubtitle =
+    header.dataset.pageSubtitle ||
+    (document.body && document.body.dataset.pageSubtitle) ||
+    "Прогнозы, бюджеты и уведомления в едином месте";
+
+    header.classList.add("app-header");
+    header.dataset.enhanced = "true";
+    header.innerHTML = `
+      <div class="header-inner">
+        <div class="header-left">
+          <button class="burger" aria-label="Меню" aria-expanded="false">
+            <span></span><span></span><span></span>
+          </button>
+          <div class="header-pills header-pills--left" role="tablist" aria-label="Период">
+            <button class="header-pill" type="button">Сводка недели</button>
+            <button class="header-pill header-pill--muted" type="button">AI советчик</button>
+          </div>
+        </div>
+        <div class="header-center">
+          <div class="header-title-wrap">
+            <h1 class="header-title">${pageTitle}</h1>
+          </div>
+          <p class="header-subtitle">${pageSubtitle}</p>
+        </div>
+        <div class="header-right">
+          <label class="header-search" aria-label="Поиск по данным FinTrackr">
+            <span class="header-search-icon">🔍</span>
+            <input type="search" placeholder="Поиск по операциям, счетам и категориям" />
+          </label>
+          <span class="header-pill header-pill--muted" id="headerCurrencyChip">Валюта: USD</span>
+          <a href="planned.html" class="header-quick" aria-label="Планирование">Планы</a>
+          <a href="transactions.html#new" class="header-primary" aria-label="Добавить операцию">+ Операция</a>
+          <button class="header-icon" type="button" aria-label="Уведомления">
+            <span class="header-icon-dot"></span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+              <path d="M12 22a2 2 0 0 0 2-2H10a2 2 0 0 0 2 2Zm6-6v-5a6 6 0 0 0-4-5.66V4a2 2 0 1 0-4 0v1.34A6 6 0 0 0 6 11v5l-2 2v1h16v-1l-2-2Z" fill="currentColor" />
+            </svg>
+          </button>
+          <div class="header-profile" id="headerProfile" aria-haspopup="menu" aria-expanded="false">
+            <div class="profile-avatar-sm" id="headerAvatar">👤</div>
+            <div class="header-dropdown" id="headerDropdown" role="menu" hidden>
+              <div class="header-dropdown-info">
+                <p class="header-profile-name" id="headerProfileName">Гость</p>
+                <p class="header-profile-email" id="headerProfileEmail">Войдите, чтобы синхронизировать</p>
+              </div>
+              <button type="button" class="dropdown-item" id="headerLogoutBtn">Выход</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+  const currencyChip = document.getElementById("headerCurrencyChip");
+  if (currencyChip) {
+    currencyChip.textContent = `Валюта: ${getBalanceCurrency()}`;
+  }
+
+  const headerAvatar = document.getElementById("headerAvatar");
+  if (headerAvatar) {
+    headerAvatar.textContent = getUserInitials(user && user.name);
+  }
+
+  const headerName = document.getElementById("headerProfileName");
+  const headerEmail = document.getElementById("headerProfileEmail");
+  if (headerName) headerName.textContent = user?.name || "Гость";
+  if (headerEmail)
+    headerEmail.textContent = user?.email || "Войдите, чтобы синхронизировать";
+  const searchInputEl = header.querySelector(".header-search input");
+  if (searchInputEl) {
+    searchInputEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const val = searchInputEl.value.trim();
+        if (val) {
+          window.location.href = `transactions.html?search=${encodeURIComponent(val)}`;
+        }
+      }
+    });
+  }
+
+  // Dropdown logic for header profile
+  const profileEl = document.getElementById("headerProfile");
+  const dropdownEl = document.getElementById("headerDropdown");
+  const logoutBtn = document.getElementById("headerLogoutBtn");
+  if (profileEl && dropdownEl) {
+    function closeDropdown() {
+      dropdownEl.hidden = true;
+      profileEl.setAttribute("aria-expanded", "false");
+    }
+    function toggleDropdown(e) {
+      e.stopPropagation();
+      const isHidden = dropdownEl.hidden;
+      dropdownEl.hidden = !isHidden;
+      profileEl.setAttribute("aria-expanded", String(isHidden));
+    }
+    profileEl.addEventListener("click", toggleDropdown);
+    document.addEventListener("click", (e) => {
+      if (!profileEl.contains(e.target)) closeDropdown();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeDropdown();
+    });
+  }
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        await fetch("/api/logout", { method: "POST" });
+      } catch (e) {}
+      if (window.Auth && typeof window.Auth.logout === "function") {
+        try { await window.Auth.logout(); } catch (e) {}
+      }
+      window.location.href = "login.html";
+    });
+  }
+
+  const searchInput = header.querySelector(".header-search input");
+  if (searchInput) {
+    searchInput.addEventListener("input", (event) => {
+      const detail = (event.target && event.target.value) || "";
+      document.dispatchEvent(
+        new CustomEvent("fintrackr:search", { detail })
+      );
+    });
+  }
+}
+
+function enhanceSidebar(user) {
+  const sidebar = document.querySelector(".sidebar");
+  if (!sidebar || sidebar.dataset.enhanced === "true" || !isWorkspacePage()) {
+    return;
+  }
+
+  const navContainer =
+    sidebar.querySelector(".sidebar-scroll") || sidebar.querySelector(".sidebar-nav");
+  if (!navContainer) {
+    return;
+  }
+
+  const host = navContainer.parentElement || sidebar;
+
+  const hero = document.createElement("div");
+  hero.className = "sidebar-hero";
+  hero.innerHTML = `
+    <p class="sidebar-hero-eyebrow">Free</p>
+    <h2 class="sidebar-hero-name">Добро пожаловать</h2>
+    <p class="sidebar-hero-subtitle">Расходы за месяц: 0</p>
+    <div class="sidebar-hero-actions">
+      <a href="accounts.html" class="sidebar-hero-link">Счета</a>
+      <a href="transactions.html#new" class="sidebar-hero-link sidebar-hero-link--primary" data-action="new-transaction">Новая</a>
+    </div>
+  `;
+
+  host.insertBefore(hero, navContainer);
+
+  const planCard = document.createElement("div");
+  planCard.className = "sidebar-plan-card";
+  planCard.innerHTML = `
+    <div class="plan-card-header">
+      <span class="plan-card-label">Лимит расходов</span>
+      <span class="plan-card-pill">Beta</span>
+    </div>
+    <p class="plan-card-value" id="planCardValue">0 USD</p>
+    <div class="plan-card-progress">
+      <span class="plan-card-progress-bar" id="planProgressBar" style="width: 0%"></span>
+    </div>
+    <p class="plan-card-hint" id="planCardHint">Добавьте бюджет, чтобы отслеживать прогресс автоматически.</p>
+  `;
+
+  host.insertBefore(planCard, navContainer);
+
+  const heroName = hero.querySelector(".sidebar-hero-name");
+  if (heroName) {
+    const text = user?.name ? `Привет, ${user.name.split(" ")[0]}` : "Добро пожаловать";
+    heroName.textContent = text;
+  }
+
+  const heroSubtitle = hero.querySelector(".sidebar-hero-subtitle");
+  if (heroSubtitle) {
+    heroSubtitle.textContent = user
+      ? "Продолжайте держать расходы под контролем"
+      : "Авторизуйтесь, чтобы синхронизировать данные";
+  }
+
+  sidebar.dataset.enhanced = "true";
 }
 
 /**
@@ -400,32 +762,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  const loginLink = document.querySelector(".login-link");
-  const regLink = document.querySelector(".register-link");
-  const logoutLink = document.querySelector(".logout-link");
-  const profileName = document.querySelector(".profile-name");
-  const profileEmail = document.querySelector(".profile-email");
+  renderAppHeader(user);
+  enhanceSidebar(user);
+  hydrateWorkspaceShell(user);
 
-  if (user) {
-    if (profileName) profileName.textContent = user.name || "Пользователь";
-    if (profileEmail) profileEmail.textContent = user.email || "";
-    if (loginLink) loginLink.style.display = "none";
-    if (regLink) regLink.style.display = "none";
-    if (logoutLink) {
-      logoutLink.style.display = "inline-block";
-      logoutLink.addEventListener("click", async (e) => {
-        e.preventDefault();
-        await Auth.logout();
-        window.location.href = "landing.html";
-      });
-    }
-  } else {
-    if (profileName) profileName.textContent = "";
-    if (profileEmail) profileEmail.textContent = "";
-    if (logoutLink) logoutLink.style.display = "none";
-    if (loginLink) loginLink.style.display = "inline-block";
-    if (regLink) regLink.style.display = "inline-block";
-  }
+  // Legacy sidebar profile/auth link handlers removed - now handled in renderAppHeader dropdown
 
   if (document.getElementById("expenseChart")) {
     initDashboard();

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Тест авторизации</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; }
+    .log { background: #f5f5f5; padding: 1rem; margin-top: 1rem; white-space: pre-wrap; }
+    button { margin: 0.5rem 0; padding: 0.5rem 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Тест авторизации FinTrackr</h1>
+  
+  <h2>Регистрация</h2>
+  <input type="text" id="regName" placeholder="Имя" value="Test User">
+  <input type="email" id="regEmail" placeholder="Email">
+  <input type="password" id="regPassword" placeholder="Пароль" value="test123456">
+  <button id="btnRegister">Зарегистрироваться</button>
+  
+  <h2>Вход</h2>
+  <input type="email" id="loginEmail" placeholder="Email">
+  <input type="password" id="loginPassword" placeholder="Пароль" value="test123456">
+  <button id="btnLogin">Войти</button>
+  
+  <h2>Проверка</h2>
+  <button id="btnCheckSession">Проверить сессию</button>
+  <button id="btnCheckAccounts">Проверить /api/accounts</button>
+  <button id="btnLogout">Выйти</button>
+  
+  <h2>Состояние</h2>
+  <div>SessionStorage user: <strong id="storageUser"></strong></div>
+  <div>Auth.getUser(): <strong id="authUser"></strong></div>
+  
+  <h2>Лог</h2>
+  <div class="log" id="log"></div>
+  
+  <script defer src="js/utils/auth.js"></script>
+  <script>
+    function log(msg) {
+      const logEl = document.getElementById('log');
+      logEl.textContent += new Date().toLocaleTimeString() + ': ' + msg + '\n';
+    }
+    
+    function updateState() {
+      try {
+        const stored = sessionStorage.getItem('user');
+        document.getElementById('storageUser').textContent = stored || '(пусто)';
+      } catch(e) {
+        document.getElementById('storageUser').textContent = 'Ошибка: ' + e.message;
+      }
+      
+      try {
+        const user = Auth.getUser();
+        document.getElementById('authUser').textContent = user ? JSON.stringify(user) : '(пусто)';
+      } catch(e) {
+        document.getElementById('authUser').textContent = 'Ошибка: ' + e.message;
+      }
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      updateState();
+      
+      // Регистрация
+      document.getElementById('btnRegister').addEventListener('click', async () => {
+        const name = document.getElementById('regName').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
+        const password = document.getElementById('regPassword').value;
+        
+        if (!name || !email || !password) {
+          log('Заполните все поля');
+          return;
+        }
+        
+        try {
+          log('Отправка POST /api/register...');
+          const resp = await fetch('/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password })
+          });
+          
+          log('Статус: ' + resp.status);
+          const data = await resp.json();
+          log('Ответ: ' + JSON.stringify(data));
+          
+          if (resp.ok) {
+            const user = data.user || data;
+            if (Auth.login(user)) {
+              log('Auth.login() успешно');
+              document.getElementById('loginEmail').value = email;
+              updateState();
+            } else {
+              log('Auth.login() вернул false');
+            }
+          }
+        } catch (err) {
+          log('Ошибка: ' + err.message);
+        }
+      });
+      
+      // Вход
+      document.getElementById('btnLogin').addEventListener('click', async () => {
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        
+        if (!email || !password) {
+          log('Заполните email и пароль');
+          return;
+        }
+        
+        try {
+          log('Отправка POST /api/login...');
+          const resp = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+          
+          log('Статус: ' + resp.status);
+          const data = await resp.json();
+          log('Ответ: ' + JSON.stringify(data));
+          
+          if (resp.ok) {
+            const user = data.user || data;
+            if (Auth.login(user)) {
+              log('Auth.login() успешно');
+              updateState();
+            } else {
+              log('Auth.login() вернул false');
+            }
+          }
+        } catch (err) {
+          log('Ошибка: ' + err.message);
+        }
+      });
+      
+      // Проверка сессии
+      document.getElementById('btnCheckSession').addEventListener('click', async () => {
+        try {
+          log('Отправка GET /api/session...');
+          const resp = await fetch('/api/session');
+          log('Статус: ' + resp.status);
+          const data = await resp.json();
+          log('Ответ: ' + JSON.stringify(data));
+          updateState();
+        } catch (err) {
+          log('Ошибка: ' + err.message);
+        }
+      });
+      
+      // Проверка /api/accounts
+      document.getElementById('btnCheckAccounts').addEventListener('click', async () => {
+        try {
+          log('Отправка GET /api/accounts...');
+          const resp = await fetch('/api/accounts');
+          log('Статус: ' + resp.status);
+          const data = await resp.json();
+          log('Количество счетов: ' + data.length);
+          updateState();
+        } catch (err) {
+          log('Ошибка: ' + err.message);
+        }
+      });
+      
+      // Выход
+      document.getElementById('btnLogout').addEventListener('click', async () => {
+        try {
+          log('Вызов Auth.logout()...');
+          await Auth.logout();
+          log('Выход выполнен');
+          updateState();
+        } catch (err) {
+          log('Ошибка: ' + err.message);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

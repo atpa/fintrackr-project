@@ -33,7 +33,7 @@
       "user_id": 2,
       "name": "Сбер",
       "currency": "RUB",
-      "balance": 95000
+      "balance": 100000
     }
   ],
   "categories": [
@@ -66,12 +66,6 @@
       "name": "Подарки",
       "kind": "expense",
       "user_id": 1
-    },
-    {
-      "id": 6,
-      "user_id": 2,
-      "name": "Продукты",
-      "kind": "expense"
     }
   ],
   "transactions": [
@@ -184,17 +178,6 @@
       "date": "2025-11-13",
       "note": "",
       "user_id": 1
-    },
-    {
-      "id": 11,
-      "user_id": 2,
-      "account_id": 5,
-      "category_id": 6,
-      "type": "expense",
-      "amount": 5000,
-      "currency": "RUB",
-      "date": "2025-11-13",
-      "note": "обед"
     }
   ],
   "budgets": [
@@ -245,17 +228,6 @@
       "limit": 0,
       "spent": 10000,
       "user_id": 1
-    },
-    {
-      "id": 7,
-      "user_id": 2,
-      "category_id": 6,
-      "month": "2025-11",
-      "limit": 1000,
-      "spent": 5000,
-      "type": "fixed",
-      "percent": null,
-      "currency": "USD"
     }
   ],
   "goals": [
@@ -268,20 +240,7 @@
       "deadline": "2027-02-13"
     }
   ],
-  "planned": [
-    {
-      "id": 1,
-      "user_id": 2,
-      "account_id": 5,
-      "category_id": 6,
-      "type": "expense",
-      "amount": 1000,
-      "currency": "RUB",
-      "start_date": "2025-11-13",
-      "frequency": "daily",
-      "note": ""
-    }
-  ],
+  "planned": [],
   "users": [
     {
       "id": 1,
@@ -302,6 +261,42 @@
       "name": "CLI Test",
       "email": "cli-test-45345@example.com",
       "password_hash": "$2b$10$fL9Bgny1zkrarLTkI2.4m..9z9ukQb.kaQim8WbhtW5UjAQaXv4qK"
+    },
+    {
+      "id": 4,
+      "name": "Test User",
+      "email": "test@example.com",
+      "password_hash": "$2b$10$CLw5loUESnqFmMS/OAXwL.MWdH0925en6.yoP8IonCIZTRmUX9Zl6"
+    },
+    {
+      "id": 5,
+      "name": "Test User",
+      "email": "test-78021000@example.com",
+      "password_hash": "$2b$10$dK5F0BDLGOYEY2hwjXGaheeHfHxcEoYy403RhwNmt0dTKNGWvQBs6"
+    },
+    {
+      "id": 6,
+      "name": "Test User",
+      "email": "test-337964772@example.com",
+      "password_hash": "$2b$10$A9PNAXXEDn6ljCGPpp7PwO4ITElt9Ukl.e7Bpf0nTW9E/VD0pJuaa"
+    },
+    {
+      "id": 7,
+      "name": "UI Test",
+      "email": "ui-test-382897377@example.com",
+      "password_hash": "$2b$10$qeX7IO.74a9huHUgkvq5jehQeyB.ONyur7uVs4Vk1AjImZNqIniIy"
+    },
+    {
+      "id": 8,
+      "name": "Full Test",
+      "email": "full-test-859521058@example.com",
+      "password_hash": "$2b$10$zcJBAWCm2gI7Q.GQ0YJp.OIEVPFTOa2zxY3x9tuCc5W3VZH7lLcCG"
+    },
+    {
+      "id": 9,
+      "name": "Test User",
+      "email": "123123@mail.ru",
+      "password_hash": "$2b$10$L5IITh38ALfs/ragSUJv.ezt.2C5Vb4TEJjwigLkX5TPKRt4OTck."
     }
   ],
   "bankConnections": [],
@@ -324,11 +319,6 @@
       "expiresAt": 1763650962151
     },
     {
-      "token": "72e7d61311510ccaba78dae569ca9d519ba5b5804f9435b8425c3cc605db99964f9b412bb4c4099c1281834e448bef64",
-      "userId": 2,
-      "expiresAt": 1763650979635
-    },
-    {
       "token": "445bef682ba528f413581e64c7f7b353b0dd23bc7c350037acf454c1df3a42be1eefc27f9486fad119f543ccee626b43",
       "userId": 2,
       "expiresAt": 1763708478694
@@ -337,6 +327,101 @@
       "token": "fbfd67ccdc4dbb2838a0bf17eb42d684bca457e5d11a736276389c331dbc92156bef2b50e6f3b784167d774111754881",
       "userId": 2,
       "expiresAt": 1763708506901
+    },
+    {
+      "token": "38440919c29b7b104ac0aac18f957c1c48d5927388c6a5985011b1f31a3f6d66d4b4f77ddbe40d4705fc45d0974eb1ca",
+      "userId": 4,
+      "expiresAt": 1763708767725
+    },
+    {
+      "token": "9762846b6c14c78307ba4d46a8ad584415723c495322190703a5c7f36b03cc2349ac857f94ca0e6cbdf9a2c55b268c6a",
+      "userId": 4,
+      "expiresAt": 1763708792535
+    },
+    {
+      "token": "b9150e7a5843c1d3eabd56b06b0d1c6fcb1012632c96a59cdced65f32c5fe726b4153567bfe7e9d54ece598440a4905b",
+      "userId": 2,
+      "expiresAt": 1763708981645
+    },
+    {
+      "token": "c1567f51fcd681077d362f51f0dc1d5889a7b98131c1e43f78c358385c03b3257baf2d1c3e11e2f458d21df0ece4558e",
+      "userId": 5,
+      "expiresAt": 1763709382910
+    },
+    {
+      "token": "213471535e89c648b1f7d39d38ed9a3044368e4a4e37a32611666822b9d9ca7903d808d1b2dca30be1cedea4c66328d0",
+      "userId": 6,
+      "expiresAt": 1763709481889
+    },
+    {
+      "token": "209848ed528860c36d69460cc0acad8fea4c7e8c3055be5f2d2b31d26f6a603aa77b8f19f496d80e1f441e936dd1244b",
+      "userId": 2,
+      "expiresAt": 1763709610046
+    },
+    {
+      "token": "a48335c0d8c11132d3f180a7144ff27023fafcd4020b8b51d82291b5d96e7d59bf5ec4061155015a0e0fa14fb4b8571b",
+      "userId": 7,
+      "expiresAt": 1763709892943
+    },
+    {
+      "token": "78507115211da2feb52031d154f30ee95cb21d8808b8b7afe190678ff8ce2d5ed18b48272b0a1fe6e65bf940d392ba81",
+      "userId": 8,
+      "expiresAt": 1763710103474
+    },
+    {
+      "token": "840dc311f5acea4acfeeea1856cbb95ad490bc318fa391ca091140a5084161747601e51f302ca414208eb6b66ad77e9a",
+      "userId": 9,
+      "expiresAt": 1763710254807
+    },
+    {
+      "token": "b4a5f9d1d029ba2aae5d06b3c7c3629295dd4db3756007e0873ebe8867a3696b1f1a1f743f01645e4c1479cfcb1c405f",
+      "userId": 2,
+      "expiresAt": 1763710308736
+    },
+    {
+      "token": "bb4352c58977242f530cc49c85bb2dcfc24ff2e1d32695ff80908f6ce953fbafba0fc942dceeb9f5302f14bbcf8ea833",
+      "userId": 2,
+      "expiresAt": 1763716043462
+    },
+    {
+      "token": "85ecd8629c0791874fe3d3ddcf01e0f3ae329c66cc3a150e99c8ddca91e8ff559e3b5b69dedb8e78d07752c17fa8a4f1",
+      "userId": 2,
+      "expiresAt": 1763717384970
+    },
+    {
+      "token": "ff78e59a8fc46e973c6338249a2a6ccea283dc4b25c1b37352dc2ab4b47c04bbf428a7bdd8eb69be85d3ec34e537f31e",
+      "userId": 2,
+      "expiresAt": 1763721133473
+    },
+    {
+      "token": "8eec7019a320e5bf7eacc65ebd8b86c92a2fa562d75a223d37b2a18ffcbb1969c2a47293e03e0c1ddb49a6e982fa8bb2",
+      "userId": 2,
+      "expiresAt": 1763721135096
+    },
+    {
+      "token": "3cdeddc427823b658161ab0e1574ee8d5471fe353c5aed57da6f9f1747d5e4f6dfd6736436b0fce21062bbc26daa9972",
+      "userId": 2,
+      "expiresAt": 1763722116099
+    },
+    {
+      "token": "f50fd4d06afa5d253fef24b029134123fd276abdfefde815e5d3ca0b5defb9ce93c12c2bf9d454112d34e25b06227430",
+      "userId": 2,
+      "expiresAt": 1763722117430
+    },
+    {
+      "token": "36965e85d1183a4ff18eb18a7fab743039241c273e991a9de183c5ee915973eaeda300ff6528caf63e24a001f881a5d6",
+      "userId": 2,
+      "expiresAt": 1763722275005
+    },
+    {
+      "token": "4e2da2f6780483b7dd8c12db2b7dae2d5009c8cb9d8eed7c320762d3e6ea3dad3716d37542d309849e40da1919b68fda",
+      "userId": 2,
+      "expiresAt": 1763723645563
+    },
+    {
+      "token": "02f06a280b4e6ec9bfd051e0d9105a3755a1fcbb7da7cc2bffb1471a488523eb1bab4f3bbe56e20ad1f42b02719eddc7",
+      "userId": 2,
+      "expiresAt": 1763723646844
     }
   ],
   "tokenBlacklist": [],
