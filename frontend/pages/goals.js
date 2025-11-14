@@ -1,6 +1,7 @@
-import fetchData from '../modules/api.js';
 import initNavigation from '../modules/navigation.js';
 import initProfileShell from '../modules/profile.js';
+import { API } from '../src/modules/api.js';
+import { toastSuccess, toastError } from '../src/components/Toast.js';
 
 initNavigation();
 initProfileShell();
@@ -49,38 +50,35 @@ function renderGoals(goals, container) {
 async function initGoalsPage() {
   const grid = document.getElementById('goalsGrid');
   if (!grid) return;
-  let goals = await fetchData('/api/goals');
-  renderGoals(goals, grid);
-  const form = document.getElementById('addGoalForm');
-  if (form) {
-    form.addEventListener('submit', async e => {
-      e.preventDefault();
-      const newGoal = {
-        title: document.getElementById('goalTitle').value,
-        target_amount: parseFloat(document.getElementById('goalTarget').value),
-        current_amount: parseFloat(document.getElementById('goalCurrent').value) || 0,
-        deadline: document.getElementById('goalDeadline').value
-      };
-      try {
-        const resp = await fetch('/api/goals', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newGoal)
-        });
-        if (!resp.ok) {
-          const err = await resp.json();
-          alert('Ошибка: ' + (err.error || 'не удалось добавить цель'));
-          return;
+
+  try {
+    let goals = await API.goals.getAll();
+    renderGoals(goals, grid);
+    const form = document.getElementById('addGoalForm');
+    if (form) {
+      form.addEventListener('submit', async e => {
+        e.preventDefault();
+        const newGoal = {
+          title: document.getElementById('goalTitle').value,
+          target_amount: parseFloat(document.getElementById('goalTarget').value),
+          current_amount: parseFloat(document.getElementById('goalCurrent').value) || 0,
+          deadline: document.getElementById('goalDeadline').value
+        };
+        try {
+          const created = await API.goals.create(newGoal);
+          goals.push(created);
+          toastSuccess('Цель добавлена!');
+          renderGoals(goals, grid);
+          form.reset();
+        } catch (error) {
+          console.error(error);
+          toastError(`Не удалось добавить цель: ${error.message}`);
         }
-        const created = await resp.json();
-        goals.push(created);
-        renderGoals(goals, grid);
-        form.reset();
-      } catch (err) {
-        console.error(err);
-        alert('Ошибка сети');
-      }
-    });
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    toastError(`Не удалось загрузить цели: ${error.message}`);
   }
 }
 

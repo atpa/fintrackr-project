@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FinTrackr – Цели</title>
+    <link rel="stylesheet" href="css/style.css" />
+  <script defer src="js/utils/auth.js"></script>
+  <script defer src="js/app.js"></script>
+  <script defer src="js/utils/ui.js"></script>
+  <script defer src="js/goals.js"></script>
+  </head>
+  <body class="workspace-page" data-page-title="Цели" data-page-subtitle="Отслеживайте прогресс сбережений">
+    <header>
+      <div class="brand visually-hidden">
+        <a href="dashboard.html">FinTrackr</a>
+      </div>
+      <button class="burger" aria-label="Меню">
+        <span></span><span></span><span></span>
+      </button>
+    </header>
+
+    <aside
+      class="sidebar"
+      id="sidebar"
+      role="navigation"
+      aria-label="Боковая навигация"
+    >
+    <div class="sidebar-top">
+      <!-- sidebar-footer удалён: профиль и auth вынесены в header dropdown -->
+            focusable="false"
+          >
+            <rect width="24" height="24" rx="6" fill="var(--primary)"></rect>
+            <path
+              d="M6 12h12M6 8h12M6 16h12"
+              stroke="#fff"
+              stroke-width="1.2"
+              stroke-linecap="round"
+            ></path>
+          </svg>
+          <span class="logo-text">FinTrackr</span>
+        </a>
+        
+      </div>
+    </div>
+
+    <div class="sidebar-scroll">
+      <nav class="sidebar-nav" aria-label="Меню приложения">
+        <div class="nav-section">
+          <h3 class="nav-section-title">Основное</h3>
+          <ul class="nav-list">
+            <li class="nav-item">
+              <a href="dashboard.html" class="nav-link"
+                ><span class="nav-icon">🏠</span
+                ><span class="nav-label">Дэшборд</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="accounts.html" class="nav-link"
+                ><span class="nav-icon">💼</span
+                ><span class="nav-label">Счёта</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="transactions.html" class="nav-link"
+                ><span class="nav-icon">🔁</span
+                ><span class="nav-label">Операции</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="categories.html" class="nav-link"
+                ><span class="nav-icon">🔖</span
+                ><span class="nav-label">Категории</span></a
+              >
+            </li>
+          </ul>
+        </div>
+
+        <div class="nav-section">
+          <h3 class="nav-section-title">Планирование</h3>
+          <ul class="nav-list">
+            <li class="nav-item">
+              <a href="budgets.html" class="nav-link"
+                ><span class="nav-icon">📊</span
+                ><span class="nav-label">Бюджеты</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="goals.html" class="nav-link"
+                ><span class="nav-icon">🎯</span
+                ><span class="nav-label">Цели</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="planned.html" class="nav-link"
+                ><span class="nav-icon">📅</span
+                ><span class="nav-label">Планируемые</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="recurring.html" class="nav-link"
+                ><span class="nav-icon">🔁</span
+                ><span class="nav-label">Регулярные</span></a
+              >
+            </li>
+          </ul>
+        </div>
+
+        <div class="nav-section">
+          <h3 class="nav-section-title">Аналитика</h3>
+          <ul class="nav-list">
+            <li class="nav-item">
+              <a href="reports.html" class="nav-link"
+                ><span class="nav-icon">📈</span
+                ><span class="nav-label">Отчёты</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="forecast.html" class="nav-link"
+                ><span class="nav-icon">🔮</span
+                ><span class="nav-label">Прогнозы</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="rules.html" class="nav-link"
+                ><span class="nav-icon">⚙️</span
+                ><span class="nav-label">Правила</span></a
+              >
+            </li>
+          </ul>
+        </div>
+
+        <div class="nav-section">
+          <h3 class="nav-section-title">Дополнительно</h3>
+          <ul class="nav-list">
+            <li class="nav-item">
+              <a href="education.html" class="nav-link"
+                ><span class="nav-icon">📚</span
+                ><span class="nav-label">Обучение</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="premium.html" class="nav-link"
+                ><span class="nav-icon">⭐</span
+                ><span class="nav-label">Премиум</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="settings.html" class="nav-link"
+                ><span class="nav-icon">⚙️</span
+                ><span class="nav-label">Настройки</span></a
+              >
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+    </aside>
+
+    <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
+    <main>
+      <section class="card">
+        <h2>Финансовые цели</h2>
+        <p>
+          Здесь вы сможете создать цели (например, накопить на путешествие или
+          крупную покупку), следить за прогрессом и получать прогнозы по
+          достижению. В настоящий момент раздел содержит только форму для
+          добавления цели и таблицу с текущими целями.
+        </p>
+        <form id="addGoalForm">
+          <div style="display: flex; flex-wrap: wrap; gap: 1rem">
+            <label style="flex: 1 1 200px">
+              Название цели
+              <input type="text" id="goalTitle" required />
+            </label>
+            <label style="flex: 1 1 150px">
+              Сумма цели
+              <input type="number" id="goalTarget" step="0.01" required />
+            </label>
+            <label style="flex: 1 1 150px">
+              Текущая сумма
+              <input type="number" id="goalCurrent" step="0.01" value="0" />
+            </label>
+            <label style="flex: 1 1 200px">
+              Дедлайн
+              <input type="date" id="goalDeadline" />
+            </label>
+          </div>
+          <button type="submit" class="btn-primary" style="margin-top: 1rem">
+            Добавить цель
+          </button>
+        </form>
+      </section>
+      <section class="card">
+        <h2>Мои цели</h2>
+        <p>
+          Прогресс по вашим целям визуально отображается в карточках ниже.
+          Достижение цели отслеживается по текущей сумме.
+        </p>
+        <div id="goalsGrid" class="goals-grid">
+          <!-- Карточки целей будут вставлены динамически -->
+          <p>Загрузка...</p>
+        </div>
+      </section>
+    </main>
+    <footer>
+      <p>&copy; 2025 FinTrackr. Все права защищены.</p>
+    </footer>
+  </body>
+</html>

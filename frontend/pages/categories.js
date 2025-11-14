@@ -1,6 +1,8 @@
-import fetchData from '../modules/api.js';
 import initNavigation from '../modules/navigation.js';
 import initProfileShell from '../modules/profile.js';
+import { API } from '../src/modules/api.js';
+import { toastSuccess, toastError } from '../src/components/Toast.js';
+import { confirmModal } from '../src/components/ModalBase.js';
 
 initNavigation();
 initProfileShell();
@@ -11,7 +13,7 @@ initProfileShell();
 
 async function loadCategories() {
   try {
-    const categories = await fetchData('/api/categories');
+    const categories = await API.categories.getAll();
     const tbody = document.querySelector('#categoriesTable tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
@@ -37,18 +39,20 @@ async function loadCategories() {
       delBtn.style.background = 'var(--danger)';
       delBtn.style.fontSize = '0.8rem';
       delBtn.addEventListener('click', async () => {
-        if (!confirm('Удалить категорию? Все операции останутся без категории.')) return;
+        const confirmed = await confirmModal({
+          title: 'Удалить категорию?',
+          message: 'Все операции останутся без категории.',
+          confirmText: 'Удалить',
+          danger: true
+        });
+        if (!confirmed) return;
         try {
-          const resp = await fetch(`/api/categories/${cat.id}`, { method: 'DELETE' });
-          if (resp.ok) {
-            loadCategories();
-          } else {
-            const err = await resp.json();
-            alert('Ошибка: ' + (err.error || 'не удалось удалить'));
-          }
-        } catch (err) {
-          console.error(err);
-          alert('Ошибка сети');
+          await API.categories.delete(cat.id);
+          toastSuccess('Категория удалена');
+          loadCategories();
+        } catch (error) {
+          console.error(error);
+          toastError(`Не удалось удалить: ${error.message}`);
         }
       });
       actionTd.appendChild(delBtn);
@@ -70,23 +74,13 @@ async function initCategoriesPage() {
       const kind = document.getElementById('catKind').value;
       if (!name) return;
       try {
-        const resp = await fetch('/api/categories', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, kind })
-        });
-        if (resp.ok) {
-          const created = await resp.json();
-          // Перезагружаем список
-          loadCategories();
-          form.reset();
-        } else {
-          const err = await resp.json();
-          alert('Ошибка: ' + (err.error || 'не удалось добавить'));
-        }
-      } catch (err) {
-        console.error(err);
-        alert('Ошибка сети');
+        await API.categories.create({ name, kind });
+        toastSuccess('Категория добавлена!');
+        loadCategories();
+        form.reset();
+      } catch (error) {
+        console.error(error);
+        toastError(`Не удалось добавить: ${error.message}`);
       }
     });
   }

@@ -1,5 +1,7 @@
 import initNavigation from '../modules/navigation.js';
 import initProfileShell from '../modules/profile.js';
+import { API } from '../src/modules/api.js';
+import { toastSuccess, toastError } from '../src/components/Toast.js';
 
 initNavigation();
 initProfileShell();
@@ -12,33 +14,30 @@ initProfileShell();
 
 async function loadBanks() {
   try {
-    const resp = await fetch('/api/banks');
-    if (!resp.ok) return [];
-    return await resp.json();
-  } catch (err) {
-    console.error('Ошибка загрузки банков', err);
+    return await API.sync.getBanks();
+  } catch (error) {
+    console.error('Ошибка загрузки банков', error);
+    toastError(`Не удалось загрузить банки: ${error.message}`);
     return [];
   }
 }
 
 async function loadAccounts() {
   try {
-    const resp = await fetch('/api/accounts');
-    if (!resp.ok) return [];
-    return await resp.json();
-  } catch (err) {
-    console.error('Ошибка загрузки счетов', err);
+    return await API.accounts.getAll();
+  } catch (error) {
+    console.error('Ошибка загрузки счетов', error);
+    toastError(`Не удалось загрузить счета: ${error.message}`);
     return [];
   }
 }
 
 async function loadConnections() {
   try {
-    const resp = await fetch('/api/sync/connections');
-    if (!resp.ok) return [];
-    return await resp.json();
-  } catch (err) {
-    console.error('Ошибка загрузки подключений', err);
+    return await API.sync.getConnections();
+  } catch (error) {
+    console.error('Ошибка загрузки подключений', error);
+    toastError(`Не удалось загрузить подключения: ${error.message}`);
     return [];
   }
 }
@@ -76,16 +75,8 @@ function renderConnections(connections) {
       if (!id) return;
       if (resultEl) resultEl.textContent = 'Синхронизация...';
       try {
-        const resp = await fetch('/api/sync/transactions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ connection_id: id })
-        });
-        const data = await resp.json();
-        if (!resp.ok) {
-          resultEl.textContent = data.error || data.message || 'Ошибка синхронизации';
-          return;
-        }
+        const data = await API.sync.syncTransactions(id);
+        toastSuccess(`Синхронизировано транзакций: ${data.synced}`);
         // Выводим результат
         let html = `<p><strong>Синхронизировано транзакций:</strong> ${data.synced}</p>`;
         if (data.transactions && data.transactions.length) {
@@ -99,9 +90,10 @@ function renderConnections(connections) {
           html += '<p>Проверьте раздел “Операции” для просмотра новых трат.</p>';
         }
         resultEl.innerHTML = html;
-      } catch (err) {
-        console.error(err);
-        resultEl.textContent = 'Ошибка сети';
+      } catch (error) {
+        console.error(error);
+        resultEl.textContent = 'Ошибка синхронизации';
+        toastError(`Не удалось синхронизировать: ${error.message}`);
       }
     });
   });
@@ -152,25 +144,23 @@ async function initSyncPage() {
       const login = document.getElementById('bankLogin').value;
       const password = document.getElementById('bankPassword').value;
       try {
-        const resp = await fetch('/api/sync/connect', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ bank_id: bankId, account_id: accId, login, password })
+        const data = await API.sync.connect({
+          bank_id: bankId,
+          account_id: accId,
+          login,
+          password
         });
-        const data = await resp.json();
-        if (!resp.ok) {
-          resultEl.textContent = data.error || 'Не удалось подключить банк';
-          return;
-        }
+        toastSuccess(`Банк ${data.bank_name} подключён к счёту`);
         // Очистить форму
         connectForm.reset();
         // Обновить список подключений
         const updated = await loadConnections();
         renderConnections(updated);
         resultEl.textContent = `Банк ${data.bank_name} подключён к счёту ID ${data.account_id}.`;
-      } catch (err) {
-        console.error(err);
-        resultEl.textContent = 'Ошибка сети';
+      } catch (error) {
+        console.error(error);
+        resultEl.textContent = 'Ошибка подключения';
+        toastError(`Не удалось подключить банк: ${error.message}`);
       }
     });
   }

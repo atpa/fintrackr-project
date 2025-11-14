@@ -2,14 +2,20 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="FinTrackr - Personal Finance Tracker Dashboard" />
+    <meta name="theme-color" content="#16213e" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="FinTrackr" />
     <title>FinTrackr – Дэшборд</title>
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/assets/icon-192.png" />
     <link rel="stylesheet" href="css/style.css" />
-  <script defer src="js/utils/auth.js"></script>
-  <script defer src="js/app.js"></script>
+    <link rel="stylesheet" href="css/layout-components.css" />
   </head>
-  <body class="workspace-page" data-page-title="Дэшборд" data-page-subtitle="Прогнозы, бюджеты и уведомления в едином месте">
-    <header data-page-title="Дэшборд" data-page-subtitle="Прогнозы, бюджеты и уведомления в едином месте">
+  <body class="workspace-page" data-page-title="Дэшборд" data-page-subtitle="Обзор финансового состояния">
+    <header>
       <div class="brand visually-hidden">
         <a href="dashboard.html">FinTrackr</a>
       </div>
@@ -18,146 +24,135 @@
       </button>
     </header>
 
-    <!-- Include sidebar component -->
-    <aside
-      class="sidebar"
-      id="sidebar"
-      role="navigation"
-      aria-label="Боковая навигация"
-    >
-    <div class="sidebar-top">
-      <!-- sidebar-footer удалён: профиль и auth вынесены в header dropdown -->
-            focusable="false"
-          >
-            <rect width="24" height="24" rx="6" fill="var(--primary)"></rect>
-            <path
-              d="M6 12h12M6 8h12M6 16h12"
-              stroke="#fff"
-              stroke-width="1.2"
-              stroke-linecap="round"
-            ></path>
-          </svg>
-          <span class="logo-text">FinTrackr</span>
-        </a>
+    <aside class="sidebar" id="sidebar" role="navigation" aria-label="Боковая навигация">
+      <div class="sidebar-top">
+        <div class="logo-container">
+          <a href="dashboard.html" class="logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <rect width="24" height="24" rx="6" fill="var(--primary)"></rect>
+              <path d="M6 12h12M6 8h12M6 16h12" stroke="#fff" stroke-width="1.2" stroke-linecap="round"></path>
+            </svg>
+            <span class="logo-text">FinTrackr</span>
+          </a>
+        </div>
       </div>
-    </div>
 
-    <div class="sidebar-scroll">
-      <nav class="sidebar-nav" aria-label="Меню приложения">
-        <div class="nav-section">
-          <h3 class="nav-section-title">Основное</h3>
-          <ul class="nav-list">
-            <li class="nav-item">
-              <a href="dashboard.html" class="nav-link">
-                <span class="nav-icon">🏠</span>
-                <span class="nav-label">Дэшборд</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="accounts.html" class="nav-link">
-                <span class="nav-icon">💼</span>
-                <span class="nav-label">Счёта</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="transactions.html" class="nav-link">
-                <span class="nav-icon">🔁</span>
-                <span class="nav-label">Операции</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="categories.html" class="nav-link">
-                <span class="nav-icon">🔖</span>
-                <span class="nav-label">Категории</span>
-              </a>
-            </li>
-          </ul>
-        </div>
+      <div class="sidebar-scroll">
+        <nav class="sidebar-nav" aria-label="Меню приложения">
+          <div class="nav-section">
+            <h3 class="nav-section-title">Основное</h3>
+            <ul class="nav-list">
+              <li class="nav-item">
+                <a href="dashboard.html" class="nav-link">
+                  <span class="nav-icon">🏠</span>
+                  <span class="nav-label">Дэшборд</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="accounts.html" class="nav-link">
+                  <span class="nav-icon">💼</span>
+                  <span class="nav-label">Счёта</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="transactions.html" class="nav-link">
+                  <span class="nav-icon">🔁</span>
+                  <span class="nav-label">Операции</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="categories.html" class="nav-link">
+                  <span class="nav-icon">🔖</span>
+                  <span class="nav-label">Категории</span>
+                </a>
+              </li>
+            </ul>
+          </div>
 
-        <div class="nav-section">
-          <h3 class="nav-section-title">Планирование</h3>
-          <ul class="nav-list">
-            <li class="nav-item">
-              <a href="budgets.html" class="nav-link">
-                <span class="nav-icon">📊</span>
-                <span class="nav-label">Бюджеты</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="goals.html" class="nav-link">
-                <span class="nav-icon">🎯</span>
-                <span class="nav-label">Цели</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="planned.html" class="nav-link">
-                <span class="nav-icon">📅</span>
-                <span class="nav-label">Планируемые</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="recurring.html" class="nav-link">
-                <span class="nav-icon">🔄</span>
-                <span class="nav-label">Регулярные</span>
-              </a>
-            </li>
-          </ul>
-        </div>
+          <div class="nav-section">
+            <h3 class="nav-section-title">Планирование</h3>
+            <ul class="nav-list">
+              <li class="nav-item">
+                <a href="budgets.html" class="nav-link">
+                  <span class="nav-icon">📊</span>
+                  <span class="nav-label">Бюджеты</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="goals.html" class="nav-link">
+                  <span class="nav-icon">🎯</span>
+                  <span class="nav-label">Цели</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="planned.html" class="nav-link">
+                  <span class="nav-icon">📅</span>
+                  <span class="nav-label">Планируемые</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="recurring.html" class="nav-link">
+                  <span class="nav-icon">🔁</span>
+                  <span class="nav-label">Регулярные</span>
+                </a>
+              </li>
+            </ul>
+          </div>
 
-        <div class="nav-section">
-          <h3 class="nav-section-title">Аналитика</h3>
-          <ul class="nav-list">
-            <li class="nav-item">
-              <a href="reports.html" class="nav-link">
-                <span class="nav-icon">📈</span>
-                <span class="nav-label">Отчёты</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="forecast.html" class="nav-link">
-                <span class="nav-icon">🔮</span>
-                <span class="nav-label">Прогнозы</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="rules.html" class="nav-link">
-                <span class="nav-icon">⚙️</span>
-                <span class="nav-label">Правила</span>
-              </a>
-            </li>
-          </ul>
-        </div>
+          <div class="nav-section">
+            <h3 class="nav-section-title">Аналитика</h3>
+            <ul class="nav-list">
+              <li class="nav-item">
+                <a href="reports.html" class="nav-link">
+                  <span class="nav-icon">📈</span>
+                  <span class="nav-label">Отчёты</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="forecast.html" class="nav-link">
+                  <span class="nav-icon">🔮</span>
+                  <span class="nav-label">Прогнозы</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="rules.html" class="nav-link">
+                  <span class="nav-icon">⚙️</span>
+                  <span class="nav-label">Правила</span>
+                </a>
+              </li>
+            </ul>
+          </div>
 
-        <div class="nav-section">
-          <h3 class="nav-section-title">Дополнительно</h3>
-          <ul class="nav-list">
-            <li class="nav-item">
-              <a href="education.html" class="nav-link">
-                <span class="nav-icon">📚</span>
-                <span class="nav-label">Обучение</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="premium.html" class="nav-link">
-                <span class="nav-icon">⭐</span>
-                <span class="nav-label">Премиум</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="settings.html" class="nav-link">
-                <span class="nav-icon">🔧</span>
-                <span class="nav-label">Настройки</span>
-              </a>
-            </li>
-          </ul>
-        </div>
-      </nav>
-    </div>
+          <div class="nav-section">
+            <h3 class="nav-section-title">Дополнительно</h3>
+            <ul class="nav-list">
+              <li class="nav-item">
+                <a href="education.html" class="nav-link">
+                  <span class="nav-icon">📚</span>
+                  <span class="nav-label">Обучение</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="premium.html" class="nav-link">
+                  <span class="nav-icon">⭐</span>
+                  <span class="nav-label">Премиум</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="settings.html" class="nav-link">
+                  <span class="nav-icon">⚙️</span>
+                  <span class="nav-label">Настройки</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+        </nav>
+      </div>
     </aside>
 
     <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
 
-    <main class="workspace-main">
+    <main class="workspace-main" id="main-content">
       <section class="alert-banner alert-banner--info" aria-live="polite">
         <div>
           <p class="alert-banner-title">AI ассистент</p>
@@ -248,6 +243,27 @@
         </article>
       </section>
 
+      <section class="panel-grid">
+        <article class="card card--wide">
+          <div class="card-header">
+            <div>
+              <h2>Cashflow (последние 6 месяцев)</h2>
+              <p class="card-subtitle">Динамика доходов и расходов</p>
+            </div>
+            <button class="btn-secondary btn-pill">Детали →</button>
+          </div>
+          <div class="chart-container">
+            <canvas
+              id="cashflowChart"
+              width="600"
+              height="300"
+              aria-label="График cashflow"
+              role="img"
+            ></canvas>
+          </div>
+        </article>
+      </section>
+
       <section class="insight-grid">
         <article class="card">
           <div class="card-header">
@@ -305,8 +321,25 @@
       </section>
     </main>
 
+    <!-- PWA Install Button (скрывается после установки) -->
+    <button id="install-button" class="btn-primary" style="display: none; position: fixed; bottom: 20px; right: 20px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+      📱 Установить приложение
+    </button>
+
+    <!-- Network Status Indicator -->
+    <div id="network-status" class="network-status" style="display: none;"></div>
+
     <footer>
       <p>&copy; 2025 FinTrackr. Все права защищены.</p>
     </footer>
+
+    <!-- PWA Registration -->
+    <script type="module">
+      import { initPWA } from './js/pwa.js';
+      initPWA();
+    </script>
+
+    <!-- Dashboard Script -->
+    <script type="module" src="js/dashboard.js"></script>
   </body>
 </html>

@@ -226,7 +226,9 @@ function authenticateRequest(req) {
  * Hash password using bcrypt
  */
 async function hashPassword(password) {
-  return await bcrypt.hash(password, 10);
+  // Use fewer rounds in test environment for performance
+  const rounds = ENV.NODE_ENV === 'test' ? 1 : 10;
+  return await bcrypt.hash(password, rounds);
 }
 
 /**
@@ -234,6 +236,73 @@ async function hashPassword(password) {
  */
 async function comparePassword(password, hash) {
   return await bcrypt.compare(password, hash);
+}
+
+/**
+ * Alias: generateTokens (same as issueTokensForUser)
+ */
+const generateTokens = issueTokensForUser;
+
+/**
+ * Alias: verifyPassword (same as comparePassword)
+ */
+const verifyPassword = comparePassword;
+
+/**
+ * Alias: blacklistToken (same as addTokenToBlacklist)
+ */
+const blacklistToken = addTokenToBlacklist;
+
+/**
+ * Save refresh token (internal to issueTokensForUser, exposed for API use)
+ */
+function saveRefreshToken(userId, token) {
+  const data = getData();
+  const now = Date.now();
+  data.refreshTokens.push({
+    token,
+    userId,
+    expiresAt: now + TOKEN_CONFIG.REFRESH_TTL_SECONDS * 1000,
+  });
+  persistData();
+}
+
+/**
+ * Verify access token
+ */
+function verifyAccessToken(token) {
+  if (!token) return null;
+  try {
+    const decoded = jwt.verify(token, ENV.JWT_SECRET);
+    // Нормализуем поле userId для единообразия с refresh токеном
+    if (!decoded.userId && decoded.sub) {
+      decoded.userId = decoded.sub;
+    }
+    return decoded;
+  } catch (err) {
+    return null;
+  }
+}
+
+/**
+ * Verify refresh token
+ */
+function verifyRefreshToken(token) {
+  if (!token) return null;
+  try {
+    const decoded = jwt.verify(token, ENV.JWT_SECRET);
+    return { userId: decoded.sub, email: decoded.email };
+  } catch (err) {
+    return null;
+  }
+}
+
+/**
+ * Check if refresh token is valid (exists in storage)
+ */
+function isRefreshTokenValid(userId, token) {
+  const data = getData();
+  return data.refreshTokens.some((entry) => entry.userId === userId && entry.token === token);
 }
 
 module.exports = {
@@ -250,4 +319,12 @@ module.exports = {
   authenticateRequest,
   hashPassword,
   comparePassword,
+  // Aliases and additional methods for API routes
+  generateTokens,
+  verifyPassword,
+  blacklistToken,
+  saveRefreshToken,
+  verifyAccessToken,
+  verifyRefreshToken,
+  isRefreshTokenValid,
 };

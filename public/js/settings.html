@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FinTrackr – Настройки</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <script defer src="js/utils/auth.js"></script>
+    <script defer src="js/app.js"></script>
+    <script defer src="js/settings.js"></script>
+  </head>
+  <body class="workspace-page" data-page-title="Настройки" data-page-subtitle="Персонализация и настройки приложения">
+    <header>
+      <div class="brand visually-hidden">
+        <a href="dashboard.html">FinTrackr</a>
+      </div>
+      <button class="burger" aria-label="Меню">
+        <span></span><span></span><span></span>
+      </button>
+
+      <aside
+        class="sidebar"
+        id="sidebar"
+        role="navigation"
+        aria-label="Боковая навигация"
+      >
+    <div class="sidebar-top">
+      <!-- sidebar-footer удалён: профиль и auth вынесены в header dropdown -->
+              focusable="false"
+            >
+              <rect width="24" height="24" rx="6" fill="var(--primary)"></rect>
+              <path
+                d="M6 12h12M6 8h12M6 16h12"
+                stroke="#fff"
+                stroke-width="1.2"
+                stroke-linecap="round"
+              ></path>
+            </svg>
+            <span class="logo-text">FinTrackr</span>
+          </a>
+          
+        </div>
+    </div>
+
+    <div class="sidebar-scroll">
+      <nav class="sidebar-nav" aria-label="Меню приложения">
+          <div class="nav-section">
+            <h3 class="nav-section-title">Основное</h3>
+            <ul class="nav-list">
+              <li class="nav-item">
+                <a href="dashboard.html" class="nav-link"
+                  ><span class="nav-icon">🏠</span
+                  ><span class="nav-label">Дэшборд</span></a
+                >
+              </li>
+              <li class="nav-item">
+                <a href="accounts.html" class="nav-link"
+                  ><span class="nav-icon">💼</span
+                  ><span class="nav-label">Счёта</span></a
+                >
+              </li>
+              <li class="nav-item">
+                <a href="transactions.html" class="nav-link"
+                  ><span class="nav-icon">🔁</span
+                  ><span class="nav-label">Операции</span></a
+                >
+              </li>
+              <li class="nav-item">
+                <a href="categories.html" class="nav-link"
+                  ><span class="nav-icon">🔖</span
+                  ><span class="nav-label">Категории</span></a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <div class="nav-section">
+            <h3 class="nav-section-title">Планирование</h3>
+            <ul class="nav-list">
+              <li class="nav-item">
+                <a href="budgets.html" class="nav-link"
+                  ><span class="nav-icon">📊</span
+                  ><span class="nav-label">Бюджеты</span></a
+                >
+              </li>
+              <li class="nav-item">
+                <a href="goals.html" class="nav-link"
+                  ><span class="nav-icon">🎯</span
+                  ><span class="nav-label">Цели</span></a
+                >
+              </li>
+              <li class="nav-item">
+                <a href="planned.html" class="nav-link"
+                  ><span class="nav-icon">📅</span
+                  ><span class="nav-label">Планируемые</span></a
+                >
+              </li>
+              <li class="nav-item">
+                <a href="recurring.html" class="nav-link"
+                  ><span class="nav-icon">🔁</span
+                  ><span class="nav-label">Регулярные</span></a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <div class="nav-section">
+            <h3 class="nav-section-title">Аналитика</h3>
+            <ul class="nav-list">
+              <li class="nav-item">
+                <a href="reports.html" class="nav-link"
+                  ><span class="nav-icon">📈</span
+                  ><span class="nav-label">Отчёты</span></a
+                >
+              </li>
+              <li class="nav-item">
+                <a href="forecast.html" class="nav-link"
+                  ><span class="nav-icon">🔮</span
+                  ><span class="nav-label">Прогнозы</span></a
+                >
+              </li>
+              <li class="nav-item">
+                <a href="rules.html" class="nav-link"
+                  ><span class="nav-icon">⚙️</span
+                  ><span class="nav-label">Правила</span></a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <div class="nav-section">
+            <h3 class="nav-section-title">Дополнительно</h3>
+            <ul class="nav-list">
+              <li class="nav-item">
+                <a href="education.html" class="nav-link"
+                  ><span class="nav-icon">📚</span
+                  ><span class="nav-label">Обучение</span></a
+                >
+              </li>
+              <li class="nav-item">
+                <a href="premium.html" class="nav-link"
+                  ><span class="nav-icon">⭐</span
+                  ><span class="nav-label">Премиум</span></a
+                >
+              </li>
+              <li class="nav-item">
+                <a href="settings.html" class="nav-link"
+                  ><span class="nav-icon">⚙️</span
+                  ><span class="nav-label">Настройки</span></a
+                >
+              </li>
+            </ul>
+          </div>
+        </nav>
+    </div>
+      </aside>
+
+      <div
+        class="sidebar-backdrop"
+        id="sidebarBackdrop"
+        aria-hidden="true"
+      ></div>
+    </header>
+    <main>
+      <!-- Раздел профиля -->
+      <section class="card">
+        <h2>Профиль</h2>
+        <p>Обновите свои данные: имя, базовую валюту и часовой пояс.</p>
+        <form id="profileForm">
+          <div style="display: flex; flex-wrap: wrap; gap: 1rem">
+            <label style="flex: 1 1 200px">
+              Имя
+              <input type="text" id="profileName" required />
+            </label>
+            <label style="flex: 1 1 150px">
+              Валюта
+              <select id="profileCurrency" required>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="PLN">PLN</option>
+                <option value="RUB">RUB</option>
+              </select>
+            </label>
+            <label style="flex: 1 1 200px">
+              Часовой пояс
+              <select id="profileTimezone" required>
+                <option value="Europe/Warsaw">Europe/Warsaw</option>
+                <option value="Europe/Moscow">Europe/Moscow</option>
+                <option value="America/New_York">America/New_York</option>
+                <option value="Asia/Tokyo">Asia/Tokyo</option>
+              </select>
+            </label>
+          </div>
+          <button type="submit" class="btn-primary" style="margin-top: 1rem">
+            Сохранить профиль
+          </button>
+        </form>
+      </section>
+      <!-- Раздел отчётной валюты -->
+      <section class="card">
+        <h2>Валюта отчётов</h2>
+        <p>
+          Выберите валюту, в которой будут отображаться отчёты, дэшборд и
+          прогнозы.
+        </p>
+        <form id="reportCurrencyForm">
+          <label>
+            Валюта для отчётов
+            <select id="reportCurrencySelect" required>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="PLN">PLN</option>
+              <option value="RUB">RUB</option>
+            </select>
+          </label>
+          <button type="submit" class="btn-primary" style="margin-top: 1rem">
+            Сохранить валюту
+          </button>
+        </form>
+      </section>
+
+      <!-- Раздел валюты баланса -->
+      <section class="card">
+        <h2>Валюта баланса</h2>
+        <p>
+          Выберите валюту, в которой будут отображаться общие показатели
+          (баланс, доходы и расходы) на дэшборде.
+        </p>
+        <form id="balanceCurrencyForm">
+          <label>
+            Валюта баланса
+            <select id="balanceCurrencySelect" required>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="PLN">PLN</option>
+              <option value="RUB">RUB</option>
+            </select>
+          </label>
+          <button type="submit" class="btn-primary" style="margin-top: 1rem">
+            Сохранить валюту
+          </button>
+        </form>
+      </section>
+      <!-- Раздел уведомлений -->
+      <section class="card">
+        <h2>Уведомления</h2>
+        <p>Выберите, как вы хотите получать уведомления о важных событиях.</p>
+        <form id="notifyForm">
+          <div style="display: flex; flex-direction: column; gap: 0.5rem">
+            <label
+              ><input type="checkbox" id="notifyEmail" /> Уведомлять по
+              e‑mail</label
+            >
+            <label
+              ><input type="checkbox" id="notifyTelegram" /> Уведомлять в
+              Telegram</label
+            >
+            <label
+              ><input type="checkbox" id="notifyPush" /> Push‑уведомления</label
+            >
+          </div>
+          <button type="submit" class="btn-primary" style="margin-top: 1rem">
+            Сохранить уведомления
+          </button>
+        </form>
+      </section>
+    </main>
+    <footer>
+      <p>&copy; 2025 FinTrackr. Все права защищены.</p>
+    </footer>
+  </body>
+</html>

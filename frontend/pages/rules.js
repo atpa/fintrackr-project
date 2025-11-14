@@ -1,5 +1,8 @@
 import initNavigation from '../modules/navigation.js';
 import initProfileShell from '../modules/profile.js';
+import { API } from '../src/modules/api.js';
+import { toastSuccess, toastError } from '../src/components/Toast.js';
+import { confirmModal } from '../src/components/ModalBase.js';
 
 initNavigation();
 initProfileShell();
@@ -22,22 +25,18 @@ function initRulesPage() {
       const categorySelect = document.getElementById('ruleCategorySelect');
       const keyword = keywordInput.value.trim();
       const categoryId = Number(categorySelect.value);
-      if (!keyword || !categoryId) return;
+      if (!keyword || !categoryId) {
+        toastError('Заполните все поля');
+        return;
+      }
       try {
-        const resp = await fetch('/api/rules', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ keyword, category_id: categoryId })
-        });
-        if (resp.ok) {
-          keywordInput.value = '';
-          await loadRules();
-        } else {
-          alert('Ошибка при добавлении правила');
-        }
-      } catch (err) {
-        console.error(err);
-        alert('Ошибка сети');
+        await API.rules.create({ keyword, category_id: categoryId });
+        keywordInput.value = '';
+        toastSuccess('Правило добавлено');
+        await loadRules();
+      } catch (error) {
+        console.error(error);
+        toastError(`Не удалось добавить правило: ${error.message}`);
       }
     });
   }
@@ -45,8 +44,7 @@ function initRulesPage() {
 
 async function loadCategories() {
   try {
-    const resp = await fetch('/api/categories');
-    const cats = await resp.json();
+    const cats = await API.categories.getAll();
     const select = document.getElementById('ruleCategorySelect');
     select.innerHTML = '';
     cats.forEach(cat => {
@@ -55,15 +53,15 @@ async function loadCategories() {
       opt.textContent = cat.name;
       select.appendChild(opt);
     });
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error(error);
+    toastError(`Не удалось загрузить категории: ${error.message}`);
   }
 }
 
 async function loadRules() {
   try {
-    const resp = await fetch('/api/rules');
-    const rules = await resp.json();
+    const rules = await API.rules.getAll();
     const tbody = document.querySelector('#rulesTable tbody');
     tbody.innerHTML = '';
     if (!rules || rules.length === 0) {
@@ -78,8 +76,7 @@ async function loadRules() {
     // Получаем категории для отображения имен
     let cats = [];
     try {
-      const respCats = await fetch('/api/categories');
-      cats = await respCats.json();
+      cats = await API.categories.getAll();
     } catch {}
     rules.forEach(rule => {
       const tr = document.createElement('tr');
@@ -95,23 +92,27 @@ async function loadRules() {
       btn.textContent = 'Удалить';
       btn.className = 'btn-danger';
       btn.addEventListener('click', async () => {
-        if (!confirm('Удалить правило?')) return;
+        const confirmed = await confirmModal({
+          title: 'Удалить правило?',
+          message: 'Это действие нельзя отменить',
+          danger: true,
+        });
+        if (!confirmed) return;
         try {
-          const resDel = await fetch(`/api/rules/${rule.id}`, { method: 'DELETE' });
-          if (resDel.ok) {
-            await loadRules();
-          } else {
-            alert('Ошибка удаления');
-          }
-        } catch (err) {
-          console.error(err);
+          await API.rules.delete(rule.id);
+          toastSuccess('Правило удалено');
+          await loadRules();
+        } catch (error) {
+          console.error(error);
+          toastError(`Не удалось удалить: ${error.message}`);
         }
       });
       tdActions.appendChild(btn);
       tr.appendChild(tdActions);
       tbody.appendChild(tr);
     });
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error(error);
+    toastError(`Не удалось загрузить правила: ${error.message}`);
   }
 }

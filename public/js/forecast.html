@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FinTrackr – Прогноз</title>
+    <link rel="stylesheet" href="css/style.css" />
+  <script defer src="js/utils/auth.js"></script>
+  <script defer src="js/app.js"></script>
+    <script defer src="js/forecast.js"></script>
+  </head>
+  <body>
+    <header>
+      <div class="brand visually-hidden">
+        <a href="dashboard.html">FinTrackr</a>
+      </div>
+      <button class="burger" aria-label="Меню">
+        <span></span><span></span><span></span>
+      </button>
+    </header>
+
+    <aside
+      class="sidebar"
+      id="sidebar"
+      role="navigation"
+      aria-label="Боковая навигация"
+    >
+    <div class="sidebar-top">
+      <!-- sidebar-footer удалён: профиль и auth вынесены в header dropdown -->
+            focusable="false"
+          >
+            <rect width="24" height="24" rx="6" fill="var(--primary)"></rect>
+            <path
+              d="M6 12h12M6 8h12M6 16h12"
+              stroke="#fff"
+              stroke-width="1.2"
+              stroke-linecap="round"
+            ></path>
+          </svg>
+          <span class="logo-text">FinTrackr</span>
+        </a>
+        
+      </div>
+    </div>
+
+    <div class="sidebar-scroll">
+      <nav class="sidebar-nav" aria-label="Меню приложения">
+        <div class="nav-section">
+          <h3 class="nav-section-title">Основное</h3>
+          <ul class="nav-list">
+            <li class="nav-item">
+              <a href="dashboard.html" class="nav-link"
+                ><span class="nav-icon">🏠</span
+                ><span class="nav-label">Дэшборд</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="accounts.html" class="nav-link"
+                ><span class="nav-icon">💼</span
+                ><span class="nav-label">Счёта</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="transactions.html" class="nav-link"
+                ><span class="nav-icon">🔁</span
+                ><span class="nav-label">Операции</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="categories.html" class="nav-link"
+                ><span class="nav-icon">🔖</span
+                ><span class="nav-label">Категории</span></a
+              >
+            </li>
+          </ul>
+        </div>
+
+        <div class="nav-section">
+          <h3 class="nav-section-title">Планирование</h3>
+          <ul class="nav-list">
+            <li class="nav-item">
+              <a href="budgets.html" class="nav-link"
+                ><span class="nav-icon">📊</span
+                ><span class="nav-label">Бюджеты</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="goals.html" class="nav-link"
+                ><span class="nav-icon">🎯</span
+                ><span class="nav-label">Цели</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="planned.html" class="nav-link"
+                ><span class="nav-icon">📅</span
+                ><span class="nav-label">Планируемые</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="recurring.html" class="nav-link"
+                ><span class="nav-icon">🔁</span
+                ><span class="nav-label">Регулярные</span></a
+              >
+            </li>
+          </ul>
+        </div>
+
+        <div class="nav-section">
+          <h3 class="nav-section-title">Аналитика</h3>
+          <ul class="nav-list">
+            <li class="nav-item">
+              <a href="reports.html" class="nav-link"
+                ><span class="nav-icon">📈</span
+                ><span class="nav-label">Отчёты</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="forecast.html" class="nav-link"
+                ><span class="nav-icon">🔮</span
+                ><span class="nav-label">Прогнозы</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="rules.html" class="nav-link"
+                ><span class="nav-icon">⚙️</span
+                ><span class="nav-label">Правила</span></a
+              >
+            </li>
+          </ul>
+        </div>
+
+        <div class="nav-section">
+          <h3 class="nav-section-title">Дополнительно</h3>
+          <ul class="nav-list">
+            <li class="nav-item">
+              <a href="education.html" class="nav-link"
+                ><span class="nav-icon">📚</span
+                ><span class="nav-label">Обучение</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="premium.html" class="nav-link"
+                ><span class="nav-icon">⭐</span
+                ><span class="nav-label">Премиум</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="settings.html" class="nav-link"
+                ><span class="nav-icon">⚙️</span
+                ><span class="nav-label">Настройки</span></a
+              >
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+    </aside>
+
+    <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
+    <main>
+      <section class="card">
+        <h2>Прогноз на 7, 30 и 90 дней</h2>
+        <p>
+          Используя ваши последние операции, мы прогнозируем доходы и расходы на
+          разные горизонты. Значения рассчитываются исходя из средней дневной
+          активности за последний месяц.
+        </p>
+        <div class="grid-3 forecast-summary">
+          <div class="forecast-box">
+            <h3>7 дней</h3>
+            <p>Доход: <strong id="forecastIncome7">0.00</strong> USD</p>
+            <p>Расход: <strong id="forecastExpense7">0.00</strong> USD</p>
+          </div>
+          <div class="forecast-box">
+            <h3>30 дней</h3>
+            <p>Доход: <strong id="forecastIncome30">0.00</strong> USD</p>
+            <p>Расход: <strong id="forecastExpense30">0.00</strong> USD</p>
+          </div>
+          <div class="forecast-box">
+            <h3>90 дней</h3>
+            <p>Доход: <strong id="forecastIncome90">0.00</strong> USD</p>
+            <p>Расход: <strong id="forecastExpense90">0.00</strong> USD</p>
+          </div>
+        </div>
+        <!-- Диаграмма сравнения доходов и расходов -->
+        <div style="margin-top: 2rem">
+          <canvas
+            id="forecastChart"
+            width="600"
+            height="300"
+            aria-label="График прогноза"
+            role="img"
+          ></canvas>
+        </div>
+      </section>
+      <section class="card">
+        <h2>Категории в зоне риска</h2>
+        <p>
+          Если фактические расходы приближаются к установленному лимиту,
+          категория попадает в список риска. Это может означать, что стоит
+          пересмотреть бюджет или сократить траты.
+        </p>
+        <ul id="riskList"></ul>
+      </section>
+    </main>
+    <footer>
+      <p>&copy; 2025 FinTrackr. Все права защищены.</p>
+    </footer>
+  </body>
+</html>

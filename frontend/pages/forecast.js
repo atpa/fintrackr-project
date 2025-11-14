@@ -1,5 +1,5 @@
-import fetchData from '../modules/api.js';
 import initNavigation from '../modules/navigation.js';
+import { API } from '../src/modules/api.js';
 import initProfileShell from '../modules/profile.js';
 
 initNavigation();
@@ -12,16 +12,16 @@ async function initForecastPage() {
   // Получаем прогноз на 30 дней с сервера
   let forecast;
   try {
-    forecast = await fetchData('/api/forecast');
+    forecast = await API.utils.getForecast();
   } catch (err) {
     console.error('Ошибка прогноза:', err);
     forecast = { predicted_income: 0, predicted_expense: 0 };
   }
   // Получаем дополнительные данные для анализа риска
   const [transactions, budgets, categories] = await Promise.all([
-    fetchData('/api/transactions'),
-    fetchData('/api/budgets'),
-    fetchData('/api/categories')
+    API.transactions.getAll(),
+    API.budgets.getAll(),
+    API.categories.getAll()
   ]);
   // Рассчитываем прогнозы на 7, 30 и 90 дней.
   // Считаем, что сервер возвращает прогноз в долларах (USD). Далее конвертируем суммы в выбранную валюту отчёта.
