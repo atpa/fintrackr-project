@@ -25,9 +25,11 @@ async function initRegisterPage() {
 
     const newUser = { name, email, password };
     try {
-      const created = await API.auth.register(newUser);
+      const response = await API.auth.register(newUser);
+      // Backend возвращает { user: {...} }, извлекаем объект пользователя
+      const user = response.user || response;
       // Используем Auth утилиту для сохранения пользователя
-      if (Auth.login(created)) {
+      if (Auth.login(user)) {
         window.location.href = 'dashboard.html';
       } else {
         toastError('Ошибка сохранения данных');

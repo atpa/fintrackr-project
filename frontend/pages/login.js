@@ -22,9 +22,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const result = await API.auth.login({ email, password });
+      const response = await API.auth.login({ email, password });
+      // Backend возвращает { user: {...} }, извлекаем объект пользователя
+      const user = response.user || response;
       // Используем Auth утилиту для сохранения пользователя
-      if (Auth.login(result)) {
+      if (Auth.login(user)) {
         window.location.href = 'dashboard.html';
       } else {
         toastError('Ошибка сохранения данных');

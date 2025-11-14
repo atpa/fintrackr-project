@@ -434,10 +434,59 @@ export const UtilsAPI = {
 };
 
 // ======================
+// Authentication API
+// ======================
+
+export const AuthAPI = {
+  /**
+   * Register new user
+   * @param {Object} data - User data { name, email, password }
+   * @returns {Promise<Object>}
+   */
+  async register(data) {
+    return requestWithRetry('/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  /**
+   * Login user
+   * @param {Object} credentials - { email, password }
+   * @returns {Promise<Object>}
+   */
+  async login(credentials) {
+    return requestWithRetry('/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+  },
+
+  /**
+   * Logout user
+   * @returns {Promise<Object>}
+   */
+  async logout() {
+    return requestWithRetry('/logout', {
+      method: 'POST',
+    });
+  },
+
+  /**
+   * Check session
+   * @returns {Promise<Object>}
+   */
+  async checkSession() {
+    return requestWithRetry('/session');
+  },
+};
+
+// ======================
 // Unified API object
 // ======================
 
 export const API = {
+  auth: AuthAPI,
   transactions: TransactionsAPI,
   accounts: AccountsAPI,
   categories: CategoriesAPI,
