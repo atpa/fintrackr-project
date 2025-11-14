@@ -2,38 +2,9 @@
  * Общие функции для загрузки данных и построения графиков
  */
 
-// Добавляем заголовок X-User-Id ко всем запросам, если пользователь авторизован
-(() => {
-  if (typeof window === "undefined" || typeof window.fetch !== "function") {
-    return;
-  }
-  const originalFetch = window.fetch.bind(window);
-  window.fetch = async (input, init) => {
-    const options = init ? { ...init } : {};
-    const headers = new Headers(options.headers || undefined);
-    if (typeof Request !== "undefined" && input instanceof Request) {
-      const requestHeaders = new Headers(input.headers);
-      requestHeaders.forEach((value, key) => {
-        if (!headers.has(key)) headers.set(key, value);
-      });
-    }
-    try {
-      if (window.Auth && typeof window.Auth.getUser === "function") {
-        const user = window.Auth.getUser();
-        if (user && user.id) {
-          headers.set("X-User-Id", String(user.id));
-        }
-      }
-    } catch (err) {
-      // Ошибки доступа к localStorage игнорируем, чтобы не ломать запросы
-    }
-    options.headers = headers;
-    if (typeof Request !== "undefined" && input instanceof Request) {
-      return originalFetch(new Request(input, options));
-    }
-    return originalFetch(input, options);
-  };
-})();
+// REMOVED: X-User-Id header interceptor (deprecated after JWT-only authentication)
+// Server now uses JWT tokens exclusively via HttpOnly cookies
+// Authentication is handled automatically by the browser for same-site requests
 
 /**
  * Загружает данные с API сервера.
@@ -594,9 +565,12 @@ function enhanceSidebar(user) {
   host.insertBefore(planCard, navContainer);
 
   const heroName = hero.querySelector(".sidebar-hero-name");
-  if (heroName) {
-    const text = user?.name ? `Привет, ${user.name.split(" ")[0]}` : "Добро пожаловать";
-    heroName.textContent = text;
+  if (heroName && user?.name) {
+    // XSS FIX: Use textContent for user-provided data
+    const firstName = String(user.name).split(" ")[0];
+    heroName.textContent = `Привет, ${firstName}`;
+  } else if (heroName) {
+    heroName.textContent = "Добро пожаловать";
   }
 
   const heroSubtitle = hero.querySelector(".sidebar-hero-subtitle");

@@ -65,11 +65,18 @@ cd fintrackr-project
 # 2. Установите зависимости
 npm install
 
-# 3. Запустите сервер
+# 3. Настройте переменные окружения (КРИТИЧНО для безопасности!)
+cp .env.example .env
+# Отредактируйте .env и установите безопасный JWT_SECRET:
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+
+# 4. Запустите сервер
 npm start
 
 # Сервер запустится на http://localhost:3000
 ```
+
+**⚠️ ВАЖНО**: В продакшене обязательно измените `JWT_SECRET` в `.env` и установите `COOKIE_SECURE=true` при использовании HTTPS!
 
 ### Альтернативные порты
 

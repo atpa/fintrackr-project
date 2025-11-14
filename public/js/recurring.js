@@ -3,9 +3,18 @@ async function loadRecurring(){
   const data = await res.json();
   const tbody = document.querySelector('#table tbody');
   tbody.innerHTML = '';
+  // XSS FIX: Use textContent for user-provided data
   for (const r of data.items) {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${r.name}</td><td>${r.avgPeriodDays}</td><td>${r.sampleAmount} ₽</td><td>${r.estimatedMonthly} ₽</td>`;
+    const tdName = document.createElement('td');
+    tdName.textContent = r.name;
+    const tdPeriod = document.createElement('td');
+    tdPeriod.textContent = r.avgPeriodDays;
+    const tdSample = document.createElement('td');
+    tdSample.textContent = `${r.sampleAmount} ₽`;
+    const tdMonthly = document.createElement('td');
+    tdMonthly.textContent = `${r.estimatedMonthly} ₽`;
+    tr.append(tdName, tdPeriod, tdSample, tdMonthly);
     tbody.appendChild(tr);
   }
   document.getElementById('summary').textContent = `Сумма по цикличным платежам в месяц: ${data.monthly} ₽`;

@@ -33,7 +33,14 @@
       "user_id": 2,
       "name": "Сбер",
       "currency": "RUB",
-      "balance": 100000
+      "balance": 50000
+    },
+    {
+      "id": 6,
+      "user_id": 2,
+      "name": "Сбербанк",
+      "currency": "RUB",
+      "balance": 413000
     }
   ],
   "categories": [
@@ -66,6 +73,42 @@
       "name": "Подарки",
       "kind": "expense",
       "user_id": 1
+    },
+    {
+      "id": 6,
+      "user_id": 2,
+      "name": "Продукты",
+      "kind": "expense"
+    },
+    {
+      "id": 7,
+      "user_id": 2,
+      "name": "Развлечения",
+      "kind": "expense"
+    },
+    {
+      "id": 8,
+      "user_id": 2,
+      "name": "ЗП",
+      "kind": "income"
+    },
+    {
+      "id": 9,
+      "user_id": 2,
+      "name": "Темки",
+      "kind": "income"
+    },
+    {
+      "id": 10,
+      "user_id": 2,
+      "name": "Крипта",
+      "kind": "income"
+    },
+    {
+      "id": 11,
+      "user_id": 2,
+      "name": "Крипта расходы",
+      "kind": "expense"
     }
   ],
   "transactions": [
@@ -178,6 +221,50 @@
       "date": "2025-11-13",
       "note": "",
       "user_id": 1
+    },
+    {
+      "id": 11,
+      "user_id": 2,
+      "account_id": 5,
+      "category_id": 6,
+      "type": "expense",
+      "amount": 50000,
+      "currency": "RUB",
+      "date": "2025-11-14",
+      "note": ""
+    },
+    {
+      "id": 12,
+      "user_id": 2,
+      "account_id": 6,
+      "category_id": 8,
+      "type": "income",
+      "amount": 250000,
+      "currency": "RUB",
+      "date": "2025-11-14",
+      "note": ""
+    },
+    {
+      "id": 13,
+      "user_id": 2,
+      "account_id": 6,
+      "category_id": 10,
+      "type": "income",
+      "amount": 1000,
+      "currency": "USD",
+      "date": "2025-11-12",
+      "note": ""
+    },
+    {
+      "id": 14,
+      "user_id": 2,
+      "account_id": 6,
+      "category_id": 11,
+      "type": "expense",
+      "amount": 300,
+      "currency": "USD",
+      "date": "2025-11-13",
+      "note": "бот"
     }
   ],
   "budgets": [
@@ -228,6 +315,28 @@
       "limit": 0,
       "spent": 10000,
       "user_id": 1
+    },
+    {
+      "id": 7,
+      "user_id": 2,
+      "category_id": 6,
+      "month": "2025-11",
+      "limit": 0,
+      "spent": 50000,
+      "type": "fixed",
+      "percent": null,
+      "currency": "RUB"
+    },
+    {
+      "id": 8,
+      "user_id": 2,
+      "category_id": 11,
+      "month": "2025-11",
+      "limit": 0,
+      "spent": 300,
+      "type": "fixed",
+      "percent": null,
+      "currency": "USD"
     }
   ],
   "goals": [
@@ -240,7 +349,20 @@
       "deadline": "2027-02-13"
     }
   ],
-  "planned": [],
+  "planned": [
+    {
+      "id": 1,
+      "user_id": 2,
+      "account_id": 5,
+      "category_id": 6,
+      "type": "expense",
+      "amount": 10,
+      "currency": "USD",
+      "start_date": "2025-11-01",
+      "frequency": "daily",
+      "note": ""
+    }
+  ],
   "users": [
     {
       "id": 1,
@@ -419,9 +541,14 @@
       "expiresAt": 1763723645563
     },
     {
-      "token": "02f06a280b4e6ec9bfd051e0d9105a3755a1fcbb7da7cc2bffb1471a488523eb1bab4f3bbe56e20ad1f42b02719eddc7",
+      "token": "d17b48333a1cf171f60307afe35f95c6bceb9b4d81c0af5428f688297f1d41ed3b7700e324e4fa073636dc1919e34e76",
       "userId": 2,
-      "expiresAt": 1763723646844
+      "expiresAt": 1763725924351
+    },
+    {
+      "token": "4fb4244e4ab91c6219ee7ad3ecd6c7691a8c120662dcd081182a0f64f8c1063c93172ac4cb0d76dc1ba81925ca735157",
+      "userId": 2,
+      "expiresAt": 1763726028375
     }
   ],
   "tokenBlacklist": [],

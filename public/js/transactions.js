@@ -69,22 +69,34 @@ function renderTransactions() {
 
       const item = document.createElement('div');
       item.className = 'tx-item';
-      item.innerHTML = `
-        <div class="tx-main">
-          <span class="tx-title">${category ? category.name : '—'} — ${account ? account.name : '—'}</span>
-          <span class="tx-meta">${tx.date}${tx.note ? ' • ' + tx.note : ''}</span>
-        </div>
-        <div class="tx-category">
-          <span class="chip">${tx.type === 'income' ? 'Доход' : 'Расход'}</span>
-        </div>
-        <div class="tx-amount ${tx.type === 'income' ? 'tx-amount--income' : 'tx-amount--expense'}">${amountStr}</div>
-      `;
+      
+      // XSS FIX: Use textContent for user-provided data
+      const txMain = document.createElement('div');
+      txMain.className = 'tx-main';
+      const txTitle = document.createElement('span');
+      txTitle.className = 'tx-title';
+      txTitle.textContent = `${category ? category.name : '—'} — ${account ? account.name : '—'}`;
+      const txMeta = document.createElement('span');
+      txMeta.className = 'tx-meta';
+      txMeta.textContent = tx.date + (tx.note ? ' • ' + tx.note : '');
+      txMain.append(txTitle, txMeta);
+      
+      const txCategory = document.createElement('div');
+      txCategory.className = 'tx-category';
+      const chip = document.createElement('span');
+      chip.className = 'chip';
+      chip.textContent = tx.type === 'income' ? 'Доход' : 'Расход';
+      txCategory.appendChild(chip);
+      
+      const txAmount = document.createElement('div');
+      txAmount.className = `tx-amount ${tx.type === 'income' ? 'tx-amount--income' : 'tx-amount--expense'}`;
+      txAmount.textContent = amountStr;
+      
+      item.append(txMain, txCategory, txAmount);
+      
+      // REFACTOR: Replace inline styles with CSS class
       const actions = document.createElement('div');
-      actions.style.display = 'flex';
-      actions.style.gap = '8px';
-      actions.style.gridColumn = '1 / -1';
-      actions.style.justifyContent = 'flex-end';
-      actions.style.marginTop = '6px';
+      actions.className = 'tx-actions';
       const editBtn = document.createElement('button');
       editBtn.type = 'button';
       editBtn.className = 'btn-secondary';

@@ -27,6 +27,10 @@ const jwt = require("jsonwebtoken");
 const dataPath = path.join(__dirname, "data.json");
 
 const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change";
+if (JWT_SECRET === "dev-secret-change" && process.env.NODE_ENV === "production") {
+  console.error("SECURITY WARNING: Using default JWT_SECRET in production! Set JWT_SECRET environment variable.");
+  process.exit(1);
+}
 const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 const REFRESH_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60;
 const COOKIE_SECURE = process.env.COOKIE_SECURE === "true";
@@ -200,7 +204,8 @@ function loadData() {
     const parsed = JSON.parse(raw);
     return applyDataDefaults(parsed);
   } catch (err) {
-    console.error("Error loading data:", err);
+    // SECURITY: Log full error internally, but don't expose to clients
+    console.error("Failed to load data file:", err.message, err.code || "");
     return applyDataDefaults({});
   }
 }
@@ -239,7 +244,8 @@ function persistData() {
   try {
     fs.writeFileSync(dataPath, JSON.stringify(data, null, 2), "utf8");
   } catch (err) {
-    console.error("Ошибка записи файла данных:", err);
+    // SECURITY: Log error details server-side only
+    console.error("Failed to write data file:", err.message, err.code || "");
   }
 }
 
@@ -435,17 +441,16 @@ function authenticateRequest(req) {
       };
     }
     return { ok: true, user, token, payload };
-  } catch (err) {
-    console.error("Ошибка проверки токена", err);
+    } catch (err) {
+    // SECURITY: Log error details server-side, return generic message to client
+    console.error("Token verification error:", err.message);
     return {
       ok: false,
       statusCode: 500,
       error: "Authentication error",
     };
   }
-}
-
-function requireAuth(req, res) {
+}function requireAuth(req, res) {
   const auth = authenticateRequest(req);
   if (!auth.ok) {
     sendJson(res, { error: auth.error }, auth.statusCode);
@@ -669,25 +674,19 @@ function handleApi(req, res) {
     return sendJson(res, { error: "Not authenticated" }, 401);
   }
 
-  let currentUserId = parseUserId(req.headers["x-user-id"]);
-  if (!currentUserId) {
-    currentUserId = parseUserId(url.searchParams.get("userId"));
-  }
-  let currentUser =
-    currentUserId != null
-      ? data.users.find((u) => u.id === currentUserId)
-      : null;
+  // SECURITY FIX: Removed X-User-Id header fallback (critical vulnerability)
+  // All authentication now goes through JWT tokens only
   const authRequired = !isPublicApiRequest(req.method, url.pathname);
-  // Если заголовок X-User-Id не пришёл, пробуем извлечь пользователя из JWT‑кук
-  if (authRequired && !currentUser) {
+  let currentUser = null;
+  let currentUserId = null;
+  
+  if (authRequired) {
     const auth = authenticateRequest(req);
-    if (auth && auth.ok) {
-      currentUser = auth.user;
-      currentUserId = auth.user.id;
+    if (!auth || !auth.ok) {
+      return sendJson(res, { error: auth?.error || "Unauthorized" }, auth?.statusCode || 401);
     }
-  }
-  if (authRequired && !currentUser) {
-    return sendJson(res, { error: "Unauthorized" }, 401);
+    currentUser = auth.user;
+    currentUserId = auth.user.id;
   }
   const userId = currentUser ? currentUser.id : null;
   const filterForUser = (collection) => {
@@ -1954,8 +1953,10 @@ function handleStatic(req, res) {
 // Создание HTTP‑сервера
 function createServer() {
   return http.createServer((req, res) => {
-    // Логирование запросов для отладки
-    console.log("REQ:", req.method, req.url);
+    // SECURITY: Log only in development, avoid exposing URLs in production
+    if (process.env.NODE_ENV !== "production") {
+      console.log("REQ:", req.method, req.url);
+    }
 
     // Обрабатываем API‑запросы отдельно, независимо от HTTP‑метода
     if (req.url.startsWith("/api/")) {

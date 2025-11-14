@@ -49,20 +49,30 @@ function renderConnections(connections) {
     listEl.innerHTML = '<p>Нет подключённых банковских аккаунтов.</p>';
     return;
   }
-  const html = connections
-    .map(
-      conn => `
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; background:#fff; padding:0.75rem 1rem; border-radius:8px; box-shadow:0 2px 6px var(--card-shadow); margin-bottom:0.5rem;">
-          <div>
-            <strong>${conn.bank_name}</strong><br />
-            <small>Счёт ID ${conn.account_id}</small>
-          </div>
-          <button class="btn-secondary" data-sync-id="${conn.id}">Синхронизировать</button>
-        </div>
-      `
-    )
-    .join('');
-  listEl.innerHTML = html;
+  // XSS FIX: Use textContent for user-provided data
+  listEl.innerHTML = '';
+  connections.forEach(conn => {
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'display:flex; align-items:center; justify-content:space-between; gap:1rem; background:#fff; padding:0.75rem 1rem; border-radius:8px; box-shadow:0 2px 6px var(--card-shadow); margin-bottom:0.5rem;';
+    
+    const info = document.createElement('div');
+    const bankName = document.createElement('strong');
+    bankName.textContent = conn.bank_name;
+    const accountId = document.createElement('small');
+    accountId.textContent = `Счёт ID ${conn.account_id}`;
+    info.appendChild(bankName);
+    info.appendChild(document.createElement('br'));
+    info.appendChild(accountId);
+    
+    const btn = document.createElement('button');
+    btn.className = 'btn-secondary';
+    btn.dataset.syncId = conn.id;
+    btn.textContent = 'Синхронизировать';
+    
+    wrapper.appendChild(info);
+    wrapper.appendChild(btn);
+    listEl.appendChild(wrapper);
+  });
   // навешиваем обработчики на кнопки синхронизации
   listEl.querySelectorAll('button[data-sync-id]').forEach(btn => {
     btn.addEventListener('click', async e => {

@@ -92,15 +92,22 @@ async function generateReport() {
     if (combinedLabels.length > 0) {
       const maxCat = combinedLabels[0];
       const maxVal = combinedValues[0];
-      summaryHtml += `<p><strong>Наибольшие расходы:</strong> категория "${maxCat}" — ${maxVal.toFixed(2)} ${reportCurrency}</p>`;
+      // XSS FIX: Use textContent for category name (user-provided)
+      const maxP = document.createElement('p');
+      const maxStrong = document.createElement('strong');
+      maxStrong.textContent = 'Наибольшие расходы:';
+      maxP.appendChild(maxStrong);
+      maxP.appendChild(document.createTextNode(` категория "${maxCat}" — ${maxVal.toFixed(2)} ${reportCurrency}`));
+      summaryEl.appendChild(maxP);
     }
     // AI‑репортаж: простое текстовое описание тренда
+    const aiP = document.createElement('p');
     if (period === 'month') {
-      summaryHtml += '<p>AI‑отчёт: в этом месяце ваши расходы распределены по категориям, как показано на диаграмме. Обратите внимание на категории с наибольшими тратами.</p>';
+      aiP.textContent = 'AI‑отчёт: в этом месяце ваши расходы распределены по категориям, как показано на диаграмме. Обратите внимание на категории с наибольшими тратами.';
     } else {
-      summaryHtml += '<p>AI‑отчёт: в этом году основные траты приходятся на показанные категории. Анализируйте ваши расходы, чтобы лучше планировать бюджет.</p>';
+      aiP.textContent = 'AI‑отчёт: в этом году основные траты приходятся на показанные категории. Анализируйте ваши расходы, чтобы лучше планировать бюджет.';
     }
-    summaryEl.innerHTML = summaryHtml;
+    summaryEl.appendChild(aiP);
   }
 }
 

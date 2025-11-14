@@ -31,21 +31,42 @@
       listEl.innerHTML = '<p>Подписок пока нет.</p>';
       return;
     }
-    const html = items
-      .map(
-        (s) => `
-        <div class="row" style="align-items:center; gap:.5rem; padding:.5rem 0; border-bottom:1px solid var(--border)">
-          <div style="flex:2 1 220px"><strong>${escapeHtml(s.title)}</strong></div>
-          <div style="flex:1 1 140px">${fmtAmount(s.amount, s.currency)}</div>
-          <div style="flex:1 1 140px">${escapeHtml(s.frequency || '')}</div>
-          <div style="flex:1 1 160px">${(s.nextDate || s.next_date) ? escapeHtml(s.nextDate || s.next_date) : '—'}</div>
-          <div style="flex:0 0 auto">
-            <button class="btn-secondary" data-del="${s.id}">Удалить</button>
-          </div>
-        </div>`
-      )
-      .join('');
-    listEl.innerHTML = html;
+    // XSS FIX: Use textContent for user-provided data (title, frequency, nextDate)
+    listEl.innerHTML = '';
+    items.forEach(s => {
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.style.cssText = 'align-items:center; gap:.5rem; padding:.5rem 0; border-bottom:1px solid var(--border)';
+      
+      const titleDiv = document.createElement('div');
+      titleDiv.style.cssText = 'flex:2 1 220px';
+      const titleStrong = document.createElement('strong');
+      titleStrong.textContent = s.title;
+      titleDiv.appendChild(titleStrong);
+      
+      const amountDiv = document.createElement('div');
+      amountDiv.style.cssText = 'flex:1 1 140px';
+      amountDiv.textContent = fmtAmount(s.amount, s.currency);
+      
+      const freqDiv = document.createElement('div');
+      freqDiv.style.cssText = 'flex:1 1 140px';
+      freqDiv.textContent = s.frequency || '';
+      
+      const dateDiv = document.createElement('div');
+      dateDiv.style.cssText = 'flex:1 1 160px';
+      dateDiv.textContent = (s.nextDate || s.next_date) ? (s.nextDate || s.next_date) : '—';
+      
+      const btnDiv = document.createElement('div');
+      btnDiv.style.cssText = 'flex:0 0 auto';
+      const btn = document.createElement('button');
+      btn.className = 'btn-secondary';
+      btn.dataset.del = s.id;
+      btn.textContent = 'Удалить';
+      btnDiv.appendChild(btn);
+      
+      row.append(titleDiv, amountDiv, freqDiv, dateDiv, btnDiv);
+      listEl.appendChild(row);
+    });
   }
 
   function escapeHtml(s) {

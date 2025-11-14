@@ -19,11 +19,16 @@ function renderGoals(goals, container) {
     const card = document.createElement('div');
     card.className = 'goal-card';
     const title = document.createElement('h3');
+    // XSS FIX: goal.title already uses textContent (safe)
     title.textContent = goal.title;
     const progressText = document.createElement('p');
     const current = Number(goal.current_amount || 0);
     const target = Number(goal.target_amount);
-    progressText.innerHTML = `<strong>${current.toFixed(2)}</strong> / ${target.toFixed(2)}`;
+    // XSS FIX: Replace innerHTML with textContent + createElement
+    const strong = document.createElement('strong');
+    strong.textContent = current.toFixed(2);
+    progressText.appendChild(strong);
+    progressText.appendChild(document.createTextNode(` / ${target.toFixed(2)}`));
     // Создаём прогресс‑бар
     const barContainer = document.createElement('div');
     barContainer.className = 'progress-bar-small';
