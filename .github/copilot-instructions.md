@@ -25,15 +25,26 @@ FinTrackr is a **personal finance tracker MVP** built as an academic capstone pr
 ### Frontend Structure (Vanilla JS)
 
 - **No Build Step for HTML**: Static files in `public/*.html` served directly
-- **ES6 Modules**: Frontend code in `frontend/pages/*.js` and `frontend/modules/*.js`
-- **Build Tool**: Vite bundles `frontend/` into `public/js/` (run via `npx vite build`)
-- **Key Modules**:
+- **ES6 Modules**: Frontend code in TWO locations (transitional):
+  - `frontend/pages/*.js` - Legacy page modules (being migrated)
+  - `frontend/src/` - New modular architecture (components/, modules/, layout/)
+  - `frontend/modules/` - Shared utilities (auth, API, navigation)
+- **Build Tool**: Vite bundles `frontend/` into `public/js/` (run via `npm run build`)
+  - Config: `vite.config.js` defines entry points for all pages and components
+  - Output: `dist/assets/` → manually copy to `public/js/` (or automated in build script)
+- **Key Shared Modules**:
   - `frontend/modules/auth.js`: Auth state in localStorage (key: `'user'`), provides `Auth.isLoggedIn()`, `Auth.getUser()`
-  - `frontend/modules/api.js`: Simple `fetchData(endpoint)` wrapper
   - `frontend/modules/navigation.js`: Sidebar injection, logout handling
   - `frontend/modules/profile.js`: User settings (theme, currency preferences)
+- **New Architecture Modules** (in `frontend/src/modules/`):
+  - `api.js`: **Unified API client** (450 lines) - CRUD for all entities with retry logic, timeout handling
+  - `validation.js`: Centralized validation (400 lines) - 14 rules, 7 entity schemas
+  - `store.js`: Reactive state management with Proxy-based observers
+  - `charts.js`: Chart.js configurations for financial visualizations
+  - `helpers.js`: Utility functions (formatCurrency, convertCurrency, etc.)
 - **CSS Architecture**:
-  - Single stylesheet: `public/css/style.css` (~2000 lines)
+  - Primary stylesheet: `public/css/style.css` (~2000 lines)
+  - Component styles: `public/css/layout-components.css`
   - CSS custom properties for theming (`--primary-color`, `--bg-color`, etc.)
   - Theme switching: `data-theme="light|dark"` on `<html>` element
 
@@ -62,8 +73,12 @@ When adding currency features:
 ```powershell
 # Start backend (serves API + static files on port 3000)
 npm start                    # Default port 3000
-npm run start:8080          # Alternative port
+npm run start:8080          # Alternative port 8080
+npm run start:3000          # Explicit port 3000
 $env:PORT=4000; npm start   # Custom port
+
+# Build frontend (required after editing frontend/pages/ or frontend/src/)
+npm run build               # Bundles frontend/ into public/js/ via Vite
 
 # IMPORTANT: No separate frontend dev server - Vite only for builds
 # Browse to http://localhost:3000 after starting backend
@@ -166,8 +181,8 @@ Deleting a category (`DELETE /api/categories/:id`):
 **Solution**: Always set `FINTRACKR_DISABLE_PERSIST=true` (check `jest.config.js` and test file imports)
 
 ### 3. Frontend Changes Not Reflecting
-**Issue**: Edited `frontend/pages/` but no effect  
-**Solution**: Run `npx vite build` to bundle into `public/js/`. Alternatively, edit `public/js/` directly for quick iteration (but loses source map)
+**Issue**: Edited `frontend/pages/` or `frontend/src/` but no effect  
+**Solution**: Run `npm run build` to bundle into `public/js/` via Vite. Alternatively, edit `public/js/` directly for quick iteration (but loses source map and will be overwritten on next build)
 
 ### 4. Authentication Failures
 **Issue**: API returns 401 after implementing new endpoint  
@@ -195,12 +210,12 @@ Deleting a category (`DELETE /api/categories/:id`):
 ### New Frontend Page Checklist
 
 1. **Create HTML** in `public/[pagename].html` (copy structure from existing pages)
-2. **Create JS module** in `frontend/pages/[pagename].js`
+2. **Create JS module** in `frontend/pages/[pagename].js` (or `frontend/src/pages/` for new architecture)
 3. **Import shared modules**: `auth.js`, `api.js`, `navigation.js`, `profile.js`
 4. **Initialize navigation**: Call `initNavigation()` in page's `DOMContentLoaded`
 5. **Add sidebar link** in `navigation.js` `buildSidebarHTML()` function
-6. **Run Vite build**: `npx vite build` to generate bundle
-7. **Update `vite.config.js`** if new entry point needed (add to `inputs` object)
+6. **Update `vite.config.js`**: Add new entry point to `inputs` object
+7. **Run Vite build**: `npm run build` to generate bundle in `public/js/`
 
 ## Refactoring Guidelines
 
@@ -235,10 +250,14 @@ Deleting a category (`DELETE /api/categories/:id`):
 - **docs/architecture_overview.md**: Architecture diagrams and flows
 - **docs/requirements_compliance_report.md**: Academic project checklist
 - **package.json scripts**: 
-  - `start` = production server
+  - `start` = production server on port 3000
+  - `start:3000`, `start:8080` = specific ports
   - `dev` = same as start (no hot reload)
+  - `build` = Vite build frontend to dist/assets/
   - `test` = backend tests with coverage
+  - `test:backend` = Jest backend unit tests
   - `test:e2e` = Playwright integration tests
+  - `lint` = ESLint backend code
 
 ## Quick Reference: Key Files
 
@@ -255,6 +274,110 @@ Deleting a category (`DELETE /api/categories/:id`):
 | `jest.config.js` | Backend test configuration | Low (settings) |
 | `playwright.config.js` | E2E test configuration | Low (settings) |
 
+## Security Considerations
+
+### JWT Secret Configuration
+
+**CRITICAL**: The `JWT_SECRET` environment variable must be set securely in production:
+
+```powershell
+# Generate a secure secret
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+
+# Set in .env file (NEVER commit to repo)
+JWT_SECRET=your_generated_secret_here
+COOKIE_SECURE=true  # Required for HTTPS in production
+```
+
+The server will **refuse to start** in production mode without a custom JWT_SECRET (fails with exit code 1).
+
+### Cookie Security
+
+- **HttpOnly Cookies**: Tokens stored as HttpOnly cookies to prevent XSS attacks
+- **Secure Flag**: Enabled in production via `COOKIE_SECURE=true` environment variable
+- **SameSite**: Set to "Lax" by default, configurable per environment
+- **Token Blacklist**: Logout invalidates tokens by adding to `tokenBlacklist` array
+
+### Password Handling
+
+- **Hashing**: bcryptjs with salt rounds of 10 (see `backend/services/authService.js`)
+- **No Plain Text**: Passwords never stored in plain text or logged
+- **Sanitization**: `sanitizeUser()` removes `password_hash` from API responses
+
 ---
 
-**Last Updated**: Generated by AI assistant analyzing codebase structure
+## Component Library (New Architecture)
+
+### UI Components (frontend/src/components/)
+
+All components use ES6 modules and are bundled via Vite. Import using `@components` alias in new architecture or relative paths in legacy pages.
+
+**ModalBase.js** - Universal modal dialogs
+```javascript
+import { openModal, confirmModal, alertModal } from '@components/ModalBase.js';
+
+// Confirmation dialog
+const confirmed = await confirmModal({ 
+  title: 'Delete item?', 
+  message: 'This cannot be undone',
+  danger: true 
+});
+```
+
+**Toast.js** - Notification system
+```javascript
+import { toastSuccess, toastError, toastWarning, toastInfo } from '@components/Toast.js';
+
+toastSuccess('Saved successfully!');
+toastError('Failed to save', { duration: 5000 });
+```
+
+**FormBase.js** - Form builder with validation
+```javascript
+import { createForm } from '@components/FormBase.js';
+
+const form = createForm({
+  fields: [
+    { name: 'email', type: 'email', label: 'Email', validation: { required: true, email: true } },
+    { name: 'amount', type: 'number', label: 'Amount', validation: { required: true, min: 0 } }
+  ],
+  submitLabel: 'Save',
+  onSubmit: async (values) => { /* handle submit */ }
+});
+```
+
+**SkeletonLoader.js** - Loading states
+```javascript
+import { createChartSkeleton, showSkeleton, hideSkeleton } from '@components/SkeletonLoader.js';
+
+showSkeleton('#container', createChartSkeleton('bar'));
+// Load data...
+hideSkeleton('#container', realContent);
+```
+
+**Chart Integration** - Professional visualizations
+```javascript
+import { createExpensesByCategoryChart, createCashflowChart, renderChart } from '@modules/charts.js';
+
+const config = createExpensesByCategoryChart(expenses, categories, 'USD');
+const chartInstance = renderChart('canvas-id', config);
+
+// Later destroy to free memory
+chartInstance.destroy();
+```
+
+**Key Pattern**: Always destroy Chart.js instances before re-rendering to prevent memory leaks.
+
+### Component Documentation
+
+Full API reference in `COMPONENTS.md` with:
+- All component APIs and parameters
+- Usage examples for each component
+- Migration guide from legacy patterns
+- Best practices for skeleton loaders and Chart.js
+
+---
+
+**Migration Status (Phase 4 Complete)**: All 15 pages now use unified API module (`API.entity.method()`), Toast notifications, and Modal confirmations. Legacy `frontend/modules/api.js` (fetchData) removed. No more direct `fetch()` calls or `alert()`/`confirm()` in pages.
+
+**Last Updated**: 2025-11-14 (Version 1.3 - Completed Phase 4: JS Refactoring)

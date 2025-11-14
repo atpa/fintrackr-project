@@ -1,13 +1,14 @@
 import initNavigation from '../modules/navigation.js';
 import initProfileShell from '../modules/profile.js';
+import { API } from '../src/modules/api.js';
+import { toastError } from '../src/components/Toast.js';
 
 initNavigation();
 initProfileShell();
 
 async function loadRecurring() {
   try {
-    const response = await fetch('/api/recurring');
-    const data = await response.json();
+    const data = await API.utils.getRecurring();
     const tbody = document.querySelector('#recurringTable tbody');
     const summary = document.getElementById('recurringSummary');
 
@@ -39,6 +40,7 @@ async function loadRecurring() {
     }
   } catch (error) {
     console.error('Не удалось загрузить повторяющиеся операции', error);
+    toastError(`Не удалось загрузить повторяющиеся операции: ${error.message}`);
   }
 }
 

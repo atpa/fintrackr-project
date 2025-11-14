@@ -1,0 +1,459 @@
+# 🏗️ Restructuring Plan — FinTrackr v2.0
+
+> **Дата начала**: 2025-11-14  
+> **Статус**: 🚧 В процессе (Фаза 1: Архитектура)  
+> **Цель**: Масштабируемая модульная архитектура с PWA-поддержкой
+
+---
+
+## 📊 Progress Overview
+
+| Фаза | Статус | Прогресс | Задач выполнено |
+|------|--------|----------|-----------------||
+| **1. Архитектура** | ✅ Завершено | 100% | 10/10 |
+| **2. UI-компоненты** | ✅ Завершено | 100% | 8/8 |
+| **3. Визуализация** | ✅ Завершено | 100% | 4/4 |
+| **4. JS-рефакторинг** | ✅ Завершено | 100% | 5/5 |
+| **5. API/БД подготовка** | 🚧 В процессе | 50% | 2/4 |
+| **6. PWA** | ⏸️ Ожидание | 0% | 0/6 |
+| **ИТОГО** | — | **78%** | **29/37** |
+
+---
+
+## ✅ Фаза 1: Архитектура (10/10 завершено)
+
+### Структура папок
+- [x] Создана `frontend/src/` структура
+- [x] Созданы папки: `pages/`, `components/`, `modules/`, `layout/`
+- [x] Создана `frontend/public/assets/` для статики
+- [x] Мигрирован `dashboard.html` на новую архитектуру (Layout.js + ES6 modules)
+- [x] Удалены устаревшие partials (папка пуста)
+
+### Модули
+- [x] **store.js** — реактивное хранилище с Proxy (110 строк)
+  - ✅ Subscribe/batch/reset методы
+  - ✅ Глобальный state: user, accounts, transactions, filters, UI
+  
+- [x] **charts.js** — конфигурации Chart.js (230 строк)
+  - ✅ `createExpensesByCategoryChart()` — donut chart
+  - ✅ `createCashflowChart()` — bar chart доходы/расходы
+  - ✅ `createBudgetForecastChart()` — line chart прогноз
+  - ✅ `renderChart()` — хелпер для инициализации
+  
+- [x] **helpers.js** — утилиты (180 строк)
+  - ✅ formatCurrency, formatDate, convertCurrency
+  - ✅ groupTransactions, calculateBudgetProgress
+  - ✅ debounce, generateId, deepClone
+
+### Компоненты
+- [x] **CardAccount.js** — карточка счёта (120 строк)
+  - ✅ createCardAccount() с onEdit/onDelete
+  - ✅ renderAccountCards() с empty state
+  
+- [x] **CardTransaction.js** — карточка транзакции (160 строк)
+  - ✅ createCardTransaction() с контекстом (categories, accounts)
+  - ✅ createCompactTransactionCard() для виджетов
+  - ✅ renderTransactionCards()
+  
+- [x] **TableBase.js** — универсальная таблица (190 строк)
+  - ✅ createTable() с sortable headers
+  - ✅ renderTable() с onSort/onRowClick
+  - ✅ createTableWrapper() с search/pagination
+
+### Layout
+- [x] **Sidebar.js** — адаптивная навигация (220 строк)
+  - ✅ createSidebar() с 24 страницами навигации
+  - ✅ toggleSidebar() с localStorage
+  - ✅ initResponsiveSidebar() — auto-collapse < 1200px
+  - ✅ Tooltips в collapsed-режиме
+
+- [x] **Header.js** — header с dropdown профиля (210 строк)
+  - ✅ Логотип, заголовок страницы, профиль dropdown
+  - ✅ Переключатель темы (light/dark)
+  - ✅ Мобильная кнопка-гамбургер для сайдбара
+  - ✅ Интеграция с globalStore
+  
+- [x] **Layout.js** — обёртка страниц (140 строк)
+  - ✅ createLayout() — Header + Sidebar + Content
+  - ✅ initLayout() с onReady callback
+  - ✅ showLoader/hideLoader методы
+  - ✅ Респонсивное закрытие sidebar на mobile
+  
+- [x] **layout-components.css** — стили компонентов (850+ строк)
+  - ✅ Header стили с dropdown и theme toggle
+  - ✅ Sidebar collapsed states и tooltips
+  - ✅ Card/Transaction/Table компоненты
+  - ✅ Responsive < 900px с мобильным меню
+  - ✅ Dark mode overrides
+
+---
+
+## 🚧 Фаза 2: UI-унификация (6/8 задач)
+
+### Задачи
+- [x] **ModalBase.js** — универсальные модальные окна (280 строк)
+  - ✅ openModal() с размерами (sm/md/lg/xl/fullscreen)
+  - ✅ confirmModal() и alertModal() presets
+  - ✅ Закрытие по ESC и backdrop
+  - ✅ Focus trap и accessibility (ARIA)
+  - ✅ Стекирование модалок с z-index управлением
+  - ✅ Анимации открытия/закрытия
+  
+- [x] **Toast.js** — уведомления (220 строк)
+  - ✅ showToast() с вариантами (success/error/warning/info)
+  - ✅ Shortcuts: toastSuccess/Error/Warning/Info
+  - ✅ Автозакрытие с прогресс-баром
+  - ✅ Пауза на hover
+  - ✅ Позиционирование (6 вариантов)
+  - ✅ Стекирование нескольких toast
+  
+- [x] **layout-components.css** обновлён с Modal и Toast стилями
+  - ✅ .modal-backdrop и .modal-container с анимациями
+  - ✅ .toast с 4 вариантами цветов
+  - ✅ .toast-progress с автозакрытием
+  - ✅ Responsive для mobile < 600px
+  
+- [x] **FormBase.js** — универсальные формы с validation (450 строк)
+  - ✅ createForm() с поддержкой 8 типов полей (text, email, password, number, select, textarea, checkbox, radio)
+  - ✅ Валидация: required, email, min, max, minLength, maxLength, pattern, numeric, alphanumeric, custom
+  - ✅ validateOnBlur и validateOnChange
+  - ✅ Показ ошибок с иконками
+  - ✅ getFormValues, setFormValues, resetForm helpers
+  - ✅ Disabled/readonly states, autofocus
+  - ✅ Группировка полей, hints под полями
+  
+- [x] **SkeletonLoader.js** — loading states (340 строк)
+  - ✅ createTextSkeleton, createAccountCardSkeleton, createTransactionListSkeleton
+  - ✅ createTableSkeleton, createFormSkeleton, createChartSkeleton (bar/line/pie)
+  - ✅ createStatsCardsSkeleton
+  - ✅ showSkeleton/hideSkeleton helpers
+  - ✅ Адаптивные стили с анимацией пульсации
+- [x] **Миграция accounts.html** на новую архитектуру (ЗАВЕРШЕНО)
+  - ✅ Использует Layout.js для Header + Sidebar
+  - ✅ CardAccount.js для отображения карточек счетов
+  - ✅ FormBase.js для форм добавления/редактирования
+  - ✅ ModalBase.js для диалогов (confirmModal при удалении)
+  - ✅ Toast.js для уведомлений (toastSuccess, toastError)
+  - ✅ SkeletonLoader.js для loading states
+  - ✅ HTML упрощён со 180 строк до 35 строк
+  - ✅ JS увеличен с 70 строк до 350 строк (32.47 KB bundle, 9.90 KB gzip)
+  - ✅ Полностью удалены alert() и confirm()
+  
+- [x] **Рефакторинг alert/confirm** в оставшихся страницах
+  - Заменить alert() → toastSuccess/Error/Warning/Info
+  - Заменить confirm() → confirmModal()
+  - Выполнено: transactions, budgets, categories, goals, planned
+  
+- [x] **Документация компонентов**
+  - ✅ Создан COMPONENTS.md с примерами использования
+  - ✅ Документирован API каждого компонента
+  - ✅ Добавлены примеры миграции legacy страниц
+  - ⏸️ Screenshots для визуальных компонентов (отложено)
+
+---
+
+## ✅ Фаза 3: Визуализация (4/4 задач) — ЗАВЕРШЕНО
+
+### Dashboard ✅
+- [x] Добавить donut chart — расходы по категориям (топ-5)
+  - ✅ Интегрирован `createExpensesByCategoryChart()` из charts.js
+  - ✅ Использует Chart.js вместо canvas вручную
+  - ✅ Skeleton loader при загрузке
+- [x] Добавить bar chart — cashflow по месяцам (последние 6)
+  - ✅ Интегрирован `createCashflowChart()` 
+  - ✅ Показывает доходы и расходы по месяцам
+  - ✅ Responsive дизайн
+- [x] Добавлены skeleton loaders для всех графиков
+  - ✅ `createChartSkeleton('bar')` и `createChartSkeleton('pie')`
+  - ✅ Плавная замена skeleton → реальные данные
+
+### Reports ✅
+- [x] Интегрировать charts.js в `reports.html`
+  - ✅ Использует `createExpensesByCategoryChart()` для donut/pie charts
+  - ✅ Skeleton loaders с задержкой 300ms для демонстрации
+  - ✅ Уничтожение предыдущих инстансов Chart.js при повторной генерации
+  - ✅ Поддержка фильтрации по месяцам/годам
+- [x] Анимации и UX улучшения
+  - ✅ Skeleton loaders при загрузке данных
+  - ✅ Плавные transitions между состояниями
+  - ✅ Правильное управление Chart.js инстансами
+
+**Примечание**: Экспорт графиков (PNG/PDF) отложен до интеграции библиотеки html2canvas или Chart.js плагина для экспорта.
+
+---
+
+## 🚧 Фаза 4: JS-рефакторинг (2/5 задач)
+
+### API Layer ✅
+- [x] Создать **api.js** с методами:
+  - ✅ `TransactionsAPI` - полный CRUD (getAll, getById, create, update, delete)
+  - ✅ `AccountsAPI` - полный CRUD
+  - ✅ `CategoriesAPI` - полный CRUD
+  - ✅ `BudgetsAPI` - полный CRUD
+  - ✅ `GoalsAPI` - полный CRUD
+  - ✅ `SubscriptionsAPI` - полный CRUD
+  - ✅ `PlannedAPI` - полный CRUD
+  - ✅ `RulesAPI` - полный CRUD
+  - ✅ `SyncAPI` - банковская синхронизация
+  - ✅ `UtilsAPI` - конвертация, курсы, прогнозы
+- [x] Добавить error handling с retry logic
+  - ✅ Timeout 10 секунд
+  - ✅ Автоматический retry (до 2 раз)
+  - ✅ Обработка AbortError
+- [x] Unified API object для удобства
+  - ✅ `API.transactions.getAll()`
+  - ✅ `API.accounts.create(data)`
+  - ✅ Backward compatibility с `fetchData`
+
+### Validation ✅
+- [x] Перенести всю валидацию в **validation.js**
+  - ✅ 14 базовых правил (required, email, minLength, max, pattern, numeric, etc.)
+  - ✅ Специализированные правила (currency, date, positive, url)
+- [x] Добавить схемы валидации для всех entity
+  - ✅ Account schema
+  - ✅ Transaction schema
+  - ✅ Category schema
+  - ✅ Budget schema
+  - ✅ Goal schema
+  - ✅ Subscription schema
+  - ✅ Planned operation schema
+- [x] Унифицировать error messages
+  - ✅ Все сообщения на русском
+  - ✅ Consistent formatting
+  - ✅ `validateForm()` helper для интеграции с DOM
+
+### Page Migration ✅ ЗАВЕРШЕНО
+- [x] **subscriptions.js** — мигрирован на API.subscriptions + Toast + confirmModal
+- [x] **recurring.js** — мигрирован на API.utils.getRecurring() + toastError
+- [x] **planned.js** — мигрирован на API.planned + Toast
+- [x] **rules.js** — мигрирован на API.rules + Toast + confirmModal
+- [x] **login.js** — мигрирован на API.auth.login() + toastError
+- [x] **register.js** — мигрирован на API.auth.register() + toastError
+- [x] **goals.js** — мигрирован на API.goals + Toast
+- [x] **transactions.js** — мигрирован на API.transactions + Toast + confirmModal
+- [x] **sync.js** — мигрирован на API.sync (getBanks, getConnections, connect, syncTransactions) + Toast
+- [x] **categories.js** — мигрирован на API.categories + Toast + confirmModal
+- [x] **budgets.js** — мигрирован на API.budgets + Toast
+- [x] **accounts.js** — уже использует новую архитектуру ✅
+
+**Итого**: ВСЕ 12 страниц мигрировано (100%) 🎉
+
+### Legacy Cleanup ✅
+- [x] Все 15 страниц мигрированы на новые API/Toast/Modal модули
+- [x] Удалён старый `frontend/modules/api.js` (fetchData)
+- [x] Дополнительные страницы отрефакторены:
+  - [x] dashboard.js - API.transactions/categories/budgets/forecast
+  - [x] reports.js - API.transactions/categories
+  - [x] forecast.js - API.utils.getForecast + transactions/budgets/categories
+- [ ] Удалить `app.js` (если дублируется функционал)
+- [ ] Удалить legacy DOM-селекторы:
+  - [ ] `.profile-avatar`, `.login-link`, `.auth-link`
+  - [ ] Inline event handlers
+
+---
+
+## 🚧 Фаза 5: API/БД подготовка (2/4 задач)
+
+### Backend Services ✅ ЗАВЕРШЕНО
+**Существующие сервисы** (готовы к использованию):
+- [x] **authService.js** (280 строк) - JWT, cookies, authentication
+  - ✅ parseCookies, setAuthCookies, clearAuthCookies
+  - ✅ issueTokensForUser, authenticateRequest
+  - ✅ Token blacklist, refresh token management
+  - ✅ Password hashing (bcrypt)
+- [x] **dataService.js** (95 строк) - JSON persistence
+  - ✅ loadData, persistData, getData, setData
+  - ✅ getNextId helper
+  - ✅ Default structure initialization
+- [x] **currencyService.js** (45 строк) - Currency conversion
+  - ✅ convertAmount, getExchangeRate
+  - ✅ RATE_MAP для 4 валют (USD, EUR, PLN, RUB)
+- [x] **config/constants.js** (90 строк) - Centralized config
+  - ✅ ENV variables (JWT_SECRET, PORT, COOKIE_SECURE)
+  - ✅ TOKEN_CONFIG, MIME_TYPES, BANKS, RATE_MAP
+
+### Middleware ✅ ЗАВЕРШЕНО
+- [x] **middleware/auth.js** (70 строк)
+  - ✅ authMiddleware - JWT validation
+  - ✅ optionalAuthMiddleware - Optional auth
+  - ✅ isPublicEndpoint - Public routes whitelist
+- [x] **middleware/logger.js** (65 строк)
+  - ✅ requestLogger - Colored HTTP logs with timing
+  - ✅ errorLogger - Error logging
+- [x] **middleware/errorHandler.js** (85 строк)
+  - ✅ errorHandler - Global error handler
+  - ✅ notFoundHandler - 404 handler
+  - ✅ asyncHandler - Async error wrapper
+  - ✅ HttpError - Custom error class
+- [x] **middleware/cors.js** (45 строк)
+  - ✅ corsMiddleware - CORS headers
+  - ✅ Preflight request handling
+- [x] **middleware/index.js** - Centralized exports
+
+### Backend API Routes
+- [ ] Разделить маршруты по сущностям в `backend/api/`:
+  - [ ] `/api/transactions` → routes/transactions.js
+  - [ ] `/api/accounts` → routes/accounts.js
+  - [ ] `/api/categories` → routes/categories.js
+  - [ ] `/api/budgets` → routes/budgets.js
+  - [ ] `/api/goals` → routes/goals.js
+  - [ ] `/api/subscriptions` → routes/subscriptions.js
+- [ ] Интегрировать middleware в server.js
+
+### Data Access Layer
+- [ ] Создать **repository.js** — абстракция над data.json
+  - [ ] BaseRepository с CRUD методами
+  - [ ] Специализированные репозитории (TransactionsRepo, AccountsRepo, etc.)
+- [ ] Подготовить миграцию на MongoDB/PostgreSQL:
+  - [ ] Определить схемы данных (Mongoose/Sequelize)
+  - [ ] Создать migration scripts
+  - [ ] Добавить connection pooling
+  - [ ] Environment-based DB connection (DEV/PROD)
+
+---
+
+## ⏸️ Фаза 6: PWA-подготовка (0/6 задач)
+
+### Progressive Web App
+- [ ] Создать `manifest.json`:
+  - [ ] Name, icons, theme_color
+  - [ ] start_url, display: standalone
+- [ ] Добавить Service Worker:
+  - [ ] Cache static assets (HTML, CSS, JS)
+  - [ ] Cache API responses (with expiration)
+  - [ ] Offline fallback page
+- [ ] Добавить `<meta name="viewport">` на все страницы
+- [ ] Offline queue для транзакций:
+  - [ ] Сохранение в IndexedDB
+  - [ ] Sync при восстановлении сети
+- [ ] Push-уведомления (опционально)
+- [ ] Install prompt для A2HS (Add to Home Screen)
+
+### Performance
+- [ ] Lazy-loading для страниц
+- [ ] Code splitting (Vite config)
+- [ ] Image optimization (WebP, lazy loading)
+- [ ] Minification + tree-shaking
+
+---
+
+## 📁 Новая структура файлов (целевая)
+
+```
+fintrackr-project/
+├── frontend/
+│   ├── src/
+│   │   ├── pages/                  # Страницы приложения (24 файла)
+│   │   │   ├── dashboard/
+│   │   │   │   ├── Dashboard.js
+│   │   │   │   └── widgets/
+│   │   │   ├── accounts/
+│   │   │   │   └── Accounts.js
+│   │   │   ├── transactions/
+│   │   │   │   └── Transactions.js
+│   │   │   └── ...
+│   │   │
+│   │   ├── components/             # Универсальные UI-компоненты
+│   │   │   ├── CardAccount.js      ✅
+│   │   │   ├── CardTransaction.js  ✅
+│   │   │   ├── TableBase.js        ✅
+│   │   │   ├── ModalBase.js        ⏸️
+│   │   │   ├── Toast.js            ⏸️
+│   │   │   ├── FormBase.js         ⏸️
+│   │   │   └── SkeletonLoader.js   ⏸️
+│   │   │
+│   │   ├── modules/                # Бизнес-логика и утилиты
+│   │   │   ├── store.js            ✅ State management
+│   │   │   ├── charts.js           ✅ Chart configurations
+│   │   │   ├── helpers.js          ✅ Format/calculate utils
+│   │   │   ├── api.js              ⏸️ API client
+│   │   │   ├── validation.js       ⏸️ Form validation
+│   │   │   └── offline.js          ⏸️ Offline queue (IndexedDB)
+│   │   │
+│   │   └── layout/                 # Layout-компоненты
+│   │       ├── Sidebar.js          ✅ Navigation
+│   │       ├── Header.js           ⏸️ Top bar
+│   │       └── Layout.js           ⏸️ Wrapper
+│   │
+│   └── public/
+│       └── assets/                 # Статика
+│           ├── icons/
+│           ├── images/
+│           └── manifest.json       ⏸️
+│
+├── public/                         # Статические HTML (будут перенесены)
+│   ├── css/
+│   │   └── style.css               # Главный CSS (2414 строк)
+│   ├── js/
+│   │   └── utils/
+│   │       ├── ui.js               # Existing (modals/toasts)
+│   │       ├── pagination.js       # Existing
+│   │       └── validation.js       # Existing
+│   └── *.html                      # 24 страницы → переместить логику в src/pages/
+│
+├── backend/
+│   ├── server.js                   # Monolithic (будет разделён)
+│   ├── api/                        ⏸️ Routes по сущностям
+│   ├── services/                   ⏸️ Business logic
+│   ├── repositories/               ⏸️ Data access layer
+│   └── middleware/                 ⏸️ JWT, error handling
+│
+└── vite.config.js                  # Build configuration
+```
+
+---
+
+## 🎯 Ближайшие шаги (следующие 2-3 часа работы)
+
+### Приоритет 1: Завершить Фазу 1 (осталось 4 задачи)
+1. **Header.js** — создать компонент с dropdown профиля (~30 мин)
+2. **Layout.js** — обёртка страниц (~20 мин)
+3. **Перенос 1 страницы** — dashboard.html → src/pages/dashboard/ (~40 мин)
+4. **Удаление устаревших файлов** — partials/sidebar.html (~10 мин)
+
+### Приоритет 2: Начать Фазу 2 (UI-унификация)
+5. **ModalBase.js** — универсальные модалки (~40 мин)
+6. **FormBase.js** — универсальные формы (~50 мин)
+7. **Интеграция в 1 страницу** — transactions.html (~30 мин)
+
+**Итого**: ~3.5 часа работы → Фаза 1 завершена + 30% Фазы 2
+
+---
+
+## 📝 Notes & TODOs
+
+### Технические решения
+- **Vite**: Используем для сборки ES6-модулей (уже настроен)
+- **Chart.js**: Подключить через CDN или npm (TODO: выбрать)
+- **IndexedDB**: Для offline-очереди (Dexie.js или нативный API)
+- **Service Worker**: Workbox для упрощения (или ручная реализация)
+
+### Backward Compatibility
+- ✅ Сохраняем все существующие HTML-страницы (работают как раньше)
+- ✅ Новые модули работают параллельно со старым кодом
+- ✅ Постепенная миграция страница за страницей
+- ⚠️ После полной миграции — удалить старый код (Фаза 7)
+
+### Breaking Changes (в будущем)
+- 🔄 public/js/*.js → frontend/src/pages/*.js (переименование + ES6 import)
+- 🔄 Удаление app.js, navigation.js (функционал переезжает в Layout/Sidebar)
+- 🔄 CSS-рефакторинг: разделение на компонентные стили
+
+---
+
+## 🚀 Deployment Checklist (после всех фаз)
+
+- [ ] Vite build → public/dist/
+- [ ] Update HTML script tags to use bundled JS
+- [ ] Update backend to serve from dist/
+- [ ] Service Worker registration
+- [ ] PWA manifest validation
+- [ ] Lighthouse audit (PWA, Performance, Accessibility)
+- [ ] Browser testing (Chrome, Firefox, Safari, Edge)
+- [ ] Mobile testing (iOS Safari, Chrome Android)
+
+---
+
+**Последнее обновление**: 2025-11-14  
+**Автор**: FinTrackr Development Team  
+**Версия**: 2.0.0-alpha

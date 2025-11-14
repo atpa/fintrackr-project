@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FinTrackr – Плановые операции</title>
+    <link rel="stylesheet" href="css/style.css" />
+  <script defer src="js/utils/auth.js"></script>
+  <script defer src="js/app.js"></script>
+  <script defer src="js/utils/ui.js"></script>
+  <script defer src="js/planned.js"></script>
+  </head>
+  <body class="workspace-page" data-page-title="Планируемые" data-page-subtitle="Запланируйте будущие транзакции">
+    <header>
+      <div class="brand visually-hidden">
+        <a href="dashboard.html">FinTrackr</a>
+      </div>
+      <button class="burger" aria-label="Меню">
+        <span></span><span></span><span></span>
+      </button>
+    </header>
+
+    <aside
+      class="sidebar"
+      id="sidebar"
+      role="navigation"
+      aria-label="Боковая навигация"
+    >
+    <div class="sidebar-top">
+      <!-- sidebar-footer удалён: профиль и auth вынесены в header dropdown -->
+            focusable="false"
+          >
+            <rect width="24" height="24" rx="6" fill="var(--primary)"></rect>
+            <path
+              d="M6 12h12M6 8h12M6 16h12"
+              stroke="#fff"
+              stroke-width="1.2"
+              stroke-linecap="round"
+            ></path>
+          </svg>
+          <span class="logo-text">FinTrackr</span>
+        </a>
+        
+      </div>
+    </div>
+
+    <div class="sidebar-scroll">
+      <nav class="sidebar-nav" aria-label="Меню приложения">
+        <div class="nav-section">
+          <h3 class="nav-section-title">Основное</h3>
+          <ul class="nav-list">
+            <li class="nav-item">
+              <a href="dashboard.html" class="nav-link"
+                ><span class="nav-icon">🏠</span
+                ><span class="nav-label">Дэшборд</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="accounts.html" class="nav-link"
+                ><span class="nav-icon">💼</span
+                ><span class="nav-label">Счёта</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="transactions.html" class="nav-link"
+                ><span class="nav-icon">🔁</span
+                ><span class="nav-label">Операции</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="categories.html" class="nav-link"
+                ><span class="nav-icon">🔖</span
+                ><span class="nav-label">Категории</span></a
+              >
+            </li>
+          </ul>
+        </div>
+
+        <div class="nav-section">
+          <h3 class="nav-section-title">Планирование</h3>
+          <ul class="nav-list">
+            <li class="nav-item">
+              <a href="budgets.html" class="nav-link"
+                ><span class="nav-icon">📊</span
+                ><span class="nav-label">Бюджеты</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="goals.html" class="nav-link"
+                ><span class="nav-icon">🎯</span
+                ><span class="nav-label">Цели</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="planned.html" class="nav-link"
+                ><span class="nav-icon">📅</span
+                ><span class="nav-label">Планируемые</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="recurring.html" class="nav-link"
+                ><span class="nav-icon">🔁</span
+                ><span class="nav-label">Регулярные</span></a
+              >
+            </li>
+          </ul>
+        </div>
+
+        <div class="nav-section">
+          <h3 class="nav-section-title">Аналитика</h3>
+          <ul class="nav-list">
+            <li class="nav-item">
+              <a href="reports.html" class="nav-link"
+                ><span class="nav-icon">📈</span
+                ><span class="nav-label">Отчёты</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="forecast.html" class="nav-link"
+                ><span class="nav-icon">🔮</span
+                ><span class="nav-label">Прогнозы</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="rules.html" class="nav-link"
+                ><span class="nav-icon">⚙️</span
+                ><span class="nav-label">Правила</span></a
+              >
+            </li>
+          </ul>
+        </div>
+
+        <div class="nav-section">
+          <h3 class="nav-section-title">Дополнительно</h3>
+          <ul class="nav-list">
+            <li class="nav-item">
+              <a href="education.html" class="nav-link"
+                ><span class="nav-icon">📚</span
+                ><span class="nav-label">Обучение</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="premium.html" class="nav-link"
+                ><span class="nav-icon">⭐</span
+                ><span class="nav-label">Премиум</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="settings.html" class="nav-link"
+                ><span class="nav-icon">⚙️</span
+                ><span class="nav-label">Настройки</span></a
+              >
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+    </aside>
+
+    <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
+    <main>
+      <!-- Форма для создания плановой или цикличной операции -->
+      <section class="card">
+        <h2>Создать плановую операцию</h2>
+        <p>
+          Запланируйте будущие доходы и расходы: укажите дату начала, частоту и
+          сумму. Система автоматически добавит операцию в вашу статистику по
+          мере наступления.
+        </p>
+        <form id="addPlannedForm">
+          <div style="display: flex; flex-wrap: wrap; gap: 1rem">
+            <label style="flex: 1 1 150px">
+              Дата начала
+              <input type="date" id="plannedStart" required />
+            </label>
+            <label style="flex: 1 1 150px">
+              Счёт
+              <select id="plannedAccount" required></select>
+            </label>
+            <label style="flex: 1 1 150px">
+              Категория
+              <select id="plannedCategory" required></select>
+            </label>
+            <label style="flex: 1 1 150px">
+              Тип
+              <select id="plannedType" required>
+                <option value="income">Доход</option>
+                <option value="expense">Расход</option>
+              </select>
+            </label>
+            <label style="flex: 1 1 150px">
+              Сумма
+              <input
+                type="number"
+                id="plannedAmount"
+                step="0.01"
+                min="0"
+                required
+              />
+            </label>
+            <label style="flex: 1 1 150px">
+              Валюта
+              <select id="plannedCurrency" required>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="PLN">PLN</option>
+                <option value="RUB">RUB</option>
+              </select>
+            </label>
+            <label style="flex: 1 1 200px">
+              Частота
+              <select id="plannedFrequency" required>
+                <option value="daily">Ежедневно</option>
+                <option value="weekly">Еженедельно</option>
+                <option value="monthly">Ежемесячно</option>
+                <option value="yearly">Ежегодно</option>
+              </select>
+            </label>
+            <label style="flex: 1 1 200px">
+              Примечание
+              <input type="text" id="plannedNote" />
+            </label>
+          </div>
+          <button type="submit" class="btn-primary" style="margin-top: 1rem">
+            Добавить
+          </button>
+        </form>
+      </section>
+      <!-- Список запланированных операций -->
+      <section class="card">
+        <h2>Запланированные операции</h2>
+        <table id="plannedTable">
+          <thead>
+            <tr>
+              <th>Дата начала</th>
+              <th>Частота</th>
+              <th>Счёт</th>
+              <th>Категория</th>
+              <th>Тип</th>
+              <th>Сумма</th>
+              <th>Примечание</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="7">Загрузка...</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+    <footer>
+      <p>&copy; 2025 FinTrackr. Все права защищены.</p>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FinTrackr – Счёта</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <script defer src="js/utils/auth.js"></script>
+    <script defer src="js/utils/validation.js"></script>
+    <script defer src="js/utils/pagination.js"></script>
+    <script defer src="js/app.js"></script>
+    <script defer src="js/utils/ui.js"></script>
+    <script defer src="js/accounts.js"></script>
+  </head>
+  <body class="workspace-page" data-page-title="Счёта" data-page-subtitle="Управляйте кошельками и картами в одном месте">
+    <header>
+      <div class="brand visually-hidden">
+        <a href="dashboard.html">FinTrackr</a>
+      </div>
+      <button class="burger" aria-label="Меню">
+        <span></span><span></span><span></span>
+      </button>
+    </header>
+
+    <aside class="sidebar" id="sidebar" role="navigation" aria-label="Боковая навигация">
+      <div class="sidebar-top">
+        <div class="sidebar-header">
+          <a href="dashboard.html" class="logo" aria-label="FinTrackr — на главную">
+            <svg class="logo-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+              <rect width="24" height="24" rx="6" fill="var(--primary)"></rect>
+              <path d="M6 12h12M6 8h12M6 16h12" stroke="#fff" stroke-width="1.2" stroke-linecap="round"></path>
+            </svg>
+            <span class="logo-text">FinTrackr</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="sidebar-scroll">
+        <nav class="sidebar-nav" aria-label="Меню приложения">
+          <div class="nav-section">
+            <h3 class="nav-section-title">Основное</h3>
+            <ul class="nav-list">
+              <li class="nav-item"><a href="dashboard.html" class="nav-link"><span class="nav-icon">🏠</span><span class="nav-label">Дэшборд</span></a></li>
+              <li class="nav-item"><a href="accounts.html" class="nav-link"><span class="nav-icon">💼</span><span class="nav-label">Счёта</span></a></li>
+              <li class="nav-item"><a href="transactions.html" class="nav-link"><span class="nav-icon">🔁</span><span class="nav-label">Операции</span></a></li>
+              <li class="nav-item"><a href="categories.html" class="nav-link"><span class="nav-icon">🔖</span><span class="nav-label">Категории</span></a></li>
+            </ul>
+          </div>
+
+          <div class="nav-section">
+            <h3 class="nav-section-title">Планирование</h3>
+            <ul class="nav-list">
+              <li class="nav-item"><a href="budgets.html" class="nav-link"><span class="nav-icon">📊</span><span class="nav-label">Бюджеты</span></a></li>
+              <li class="nav-item"><a href="goals.html" class="nav-link"><span class="nav-icon">🎯</span><span class="nav-label">Цели</span></a></li>
+              <li class="nav-item"><a href="planned.html" class="nav-link"><span class="nav-icon">📅</span><span class="nav-label">Планируемые</span></a></li>
+              <li class="nav-item"><a href="recurring.html" class="nav-link"><span class="nav-icon">🔄</span><span class="nav-label">Регулярные</span></a></li>
+            </ul>
+          </div>
+
+          <div class="nav-section">
+            <h3 class="nav-section-title">Аналитика</h3>
+            <ul class="nav-list">
+              <li class="nav-item"><a href="reports.html" class="nav-link"><span class="nav-icon">📈</span><span class="nav-label">Отчёты</span></a></li>
+              <li class="nav-item"><a href="forecast.html" class="nav-link"><span class="nav-icon">🔮</span><span class="nav-label">Прогнозы</span></a></li>
+              <li class="nav-item"><a href="rules.html" class="nav-link"><span class="nav-icon">⚙️</span><span class="nav-label">Правила</span></a></li>
+            </ul>
+          </div>
+
+          <div class="nav-section">
+            <h3 class="nav-section-title">Дополнительно</h3>
+            <ul class="nav-list">
+              <li class="nav-item"><a href="education.html" class="nav-link"><span class="nav-icon">📚</span><span class="nav-label">Обучение</span></a></li>
+              <li class="nav-item"><a href="premium.html" class="nav-link"><span class="nav-icon">⭐</span><span class="nav-label">Премиум</span></a></li>
+              <li class="nav-item"><a href="settings.html" class="nav-link"><span class="nav-icon">🔧</span><span class="nav-label">Настройки</span></a></li>
+            </ul>
+          </div>
+        </nav>
+      </div>
+
+      <!-- sidebar-footer удалён: профиль и auth вынесены в header dropdown -->
+    </aside>
+
+    <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
+
+    <main class="workspace-main">
+      <section class="panel-grid">
+        <article class="card">
+          <div class="card-header">
+            <div>
+              <h2>Добавить счёт</h2>
+              <p class="card-subtitle">Синхронизируйте наличные, карты и вклады</p>
+            </div>
+          </div>
+          <form id="addAccountForm">
+            <div class="form-grid">
+              <div class="form-field">
+                <label for="accName">Название</label>
+                <input type="text" id="accName" required />
+                <span class="form-error" data-error-for="accName"></span>
+              </div>
+              <div class="form-field form-field--short">
+                <label for="accCurrency">Валюта</label>
+                <select id="accCurrency" required>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="PLN">PLN</option>
+                  <option value="RUB">RUB</option>
+                </select>
+                <span class="form-error" data-error-for="accCurrency"></span>
+              </div>
+              <div class="form-field form-field--short">
+                <label for="accBalance">Начальный баланс</label>
+                <input type="number" id="accBalance" step="0.01" />
+                <span class="form-error" data-error-for="accBalance"></span>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn-primary">Добавить счёт</button>
+            </div>
+          </form>
+        </article>
+
+        <article class="card card--wide">
+          <div class="card-header">
+            <div>
+              <h2>Мои кошельки</h2>
+              <p class="card-subtitle">Фильтруйте по валютам и отслеживайте остатки</p>
+            </div>
+            <a class="link-ghost" href="transactions.html">Перейти к операциям →</a>
+          </div>
+          <div class="filter-grid">
+            <div class="form-field">
+              <label for="accountSearch">Поиск</label>
+              <input type="text" id="accountSearch" placeholder="Название счёта" />
+            </div>
+            <div class="form-field form-field--short">
+              <label for="accountCurrencyFilter">Валюта</label>
+              <select id="accountCurrencyFilter">
+                <option value="">Все</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="PLN">PLN</option>
+                <option value="RUB">RUB</option>
+              </select>
+            </div>
+          </div>
+          <div id="accountsList" class="wallet-grid" aria-live="polite">
+            <div class="wallet-card" role="status">
+              <div class="wallet-header">
+                <div class="wallet-icon">💼</div>
+                <div class="wallet-name">Загрузка…</div>
+              </div>
+              <div class="wallet-balance">0.00 <span class="currency">USD</span></div>
+            </div>
+          </div>
+          <table id="accountsTable" class="visually-hidden" aria-hidden="true">
+            <thead>
+              <tr>
+                <th>Название</th>
+                <th>Валюта</th>
+                <th>Баланс</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="3">Загрузка...</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="table-controls">
+            <div>
+              <label>
+                <span>На странице:</span>
+                <select id="accountsPageSize">
+                  <option value="5">5</option>
+                  <option value="10" selected>10</option>
+                  <option value="20">20</option>
+                </select>
+              </label>
+            </div>
+            <div class="table-pagination" id="accountsPagination"></div>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <footer>
+      <p>&copy; 2025 FinTrackr. Все права защищены.</p>
+    </footer>
+  </body>
+</html>

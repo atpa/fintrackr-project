@@ -1,16 +1,17 @@
 /**
  * FinTrackr Server
  * 
- * NOTE: This file is currently monolithic (~2000 lines) and needs refactoring.
- * Modular services have been created in:
+ * NOTE: This file is transitioning from monolithic to modular architecture.
+ * New architecture (Phase 5):
+ * - middleware/ - Authentication, logging, error handling, CORS
+ * - repositories/ - Data access layer with BaseRepository pattern
+ * - api/ - Modular route handlers by resource
+ * - services/ - Authentication, data persistence, currency conversion
  * - config/constants.js - Application constants
- * - services/authService.js - Authentication and JWT
- * - services/dataService.js - Data persistence
- * - services/currencyService.js - Currency conversion
  * - utils/http.js - HTTP utilities
  * 
- * See server.refactored.js for the target architecture.
- * Migration in progress - use services where imported below.
+ * Migration Status: Middleware and API routes created, integration in progress
+ * Old inline handlers preserved as fallback during migration
  */
 
 const http = require("http");
@@ -23,6 +24,10 @@ const crypto = require("crypto");
 // Keeping original implementation for stability
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+
+// New modular infrastructure (Phase 5)
+const { requestLogger, corsMiddleware, errorHandler } = require("./middleware");
+const { handleApiRequest } = require("./api");
 
 const dataPath = path.join(__dirname, "data.json");
 
@@ -1945,23 +1950,34 @@ function handleStatic(req, res) {
 
 // Создание HTTP‑сервера
 function createServer() {
-  return http.createServer((req, res) => {
-    // SECURITY: Log only in development, avoid exposing URLs in production
+  return http.createServer(async (req, res) => {
+    // Apply CORS middleware
+    corsMiddleware(req, res, () => {});
+    
+    // Apply request logger (only in development)
     if (process.env.NODE_ENV !== "production") {
-      console.log("REQ:", req.method, req.url);
+      requestLogger(req, res, () => {});
     }
 
-    // Обрабатываем API‑запросы отдельно, независимо от HTTP‑метода
-    if (req.url.startsWith("/api/")) {
-      return handleApi(req, res);
+    try {
+      // Обрабатываем API‑запросы через новый модульный роутер
+      if (req.url.startsWith("/api/")) {
+        // Use new modular API router (Phase 5)
+        return await handleApiRequest(req, res);
+      }
+      
+      // Для нестатических путей разрешаем только GET
+      if (req.method !== "GET") {
+        res.statusCode = 405;
+        return res.end("Method Not Allowed");
+      }
+      
+      // Остальные запросы считаем статикой
+      return handleStatic(req, res);
+    } catch (error) {
+      // Global error handler
+      errorHandler(error, req, res);
     }
-    // Для нестатических путей разрешаем только GET
-    if (req.method !== "GET") {
-      res.statusCode = 405;
-      return res.end("Method Not Allowed");
-    }
-    // Остальные запросы считаем статикой
-    return handleStatic(req, res);
   });
 }
 

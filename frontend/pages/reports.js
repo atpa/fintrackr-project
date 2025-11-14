@@ -1,9 +1,23 @@
-import fetchData from '../modules/api.js';
 import initNavigation from '../modules/navigation.js';
+import { API } from '../src/modules/api.js';
 import initProfileShell from '../modules/profile.js';
+import {
+  createExpensesByCategoryChart,
+  createCashflowChart,
+  renderChart
+} from '../src/modules/charts.js';
+import {
+  createChartSkeleton,
+  showSkeleton,
+  hideSkeleton
+} from '../src/components/SkeletonLoader.js';
 
 initNavigation();
 initProfileShell();
+
+// Храним инстансы графиков для последующего обновления
+let reportChartInstance = null;
+let reportPieChartInstance = null;
 
 /**
  * Логика для страницы отчётов: генерация диаграммы и текстового анализа.
@@ -30,8 +44,8 @@ async function generateReport() {
   const yearInput = document.getElementById('reportYear');
   // Загружаем данные
   const [transactions, categories] = await Promise.all([
-    fetchData('/api/transactions'),
-    fetchData('/api/categories')
+    API.transactions.getAll(),
+    API.categories.getAll()
   ]);
   // Фильтруем операции по выбранному периоду
   const filtered = transactions.filter(tx => {
@@ -69,15 +83,58 @@ async function generateReport() {
     combinedLabels.push('Другие');
     combinedValues.push(otherSum);
   }
-  // Обновляем график
+  // Обновляем график с использованием Chart.js
   const canvas = document.getElementById('reportChart');
-  if (canvas) {
-    drawBarChart(canvas, combinedLabels, combinedValues);
+  const canvasContainer = canvas?.parentElement;
+  
+  if (canvas && canvasContainer) {
+    // Уничтожаем предыдущий инстанс если был
+    if (reportChartInstance) {
+      reportChartInstance.destroy();
+    }
+    
+    // Показываем skeleton
+    showSkeleton(canvasContainer, createChartSkeleton('bar'));
+    
+    // Небольшая задержка для демонстрации skeleton
+    setTimeout(() => {
+      hideSkeleton(canvasContainer, canvas);
+      
+      const reportCurrency = (typeof getReportCurrency === 'function') ? getReportCurrency() : 'USD';
+      const chartConfig = createExpensesByCategoryChart(
+        filtered.filter(tx => tx.type === 'expense'),
+        categories,
+        reportCurrency
+      );
+      
+      reportChartInstance = renderChart(canvas, chartConfig);
+    }, 300);
   }
+  
   // Также отображаем круговую диаграмму по тем же данным, если есть элемент
   const pieCanvas = document.getElementById('reportPie');
-  if (pieCanvas) {
-    drawPieChart(pieCanvas, combinedLabels, combinedValues);
+  const pieCanvasContainer = pieCanvas?.parentElement;
+  
+  if (pieCanvas && pieCanvasContainer) {
+    // Уничтожаем предыдущий инстанс если был
+    if (reportPieChartInstance) {
+      reportPieChartInstance.destroy();
+    }
+    
+    showSkeleton(pieCanvasContainer, createChartSkeleton('pie'));
+    
+    setTimeout(() => {
+      hideSkeleton(pieCanvasContainer, pieCanvas);
+      
+      const reportCurrency = (typeof getReportCurrency === 'function') ? getReportCurrency() : 'USD';
+      const pieConfig = createExpensesByCategoryChart(
+        filtered.filter(tx => tx.type === 'expense'),
+        categories,
+        reportCurrency
+      );
+      
+      reportPieChartInstance = renderChart(pieCanvas, pieConfig);
+    }, 300);
   }
   // Формируем текстовый отчёт
   const summaryEl = document.getElementById('reportSummary');

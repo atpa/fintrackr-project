@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FinTrackr – Операции</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <script defer src="js/utils/auth.js"></script>
+    <script defer src="js/utils/validation.js"></script>
+    <script defer src="js/utils/pagination.js"></script>
+    <script defer src="js/app.js"></script>
+    <script defer src="js/utils/ui.js"></script>
+    <script defer src="js/transactions.js"></script>
+  </head>
+  <body class="workspace-page" data-page-title="Операции" data-page-subtitle="Все доходы и расходы в одном месте">
+    <header>
+      <div class="brand visually-hidden">
+        <a href="dashboard.html">FinTrackr</a>
+      </div>
+      <button class="burger" aria-label="Меню">
+        <span></span><span></span><span></span>
+      </button>
+    </header>
+
+    <aside
+      class="sidebar"
+      id="sidebar"
+      role="navigation"
+      aria-label="Боковая навигация"
+    >
+    <div class="sidebar-top">
+      <!-- sidebar-footer удалён: профиль и auth вынесены в header dropdown -->
+            focusable="false"
+          >
+            <rect width="24" height="24" rx="6" fill="var(--primary)"></rect>
+            <path
+              d="M6 12h12M6 8h12M6 16h12"
+              stroke="#fff"
+              stroke-width="1.2"
+              stroke-linecap="round"
+            ></path>
+          </svg>
+          <span class="logo-text">FinTrackr</span>
+        </a>
+        
+      </div>
+    </div>
+
+    <div class="sidebar-scroll">
+      <nav class="sidebar-nav" aria-label="Меню приложения">
+        <div class="nav-section">
+          <h3 class="nav-section-title">Основное</h3>
+          <ul class="nav-list">
+            <li class="nav-item">
+              <a href="dashboard.html" class="nav-link"
+                ><span class="nav-icon">🏠</span
+                ><span class="nav-label">Дэшборд</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="accounts.html" class="nav-link"
+                ><span class="nav-icon">💼</span
+                ><span class="nav-label">Счёта</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="transactions.html" class="nav-link"
+                ><span class="nav-icon">🔁</span
+                ><span class="nav-label">Операции</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="categories.html" class="nav-link"
+                ><span class="nav-icon">🔖</span
+                ><span class="nav-label">Категории</span></a
+              >
+            </li>
+          </ul>
+        </div>
+
+        <div class="nav-section">
+          <h3 class="nav-section-title">Планирование</h3>
+          <ul class="nav-list">
+            <li class="nav-item">
+              <a href="budgets.html" class="nav-link"
+                ><span class="nav-icon">📊</span
+                ><span class="nav-label">Бюджеты</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="goals.html" class="nav-link"
+                ><span class="nav-icon">🎯</span
+                ><span class="nav-label">Цели</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="planned.html" class="nav-link"
+                ><span class="nav-icon">📅</span
+                ><span class="nav-label">Планируемые</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="recurring.html" class="nav-link"
+                ><span class="nav-icon">🔁</span
+                ><span class="nav-label">Регулярные</span></a
+              >
+            </li>
+          </ul>
+        </div>
+
+        <div class="nav-section">
+          <h3 class="nav-section-title">Аналитика</h3>
+          <ul class="nav-list">
+            <li class="nav-item">
+              <a href="reports.html" class="nav-link"
+                ><span class="nav-icon">📈</span
+                ><span class="nav-label">Отчёты</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="forecast.html" class="nav-link"
+                ><span class="nav-icon">🔮</span
+                ><span class="nav-label">Прогнозы</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="rules.html" class="nav-link"
+                ><span class="nav-icon">⚙️</span
+                ><span class="nav-label">Правила</span></a
+              >
+            </li>
+          </ul>
+        </div>
+
+        <div class="nav-section">
+          <h3 class="nav-section-title">Дополнительно</h3>
+          <ul class="nav-list">
+            <li class="nav-item">
+              <a href="education.html" class="nav-link"
+                ><span class="nav-icon">📚</span
+                ><span class="nav-label">Обучение</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="premium.html" class="nav-link"
+                ><span class="nav-icon">⭐</span
+                ><span class="nav-label">Премиум</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="settings.html" class="nav-link"
+                ><span class="nav-icon">⚙️</span
+                ><span class="nav-label">Настройки</span></a
+              >
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    </aside>
+
+    <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
+    <main>
+      <!-- Форма для добавления новой операции -->
+      <section class="card">
+        <h2>Добавить операцию</h2>
+        <form id="addTransactionForm">
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="txDate">Дата</label>
+              <input type="date" id="txDate" required />
+              <span class="form-error" data-error-for="txDate"></span>
+            </div>
+            <div class="form-field">
+              <label for="txAccount">Счёт</label>
+              <select id="txAccount" required></select>
+              <span class="form-error" data-error-for="txAccount"></span>
+            </div>
+            <div class="form-field">
+              <label for="txCategory">Категория</label>
+              <select id="txCategory" required></select>
+              <span class="form-error" data-error-for="txCategory"></span>
+            </div>
+            <div class="form-field">
+              <label for="txType">Тип</label>
+              <select id="txType" required>
+                <option value="income">Доход</option>
+                <option value="expense">Расход</option>
+              </select>
+              <span class="form-error" data-error-for="txType"></span>
+            </div>
+            <div class="form-field">
+              <label for="txAmount">Сумма</label>
+              <input type="number" id="txAmount" step="0.01" min="0" required />
+              <span class="form-error" data-error-for="txAmount"></span>
+            </div>
+            <div class="form-field">
+              <label for="txCurrency">Валюта</label>
+              <select id="txCurrency" required>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="PLN">PLN</option>
+                <option value="RUB">RUB</option>
+              </select>
+              <span class="form-error" data-error-for="txCurrency"></span>
+            </div>
+            <div class="form-field" style="flex: 1 1 240px">
+              <label for="txNote">Примечание</label>
+              <input type="text" id="txNote" placeholder="Например, обед или бонус" />
+            </div>
+          </div>
+          <button type="submit" class="btn-primary" style="margin-top: 1rem">
+            Добавить
+          </button>
+        </form>
+      </section>
+
+      <!-- Фильтр операций -->
+      <section class="card">
+        <h2>Фильтр операций</h2>
+        <form id="filterTxForm">
+          <div class="filter-grid">
+            <div class="form-field">
+              <label for="filterStart">От</label>
+              <input type="date" id="filterStart" />
+            </div>
+            <div class="form-field">
+              <label for="filterEnd">До</label>
+              <input type="date" id="filterEnd" />
+            </div>
+            <div class="form-field">
+              <label for="filterCategory">Категория</label>
+              <select id="filterCategory">
+                <option value="">Все</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="filterType">Тип</label>
+              <select id="filterType">
+                <option value="">Все</option>
+                <option value="income">Доход</option>
+                <option value="expense">Расход</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="filterSearch">Поиск</label>
+              <input
+                type="text"
+                id="filterSearch"
+                placeholder="Название, примечание или сумма"
+              />
+            </div>
+            <div class="form-field" style="align-self: end; flex: 0 0 auto">
+              <button type="submit" class="btn-primary">Применить</button>
+            </div>
+          </div>
+        </form>
+      </section>
+      <!-- Список операций (карточки) -->
+      <section class="card">
+        <h2>Список операций</h2>
+        <div class="filter-grid" style="margin-bottom: 1rem">
+          <div class="form-field" style="flex:0 0 200px">
+            <label>Быстрый период</label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap">
+              <button type="button" class="btn-secondary" data-quick-period="today">Today</button>
+              <button type="button" class="btn-secondary" data-quick-period="week">Week</button>
+              <button type="button" class="btn-secondary" data-quick-period="month">Month</button>
+            </div>
+          </div>
+        </div>
+        <div id="transactionsList" class="tx-list" aria-live="polite">
+          <div class="tx-item" role="status">
+            <div class="tx-main">
+              <span class="tx-title">Загрузка...</span>
+              <span class="tx-meta">Пожалуйста, подождите</span>
+            </div>
+          </div>
+        </div>
+        <div class="table-controls" style="margin-top: 12px; display:flex; justify-content: space-between; align-items:center; gap: 12px;">
+          <div>
+            <label style="display: flex; align-items: center; gap: 0.5rem">
+              <span>На странице:</span>
+              <select id="transactionsPageSize">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+              </select>
+            </label>
+          </div>
+          <div class="table-pagination" id="transactionsPagination"></div>
+        </div>
+      </section>
+    </main>
+    <footer>
+      <p>&copy; 2025 FinTrackr. Все права защищены.</p>
+    </footer>
+  </body>
+</html>

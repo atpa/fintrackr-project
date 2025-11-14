@@ -1,5 +1,8 @@
 import initNavigation from '../modules/navigation.js';
 import initProfileShell from '../modules/profile.js';
+import { API } from '../src/modules/api.js';
+import { toastSuccess, toastError } from '../src/components/Toast.js';
+import { confirmModal } from '../src/components/ModalBase.js';
 
 initNavigation();
 initProfileShell();
@@ -23,12 +26,11 @@ initProfileShell();
   async function loadSubscriptions() {
     listEl.innerHTML = '<p>Загрузка…</p>';
     try {
-      const res = await fetch('/api/subscriptions');
-      if (!res.ok) throw new Error('Failed to load');
-      const items = await res.json();
+      const items = await API.subscriptions.getAll();
       renderList(items);
-    } catch (e) {
-      listEl.innerHTML = `<p class="text-danger">Ошибка загрузки: ${e.message}</p>`;
+    } catch (error) {
+      listEl.innerHTML = `<p class="text-danger">Ошибка загрузки: ${error.message}</p>`;
+      toastError(`Не удалось загрузить подписки: ${error.message}`);
     }
   }
 
@@ -70,26 +72,25 @@ initProfileShell();
       const amount = Number(amountEl.value);
       const currency = currencyEl.value;
       const frequency = freqEl.value;
-  const next_date = dateEl.value || null;
+      const next_date = dateEl.value || null;
 
-      if (!title) return alert('Введите название подписки');
-      if (!isFinite(amount) || amount < 0) return alert('Введите корректную сумму');
+      // Базовая валидация
+      if (!title) {
+        toastError('Введите название подписки');
+        return;
+      }
+      if (!isFinite(amount) || amount < 0) {
+        toastError('Введите корректную сумму');
+        return;
+      }
 
       try {
-        const res = await fetch('/api/subscriptions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, amount, currency, frequency, next_date }),
-        });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || 'Не удалось добавить подписку');
-        }
-        // Reset and refresh
+        await API.subscriptions.create({ title, amount, currency, frequency, next_date });
+        toastSuccess('Подписка добавлена');
         form.reset();
         await loadSubscriptions();
-      } catch (err) {
-        alert(err.message);
+      } catch (error) {
+        toastError(`Не удалось добавить подписку: ${error.message}`);
       }
     });
   }
@@ -99,13 +100,21 @@ initProfileShell();
     if (!btn) return;
     const id = btn.getAttribute('data-del');
     if (!id) return;
-    if (!confirm('Удалить подписку?')) return;
+
+    const confirmed = await confirmModal({
+      title: 'Удалить подписку?',
+      message: 'Это действие нельзя отменить',
+      danger: true,
+    });
+
+    if (!confirmed) return;
+
     try {
-      const res = await fetch(`/api/subscriptions/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Не удалось удалить');
+      await API.subscriptions.delete(id);
+      toastSuccess('Подписка удалена');
       await loadSubscriptions();
-    } catch (err) {
-      alert(err.message);
+    } catch (error) {
+      toastError(`Не удалось удалить: ${error.message}`);
     }
   });
 
