@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FinTrackr – Test Page (No SW)</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      .test-container {
+        max-width: 800px;
+        margin: 50px auto;
+        padding: 20px;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      }
+      .test-result {
+        margin: 10px 0;
+        padding: 10px;
+        border-radius: 4px;
+        background: #f0f0f0;
+      }
+      .test-result.pass {
+        background: #d4edda;
+        color: #155724;
+      }
+      .test-result.fail {
+        background: #f8d7da;
+        color: #721c24;
+      }
+      .btn-test {
+        padding: 10px 20px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 10px 5px;
+      }
+      .btn-test:hover {
+        background: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="test-container">
+      <h1>FinTrackr Test Page</h1>
+      <p>Эта страница работает БЕЗ Service Worker для отладки</p>
+      
+      <h2>Тесты API</h2>
+      <button class="btn-test" onclick="testAccounts()">Тест /api/accounts</button>
+      <button class="btn-test" onclick="testRates()">Тест /api/rates</button>
+      <button class="btn-test" onclick="testDashboard()">Тест Dashboard</button>
+      
+      <div id="results"></div>
+      
+      <h2>Навигация</h2>
+      <ul>
+        <li><a href="/">Главная</a></li>
+        <li><a href="/dashboard.html">Dashboard</a></li>
+        <li><a href="/login.html">Login</a></li>
+        <li><a href="/transactions.html">Транзакции</a></li>
+        <li><a href="/accounts.html">Счета</a></li>
+      </ul>
+      
+      <h2>Информация</h2>
+      <div class="test-result">
+        <strong>Сервер:</strong> <span id="server-status">Проверка...</span><br>
+        <strong>Service Worker:</strong> <span id="sw-status">Отключен на этой странице</span><br>
+        <strong>PWA Manifest:</strong> <span id="manifest-status">Проверка...</span>
+      </div>
+    </div>
+    
+    <script>
+      const resultsDiv = document.getElementById('results');
+      
+      // Проверка сервера при загрузке
+      fetch('/api/accounts')
+        .then(r => r.ok ? '✅ Работает' : '❌ Ошибка')
+        .then(status => document.getElementById('server-status').textContent = status)
+        .catch(() => document.getElementById('server-status').textContent = '❌ Недоступен');
+      
+      fetch('/manifest.json')
+        .then(r => r.ok ? '✅ Доступен' : '❌ Ошибка')
+        .then(status => document.getElementById('manifest-status').textContent = status)
+        .catch(() => document.getElementById('manifest-status').textContent = '❌ Недоступен');
+      
+      function addResult(test, status, message) {
+        const div = document.createElement('div');
+        div.className = `test-result ${status}`;
+        div.innerHTML = `<strong>${test}:</strong> ${message}`;
+        resultsDiv.appendChild(div);
+      }
+      
+      async function testAccounts() {
+        resultsDiv.innerHTML = '';
+        try {
+          const response = await fetch('/api/accounts');
+          const data = await response.json();
+          addResult('GET /api/accounts', 'pass', `✅ OK - ${data.length} счетов`);
+        } catch (error) {
+          addResult('GET /api/accounts', 'fail', `❌ ${error.message}`);
+        }
+      }
+      
+      async function testRates() {
+        try {
+          const response = await fetch('/api/rates?base=USD&quote=EUR');
+          const data = await response.json();
+          addResult('GET /api/rates', 'pass', `✅ OK - rate: ${data.rate}`);
+        } catch (error) {
+          addResult('GET /api/rates', 'fail', `❌ ${error.message}`);
+        }
+      }
+      
+      async function testDashboard() {
+        try {
+          const response = await fetch('/dashboard.html');
+          const ok = response.ok;
+          addResult('GET /dashboard.html', ok ? 'pass' : 'fail', 
+            ok ? '✅ Страница доступна' : '❌ Ошибка загрузки');
+        } catch (error) {
+          addResult('GET /dashboard.html', 'fail', `❌ ${error.message}`);
+        }
+      }
+    </script>
+  </body>
+</html>

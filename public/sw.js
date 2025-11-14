@@ -3,7 +3,7 @@
  * Обеспечивает offline-режим, кэширование и фоновую синхронизацию
  */
 
-const CACHE_VERSION = 'fintrackr-v1.0.0';
+const CACHE_VERSION = 'fintrackr-v1.0.1';
 const CACHE_NAME = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
 const API_CACHE = `${CACHE_VERSION}-api`;
@@ -291,3 +291,4 @@ self.addEventListener('message', (event) => {
 });
 
 console.log('[SW] Service Worker script loaded');
+
