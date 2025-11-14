@@ -4,17 +4,24 @@
  */
 
 const BaseRepository = require("./BaseRepository");
+const DbBaseRepository = require("./DbBaseRepository");
 const { convertAmount } = require("../services/currencyService");
+const { ENV } = require("../config/constants");
 
 class AccountsRepository extends BaseRepository {
   constructor() {
     super("accounts");
+    this.dbRepo = new DbBaseRepository("accounts");
   }
 
   /**
    * Find accounts by user ID
    */
   findByUserId(userId) {
+    if (ENV.USE_DB) {
+      // Draft passthrough: filter after dbRepo.findAll()
+      return this.dbRepo.findAll().then(list => list.filter(a => a.user_id === Number(userId)));
+    }
     return this.findBy({ user_id: Number(userId) });
   }
 
@@ -22,12 +29,16 @@ class AccountsRepository extends BaseRepository {
    * Update account balance
    */
   updateBalance(accountId, amount) {
+    if (ENV.USE_DB) {
+      return this.dbRepo.findById(accountId).then(account => {
+        if (!account) return null;
+        const updated = { balance: Number(account.balance) + Number(amount) };
+        return this.dbRepo.update(accountId, updated);
+      });
+    }
     const account = this.findById(accountId);
     if (!account) return null;
-
-    return this.update(accountId, {
-      balance: Number(account.balance) + Number(amount),
-    });
+    return this.update(accountId, { balance: Number(account.balance) + Number(amount) });
   }
 
   /**

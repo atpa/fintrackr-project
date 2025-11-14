@@ -1985,8 +1985,15 @@ const server = createServer();
 
 if (require.main === module) {
   const PORT = process.env.PORT || 3000;
+  // Режим запуска: выводим информацию о том, используется ли JSON-файл или DB-режим
+  const USE_DB = process.env.USE_DB === "true";
+  const DB_BACKEND = process.env.DB_BACKEND || "mongo"; // планируемая СУБД
+  const DISABLE_PERSIST = process.env.FINTRACKR_DISABLE_PERSIST === "true";
   server.listen(PORT, () => {
-    console.log(`FinTrackr server listening on http://localhost:${PORT}`);
+    const modeLabel = USE_DB ? `DB mode (backend=${DB_BACKEND})` : "JSON file mode";
+    console.log(
+      `FinTrackr server listening on http://localhost:${PORT} | ${modeLabel} | persistDisabled=${DISABLE_PERSIST}`
+    );
   });
 }
 
