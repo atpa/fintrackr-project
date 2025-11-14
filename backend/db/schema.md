@@ -159,6 +159,8 @@ Index: (user_id, active)
 | run_at | TIMESTAMP | NOT NULL | Scheduled run |
 | created_at | TIMESTAMP | DEFAULT now |  |
 
+Index candidates: (user_id, status), (run_at)
+
 ## refreshTokens
 | Field | Type | Constraints | Notes |
 |-------|------|-------------|-------|
@@ -174,6 +176,8 @@ Index: (user_id, active)
 | expires_at | TIMESTAMP | NOT NULL |  |
 | created_at | TIMESTAMP | DEFAULT now |  |
 
+Index: (expires_at)
+
 ## bankConnections
 | Field | Type | Constraints | Notes |
 |-------|------|-------------|-------|
@@ -186,12 +190,19 @@ Index: (user_id, active)
 | created_at | TIMESTAMP | DEFAULT now |  |
 | updated_at | TIMESTAMP | DEFAULT now on update |  |
 
+Composite Index: (user_id, bank_id, status)
+
 ---
 ## Relationships Overview
 - users 1—N accounts, categories, transactions, budgets, goals, planned, subscriptions, rules, bankConnections
 - categories 1—N transactions, budgets, planned
 - accounts 1—N transactions
 - subscriptions 1—N recurring (future)
+
+Cascade / Referential Notes:
+- Category deletion: set category_id=NULL in transactions; delete budgets & planned referencing category.
+- User deletion (future admin op): logical delete flag instead of physical remove to preserve financial history.
+- Account deletion: only allowed if no transactions OR archive flag; balances must reconcile before removal.
 
 ---
 ## Migration Strategy
@@ -203,12 +214,32 @@ Index: (user_id, active)
 6. Replace repository implementations to query DB instead of JSON
 7. Toggle persistence via ENV flag `USE_DB=true`
 
+Atomicity Plan:
+- Use DB transactions (Mongo: session.startTransaction / Postgres: BEGIN) for: create transaction → update account balance → adjust budget spent.
+- Rollback if any step fails to keep consistency.
+
+Optimistic Locking (Future):
+- accounts: version field to prevent lost update on high concurrency.
+- budgets: version field for simultaneous spent adjustments.
+
+Index Strategy Summary:
+- users.email (unique)
+- accounts (user_id, name)
+- transactions (user_id, date), (account_id), (category_id), (user_id, type)
+- budgets (user_id, category_id, month)
+- planned (user_id, date)
+- subscriptions (user_id, next_date, active)
+- rules (user_id, active)
+- bankConnections (user_id, bank_id, status)
+
 ---
 ## Open Questions
 - Use Prisma (multi-DB) vs Mongoose (Mongo-focused)?
 - Need soft delete for transactions/categories? (audit trail)
 - Implement optimistic locking on accounts/budgets?
 - Encryption for sensitive user settings?
+- Introduce event sourcing for critical balance changes?
+- Partitioning strategy for large transactions volume (by year / month)?
 
 ---
 ## Next Actions
@@ -217,6 +248,8 @@ Index: (user_id, active)
 - [ ] Implement Prisma schema OR Mongoose models
 - [ ] Prototype repository rewrite for `AccountsRepository`
 - [ ] Write data.json → DB migration script
+- [ ] Add atomic transaction wrapper utility
+- [ ] Implement cascade helpers for category removal
 
 ---
 Last Updated: 2025-11-14

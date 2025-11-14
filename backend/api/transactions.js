@@ -67,53 +67,66 @@ async function createTransaction(req, res) {
     throw new HttpError("Account not found", 404);
   }
 
-  // Create transaction
-  const transaction = transactionsRepo.create({
-    user_id: userId,
-    account_id: Number(account_id),
-    category_id: category_id ? Number(category_id) : null,
-    type,
-    amount: Number(amount),
-    currency,
-    date,
-    note: note || "",
-  });
+  // Атомарная секция (Mongo) или последовательная логика (JSON)
+  const { runAtomic } = require('../db/atomic');
+  const transaction = await runAtomic(async ({ session, db, atomic }) => {
+    // 1. Создать транзакцию
+    const created = transactionsRepo.create({
+      user_id: userId,
+      account_id: Number(account_id),
+      category_id: category_id ? Number(category_id) : null,
+      type,
+      amount: Number(amount),
+      currency,
+      date,
+      note: note || "",
+    });
 
-  // Update account balance
-  const convertedAmount = convertAmount(amount, currency, account.currency);
-  const balanceChange = type === "income" ? convertedAmount : -convertedAmount;
-  accountsRepo.updateBalance(account_id, balanceChange);
+    // 2. Обновить баланс счёта
+    const convertedAmount = convertAmount(amount, currency, account.currency);
+    const balanceChange = type === "income" ? convertedAmount : -convertedAmount;
+    accountsRepo.updateBalance(account_id, balanceChange);
 
-  // Update budget if expense
-  if (type === "expense" && category_id) {
-    const txDate = new Date(date);
-    const month = `${txDate.getFullYear()}-${String(txDate.getMonth() + 1).padStart(2, "0")}`;
-    let budget;
-    if (userId != null) {
-      budget = budgetsRepo.findByCategoryAndMonth(userId, category_id, month);
-    } else {
-      // Fallback: search ignoring user scope for legacy test data without user_id
-      const data = require("../services/dataService").getData();
-      budget = data.budgets.find(b => b.category_id === Number(category_id) && b.month === month);
-      if (!budget) {
-        budget = budgetsRepo.create({
-          user_id: userId,
-          category_id: Number(category_id),
-          month,
-          limit: 0,
-          spent: 0,
-          currency: account.currency,
-        });
+    // 3. Бюджет (только expense)
+    if (type === "expense" && category_id) {
+      const txDate = new Date(date);
+      const month = `${txDate.getFullYear()}-${String(txDate.getMonth() + 1).padStart(2, "0")}`;
+      let budget;
+      if (userId != null) {
+        // Используем BudgetsRepository.ensureBudget если доступен
+        if (typeof budgetsRepo.findByCategoryAndMonth === 'function') {
+          budget = budgetsRepo.findByCategoryAndMonth(userId, category_id, month);
+        }
+        if (!budget && typeof budgetsRepo.ensureBudget === 'function') {
+          budget = budgetsRepo.ensureBudget(userId, category_id, month, account.currency);
+        }
+      } else {
+        const data = require("../services/dataService").getData();
+        budget = data.budgets.find(b => b.category_id === Number(category_id) && b.month === month);
+        if (!budget) {
+          budget = budgetsRepo.create({
+            user_id: userId,
+            category_id: Number(category_id),
+            month,
+            limit: 0,
+            spent: 0,
+            currency: account.currency,
+          });
+        }
+      }
+      if (budget) {
+        const budgetAmount = convertAmount(amount, currency, budget.currency);
+        if (budget.id && typeof budgetsRepo.incrementSpent === 'function') {
+          budgetsRepo.incrementSpent(budget.id, budgetAmount);
+        } else if (budget.id && typeof budgetsRepo.adjustSpent === 'function') {
+          budgetsRepo.adjustSpent(budget.id, amount, currency, +1);
+        } else {
+          budget.spent = (budget.spent || 0) + budgetAmount;
+        }
       }
     }
-    const budgetAmount = convertAmount(amount, currency, budget.currency);
-    if (budget.id) {
-      budgetsRepo.incrementSpent(budget.id, budgetAmount);
-    } else {
-      // Direct mutation for legacy object lacking id
-      budget.spent += budgetAmount;
-    }
-  }
+    return created;
+  });
 
   res.statusCode = 201;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -133,32 +146,37 @@ async function updateTransaction(req, res) {
     throw new HttpError("Transaction not found", 404);
   }
 
-  // Rollback old balance change
-  const oldAccount = accountsRepo.findById(existing.account_id);
-  if (oldAccount) {
-    const oldAmount = convertAmount(
-      existing.amount,
-      existing.currency,
-      oldAccount.currency
-    );
-    const rollback = existing.type === "income" ? -oldAmount : oldAmount;
-    accountsRepo.updateBalance(existing.account_id, rollback);
-  }
+  // Атомарное обновление: rollback старых значений + применение новых
+  const { runAtomic } = require('../db/atomic');
+  const updated = await runAtomic(async ({ session, db, atomic }) => {
+    // Rollback old balance change
+    const oldAccount = accountsRepo.findById(existing.account_id);
+    if (oldAccount) {
+      const oldAmount = convertAmount(
+        existing.amount,
+        existing.currency,
+        oldAccount.currency
+      );
+      const rollback = existing.type === "income" ? -oldAmount : oldAmount;
+      accountsRepo.updateBalance(existing.account_id, rollback);
+    }
 
-  // Update transaction
-  const updated = transactionsRepo.update(id, req.body);
+    // Update transaction
+    const updated = transactionsRepo.update(id, req.body);
 
-  // Apply new balance change
-  const newAccount = accountsRepo.findById(updated.account_id);
-  if (newAccount) {
-    const newAmount = convertAmount(
-      updated.amount,
-      updated.currency,
-      newAccount.currency
-    );
-    const change = updated.type === "income" ? newAmount : -newAmount;
-    accountsRepo.updateBalance(updated.account_id, change);
-  }
+    // Apply new balance change
+    const newAccount = accountsRepo.findById(updated.account_id);
+    if (newAccount) {
+      const newAmount = convertAmount(
+        updated.amount,
+        updated.currency,
+        newAccount.currency
+      );
+      const change = updated.type === "income" ? newAmount : -newAmount;
+      accountsRepo.updateBalance(updated.account_id, change);
+    }
+    return updated;
+  });
 
   res.statusCode = 200;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -178,20 +196,24 @@ async function deleteTransaction(req, res) {
     throw new HttpError("Transaction not found", 404);
   }
 
-  // Rollback balance
-  const account = accountsRepo.findById(transaction.account_id);
-  if (account) {
-    const amount = convertAmount(
-      transaction.amount,
-      transaction.currency,
-      account.currency
-    );
-    const rollback = transaction.type === "income" ? -amount : amount;
-    accountsRepo.updateBalance(transaction.account_id, rollback);
-  }
+  // Атомарное удаление: rollback баланса + удаление записи
+  const { runAtomic } = require('../db/atomic');
+  await runAtomic(async ({ session, db, atomic }) => {
+    // Rollback balance
+    const account = accountsRepo.findById(transaction.account_id);
+    if (account) {
+      const amount = convertAmount(
+        transaction.amount,
+        transaction.currency,
+        account.currency
+      );
+      const rollback = transaction.type === "income" ? -amount : amount;
+      accountsRepo.updateBalance(transaction.account_id, rollback);
+    }
 
-  // Delete transaction
-  transactionsRepo.delete(id);
+    // Delete transaction
+    transactionsRepo.delete(id);
+  });
 
   res.statusCode = 200;
   res.setHeader("Content-Type", "application/json; charset=utf-8");

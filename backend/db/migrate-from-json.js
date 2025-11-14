@@ -24,8 +24,8 @@ async function migrate() {
   }
   console.log('Connected to DB backend =', client.backend);
 
-  // In real implementation each section would perform bulk inserts.
-  // Here we only log counts and prepare pseudo operations.
+  // Реализация: если клиент подключён и не stub — делаем реальные вставки.
+  const isStub = client.stub;
   const collections = [
     'users','accounts','categories','transactions','budgets','goals','planned','subscriptions','rules','recurring','refreshTokens','tokenBlacklist','bankConnections'
   ];
@@ -38,11 +38,34 @@ async function migrate() {
 
   console.table(report);
   console.log('\nPseudo operations preview:');
-  report.forEach(r => {
+  for (const r of report) {
     console.log(`INSERT ${r.collection} (${r.count} rows)`);
-  });
+    if (!isStub) {
+      const items = data[r.collection] || [];
+      if (!Array.isArray(items) || items.length === 0) continue;
+      try {
+        const db = client.db();
+        const col = db.collection(r.collection);
+        // Сохраняем id как есть (число) для совместимости; добавляем timestamps если отсутствуют.
+        const prepared = items.map(x => ({
+          ...x,
+          created_at: x.created_at || new Date(),
+          updated_at: x.updated_at || new Date(),
+        }));
+        const result = await col.insertMany(prepared, { ordered: false });
+        console.log(`  -> inserted ${result.insertedCount}`);
+      } catch (e) {
+        console.error(`  !! insert error in ${r.collection}:`, e.message);
+      }
+    }
+  }
 
-  console.log('\nMigration draft complete. Implement real DB layer next.');
+  console.log(`\nMigration ${isStub ? 'stub (no real driver)' : 'completed initial bulk load'}.`);
+  if (isStub) {
+    console.log('Install mongodb package and ensure MONGO_URL for real migration.');
+  } else {
+    console.log('Next: verify derived balances and budgets consistency.');
+  }
 }
 
 migrate().catch(err => {

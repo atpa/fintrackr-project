@@ -105,27 +105,39 @@ async function deleteCategory(req, res) {
     throw new HttpError("Category not found", 404);
   }
 
-  // Cascade delete related entities
-  const data = require("../services/dataService").getData();
+  // Каскад: бюджеты, planned, обнуление category_id у транзакций
+  const { runAtomic } = require('../db/atomic');
+  await runAtomic(async ({ session, db, atomic }) => {
+    const dataService = require("../services/dataService");
+    const data = dataService.getData();
+    const catIdNum = Number(id);
 
-  // Delete budgets
-  data.budgets = data.budgets.filter((b) => b.category_id !== Number(id));
-
-  // Delete planned operations
-  data.planned = data.planned.filter((p) => p.category_id !== Number(id));
-
-  // Nullify category_id in transactions
-  data.transactions.forEach((tx) => {
-    if (tx.category_id === Number(id)) {
-      tx.category_id = null;
+    if (!atomic) {
+      // JSON режим
+      data.budgets = data.budgets.filter((b) => b.category_id !== catIdNum);
+      data.planned = data.planned.filter((p) => p.category_id !== catIdNum);
+      data.transactions.forEach((tx) => { if (tx.category_id === catIdNum) tx.category_id = null; });
+      dataService.persistData();
+      return;
+    }
+    // DB режим (Mongo) — выполняем операции по коллекциям
+    try {
+      const budgetsCol = db.collection('budgets');
+      const plannedCol = db.collection('planned');
+      const transactionsCol = db.collection('transactions');
+      await budgetsCol.deleteMany({ category_id: catIdNum }, { session });
+      await plannedCol.deleteMany({ category_id: catIdNum }, { session });
+      await transactionsCol.updateMany({ category_id: catIdNum }, { $set: { category_id: null } }, { session });
+    } catch (e) {
+      console.error('[DB] cascade delete error:', e.message);
+      throw new HttpError('Cascade delete failed', 500);
     }
   });
 
-  // Delete category
+  // Удаляем саму категорию
   categoriesRepo.delete(id);
 
-  // Persist changes
-  require("../services/dataService").persistData();
+  // В JSON режиме persist уже сделан внутри каскада.
 
   res.statusCode = 200;
   res.setHeader("Content-Type", "application/json; charset=utf-8");

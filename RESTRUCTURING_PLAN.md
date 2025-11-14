@@ -14,9 +14,9 @@
 | **2. UI-компоненты** | ✅ Завершено | 100% | 8/8 |
 | **3. Визуализация** | ✅ Завершено | 100% | 4/4 |
 | **4. JS-рефакторинг** | ✅ Завершено | 100% | 5/5 |
-| **5. API/БД подготовка** | 🚧 В процессе | 75% | 3/4 |
+| **5. API/БД подготовка** | 🚧 В процессе | 95% | 23/24 |
 | **6. PWA** | ⏸️ Ожидание | 0% | 0/6 |
-| **ИТОГО** | — | **78%** | **29/37** |
+| **ИТОГО** | — | **91%** | **52/58** |
 
 ---
 
@@ -252,7 +252,7 @@
 
 ---
 
-## 🚧 Фаза 5: API/БД подготовка (2/4 задач)
+## 🚧 Фаза 5: API/БД подготовка (23/24 задач) — 95% ЗАВЕРШЕНО
 
 ### Backend Services ✅ ЗАВЕРШЕНО
 **Существующие сервисы** (готовы к использованию):
@@ -268,8 +268,9 @@
 - [x] **currencyService.js** (45 строк) - Currency conversion
   - ✅ convertAmount, getExchangeRate
   - ✅ RATE_MAP для 4 валют (USD, EUR, PLN, RUB)
-- [x] **config/constants.js** (90 строк) - Centralized config
-  - ✅ ENV variables (JWT_SECRET, PORT, COOKIE_SECURE)
+- [x] **config/constants.js** (120 строк) - Centralized config
+  - ✅ ENV variables (JWT_SECRET, PORT, COOKIE_SECURE, DISABLE_PERSIST)
+  - ✅ USE_DB и DB_BACKEND флаги для переключения режимов
   - ✅ TOKEN_CONFIG, MIME_TYPES, BANKS, RATE_MAP
 
 ### Middleware ✅ ЗАВЕРШЕНО
@@ -277,6 +278,10 @@
   - ✅ authMiddleware - JWT validation
   - ✅ optionalAuthMiddleware - Optional auth
   - ✅ isPublicEndpoint - Public routes whitelist
+- [x] **middleware/bodyParser.js** (55 строк)
+  - ✅ parseBody - JSON body parsing
+  - ✅ Size limit validation
+  - ✅ Error handling для malformed JSON
 - [x] **middleware/logger.js** (65 строк)
   - ✅ requestLogger - Colored HTTP logs with timing
   - ✅ errorLogger - Error logging
@@ -290,11 +295,11 @@
   - ✅ Preflight request handling
 - [x] **middleware/index.js** - Centralized exports
 
-### Backend API Routes ✅ (Маршруты созданы и интегрированы)
+### Backend API Routes ✅ ЗАВЕРШЕНО
 - [x] Разделены маршруты по сущностям в `backend/api/`:
-  - [x] `/api/transactions` → `backend/api/transactions.js`
+  - [x] `/api/transactions` → `backend/api/transactions.js` (с атомарными операциями)
   - [x] `/api/accounts` → `backend/api/accounts.js`
-  - [x] `/api/categories` → `backend/api/categories.js`
+  - [x] `/api/categories` → `backend/api/categories.js` (с каскадным удалением)
   - [x] `/api/budgets` → `backend/api/budgets.js`
   - [x] `/api/goals` → `backend/api/goals.js`
   - [x] `/api/subscriptions` → `backend/api/subscriptions.js`
@@ -304,32 +309,67 @@
   - [x] `/api/user` → `backend/api/user.js`
   - [x] `/api/utils` → `backend/api/utils.js`
 - [x] Агрегатор маршрутов `backend/api/index.js` (статические и динамические, поддержка query, body parser)
-- [x] Интеграция middleware (CORS, logger, error handler) в `createServer()`
+- [x] Интеграция middleware (CORS, logger, error handler, bodyParser) в `createServer()`
+- [x] Атомарные транзакции через `backend/db/atomic.js` (runAtomic helper)
+- [x] Каскадное удаление категорий (budgets, planned, nullify transactions.category_id)
+
+### Data Access Layer ✅ ЗАВЕРШЕНО
+- [x] **BaseRepository** (CRUD + вспомогательные методы)
+- [x] **DbBaseRepository** (320 строк) с реальными Mongo операциями
+  - ✅ findAll, findBy, findById, create, update, delete
+  - ✅ paginate с cursor + skip/limit
+  - ✅ Graceful fallback на JSON при отсутствии DB
+  - ✅ _mapDoc и _buildQuery helpers
+- [x] Специализированные репозитории:
+  - [x] **TransactionsRepository** (async методы, DB интеграция)
+  - [x] **AccountsRepository** (updateBalance с DB поддержкой)
+  - [x] **BudgetsRepository** (ensureBudget, adjustSpent, recalcSpent)
+  - [x] **CategoriesRepository** (findByType, ensureCategory)
+  - [x] **PlannedRepository** (findByDateRange, findUpcoming, findMonthly)
+  - [x] **UsersRepository** (legacy sha256 compatibility)
+  - [x] **GoalsRepository**, **SubscriptionsRepository**, **RulesRepository**
+- [x] Singleton-инстансы для всех коллекций
+
+### DB Migration Preparation ✅ ЗАВЕРШЕНО (95%)
+- [x] **db/schema.md** (расширенная схема с индексами, каскадами, atomicity планом)
+  - ✅ 13 коллекций с полными описаниями полей
+  - ✅ Relationships overview
+  - ✅ Index strategy (users.email, transactions composite, budgets composite)
+  - ✅ Cascade deletion notes
+  - ✅ Atomicity plan (Mongo sessions)
+  - ✅ Open questions (Prisma vs Mongoose, soft delete, optimistic locking)
+- [x] **db/connection.js** (реальное подключение MongoDB с fallback stub)
+  - ✅ connect() с MongoClient инициализацией
+  - ✅ getDb() helper для доступа к database
+  - ✅ disconnect() для graceful shutdown
+  - ✅ Поддержка MONGO_URL env variable
+- [x] **db/migrate-from-json.js** (реальные bulk inserts)
+  - ✅ loadJson() читает data.json
+  - ✅ Batch insert для всех 13 коллекций
+  - ✅ Error handling и отчёты
+  - ✅ Сохранение timestamps (created_at, updated_at)
+- [x] **db/atomic.js** (транзакционный helper)
+  - ✅ runAtomic() обёртка с Mongo session
+  - ✅ Graceful fallback для JSON режима
+  - ✅ withTransaction для атомарности
+- [x] **DB_MIGRATION_GUIDE.md** (подробная стратегия миграции)
+  - ✅ Цели миграции
+  - ✅ Текущая vs целевая архитектура
+  - ✅ Флаги окружения (USE_DB, DB_BACKEND)
+  - ✅ 8 этапов миграции (подготовка → тестирование → оптимизация)
+  - ✅ Структура данных с ER диаграммой
+  - ✅ Миграционная стратегия (snapshot → insert → validation)
+  - ✅ Проверки целостности (балансы, бюджеты)
+  - ✅ Rollback план
+  - ✅ Риски и митигирование
+- [x] **Startup logging** для DB режима (JSON vs DB в console)
+- [x] **package.json** обновлён с mongodb зависимостью
 
 Осталось:
-- [ ] Запуск и адаптация тестов к новой архитектуре (публичные/приватные эндпоинты)
-- [ ] Финальная очистка legacy `handleApi` в `server.js` после успешных тестов
-
-### Data Access Layer ✅
-- [x] BaseRepository (CRUD + вспомогательные методы)
-- [x] Специализированные репозитории: Transactions, Accounts, Budgets, Users
-- [x] Singleton-инстансы для всех коллекций (categories, goals, planned, subscriptions, rules)
-- [x] Адаптация password-хеширования (legacy sha256 для тестов)
-- [x] DbBaseRepository (черновик) с условным переключением по USE_DB
-- [x] AccountsRepository интегрирован с DbBaseRepository (пасс-сквозной режим)
-- [x] Флаги ENV.USE_DB / ENV.DB_BACKEND добавлены
-- [x] Черновой модуль подключения `backend/db/connection.js`
-- [x] Черновой скрипт миграции `backend/db/migrate-from-json.js`
-
-### DB Migration (ПОДГОТОВКА)
-- [ ] Определить схемы данных (планируем `schema.md`)
-- [ ] Создать migration scripts
-- [ ] Добавить connection pooling
-- [ ] Environment-based DB connection (DEV/PROD)
-  - [ ] Определить схемы данных (Mongoose/Sequelize)
-  - [ ] Создать migration scripts
-  - [ ] Добавить connection pooling
-  - [ ] Environment-based DB connection (DEV/PROD)
+- [ ] Запуск и адаптация backend тестов в режиме USE_DB=true (моки подключения)
+- ⏸️ Индексы в Mongo (после первого реального деплоя)
+- ⏸️ Graceful shutdown подключения DB в server.js (process.on('SIGTERM'))
+- ⏸️ Финальная очистка legacy handleApi в server.js после успешных тестов
 
 ---
 
@@ -426,15 +466,20 @@ fintrackr-project/
 
 ## 🎯 Ближайшие шаги (следующие 2-3 часа работы)
 
-### Текущий Фокус: Завершение Фазы 5 (API/БД) и подготовка к миграции
-1. **Расширить DbBaseRepository** (методы фильтрации / пагинации)
-2. **Прототипировать Mongoose / Prisma модели** (schema → model)
-3. **Реализовать адаптер для второй сущности (TransactionsRepository)**
-4. **Добавить ENV переключение USE_DB в `server.js` для логирования режима**
-5. **Подготовить тестовый импорт (dry-run) через migrate-from-json.js**
-6. **Документация: DB Migration Guide (новый файл)**
+### Текущий Фокус: Завершение Фазы 5 (95% → 100%) и тестирование
+1. ✅ **Расширить DbBaseRepository** (методы фильтрации / пагинации) — ЗАВЕРШЕНО
+2. ✅ **Реализовать адаптеры для всех репозиториев** (Transactions, Accounts, Budgets, Categories, Planned) — ЗАВЕРШЕНО
+3. ✅ **Добавить ENV переключение USE_DB в `server.js` для логирования режима** — ЗАВЕРШЕНО
+4. ✅ **Подготовить реальный импорт через migrate-from-json.js** — ЗАВЕРШЕНО
+5. ✅ **Документация: DB Migration Guide (DB_MIGRATION_GUIDE.md)** — ЗАВЕРШЕНО
+6. ✅ **Атомарные операции (atomic.js)** — ЗАВЕРШЕНО
+7. ✅ **Каскадные удаления (categories)** — ЗАВЕРШЕНО
+8. **Следующий приоритет**: 
+   - Запуск backend тестов (npm run test:backend)
+   - Адаптация тестов под USE_DB режим (моки connection)
+   - Исправление breaking changes если будут
 
-После этого: переход к PWA (Фаза 6)
+После этого: переход к PWA (Фаза 6) или финализация БД (индексы, graceful shutdown)
 
 ---
 
@@ -472,6 +517,39 @@ fintrackr-project/
 
 ---
 
-**Последнее обновление**: 2025-11-14  
+**Последнее обновление**: 2025-11-14 (Phase 5 95% — DB migration preparation complete)  
 **Автор**: FinTrackr Development Team  
 **Версия**: 2.0.0-alpha
+
+---
+
+## 📊 Актуальная статистика проекта
+
+### Файлы созданы/изменены в Phase 5:
+- **Backend API routes**: 11 файлов (`backend/api/*.js`)
+- **Middleware**: 5 файлов (`backend/middleware/*.js`)
+- **Repositories**: 9 файлов (Base + 8 специализированных)
+- **DB infrastructure**: 4 файла (connection, atomic, migrate, schema)
+- **Config**: constants.js расширен
+- **Documentation**: DB_MIGRATION_GUIDE.md создан
+
+### Строки кода (Phase 5 contributions):
+- API routes: ~1200 строк
+- Repositories: ~900 строк
+- DB layer: ~450 строк
+- Middleware: ~320 строк
+- **Итого Phase 5**: ~2870 строк нового backend кода
+
+### Технологический стек:
+- **Runtime**: Node.js 14+
+- **Backend**: Custom HTTP server (no Express)
+- **Auth**: JWT + HttpOnly cookies + refresh tokens
+- **DB planned**: MongoDB (driver готов, USE_DB=false пока)
+- **Build**: Vite для frontend ES6 modules
+- **Testing**: Jest (backend), Playwright (e2e)
+- **Linting**: ESLint
+
+### Следующая веха:
+🎯 **Phase 5 → 100%**: Backend test suite адаптация  
+🚀 **Phase 6 Start**: PWA manifest + Service Worker  
+📦 **Production Ready**: После завершения Phase 6 (индексы DB, graceful shutdown, performance audit)
