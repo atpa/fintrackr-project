@@ -1,7 +1,6 @@
+import fetchData from '../modules/api.js';
 import initNavigation from '../modules/navigation.js';
 import initProfileShell from '../modules/profile.js';
-import { API } from '../src/modules/api.js';
-import { toastSuccess, toastError } from '../src/components/Toast.js';
 
 initNavigation();
 initProfileShell();
@@ -70,13 +69,11 @@ function renderBudgets(budgets, categories, tbody, transactions) {
 async function initBudgetsPage() {
   const tbody = document.querySelector('#budgetsTable tbody');
   if (!tbody) return;
-
-  try {
-    const [budgets, categories, transactions] = await Promise.all([
-      API.budgets.getAll(),
-      API.categories.getAll(),
-      API.transactions.getAll()
-    ]);
+  const [budgets, categories, transactions] = await Promise.all([
+    fetchData('/api/budgets'),
+    fetchData('/api/categories'),
+    fetchData('/api/transactions')
+  ]);
   renderBudgets(budgets, categories, tbody, transactions);
   // Populate category dropdown for budget form
   const catSelect = document.getElementById('budgetCategory');
@@ -160,27 +157,31 @@ async function initBudgetsPage() {
         payload.percent = null;
       }
       try {
-        const updated = await API.budgets.create(payload);
+        const resp = await fetch('/api/budgets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!resp.ok) {
+          const err = await resp.json();
+          alert('Ошибка: ' + (err.error || 'не удалось сохранить бюджет'));
+          return;
+        }
+        const updated = await resp.json();
         // Если бюджет существует, обновляем, иначе добавляем
         const idx = budgets.findIndex(b => b.id === updated.id);
         if (idx !== -1) {
           budgets[idx] = updated;
-          toastSuccess('Бюджет обновлён!');
         } else {
           budgets.push(updated);
-          toastSuccess('Бюджет создан!');
         }
-        renderBudgets(budgets, categories, tbody, transactions);
+        renderBudgets(budgets, categories, tbody);
         form.reset();
-      } catch (error) {
-        console.error(error);
-        toastError(`Не удалось сохранить бюджет: ${error.message}`);
+      } catch (err) {
+        console.error(err);
+        alert('Ошибка сети');
       }
     });
-  }
-  } catch (error) {
-    console.error(error);
-    toastError(`Не удалось загрузить данные: ${error.message}`);
   }
 }
 

@@ -1,1 +1,41 @@
-import{i as e}from"./chunks/profile-BfLkpaKJ.js";e({requireAuth:!1}),document.addEventListener("DOMContentLoaded",()=>{document.querySelectorAll(".feature").forEach((e,s)=>{e.style.animationDelay=.2*s+"s",setTimeout(()=>{e.classList.add("show")},100)});const e=document.querySelector(".burger"),s=document.querySelector(".landing-nav"),t=document.querySelector(".auth-links");e&&s&&(e.addEventListener("click",()=>{e.classList.toggle("open"),s.classList.toggle("open"),t&&t.classList.toggle("open")}),s.querySelectorAll("a").forEach(o=>{o.addEventListener("click",()=>{window.innerWidth<=768&&(e.classList.remove("open"),s.classList.remove("open"),t&&t.classList.remove("open"))})}),document.addEventListener("keydown",o=>{"Escape"===o.key&&(e.classList.remove("open"),s.classList.remove("open"),t&&t.classList.remove("open"))}))});
+// Скрипт лендинга: анимация появления элементов
+document.addEventListener('DOMContentLoaded', () => {
+  const features = document.querySelectorAll('.feature');
+  features.forEach((feat, idx) => {
+    feat.style.animationDelay = `${idx * 0.2}s`;
+    // Добавляем класс show чуть позже, чтобы анимация сыграла после загрузки
+    setTimeout(() => {
+      feat.classList.add('show');
+    }, 100);
+  });
+
+  // Навигация: переключение адаптивного меню для лендинга
+  const burger = document.querySelector('.burger');
+  const nav = document.querySelector('.landing-nav');
+  const authLinks = document.querySelector('.auth-links');
+  if (burger && nav) {
+    burger.addEventListener('click', () => {
+      burger.classList.toggle('open');
+      nav.classList.toggle('open');
+      if (authLinks) authLinks.classList.toggle('open');
+    });
+    // Закрываем меню при клике по ссылке внутри навигации (только на мобильных)
+    nav.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 768) {
+          burger.classList.remove('open');
+          nav.classList.remove('open');
+          if (authLinks) authLinks.classList.remove('open');
+        }
+      });
+    });
+    // Закрываем меню по нажатию Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        burger.classList.remove('open');
+        nav.classList.remove('open');
+        if (authLinks) authLinks.classList.remove('open');
+      }
+    });
+  }
+});

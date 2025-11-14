@@ -1,8 +1,6 @@
+import fetchData from '../modules/api.js';
 import initNavigation from '../modules/navigation.js';
 import initProfileShell from '../modules/profile.js';
-import { API } from '../src/modules/api.js';
-import { toastSuccess, toastError } from '@components/Toast.js';
-import { confirmModal } from '@components/ModalBase.js';
 
 initNavigation();
 initProfileShell();
@@ -58,14 +56,12 @@ function appendTransactionRow(tx, accounts, categories, tbody, prepend = false) 
 async function initTransactionsPage() {
   const tbody = document.querySelector('#transactionsTable tbody');
   if (!tbody) return;
-
-  try {
-    const [transactions, accounts, categories, rules] = await Promise.all([
-      API.transactions.getAll(),
-      API.accounts.getAll(),
-      API.categories.getAll(),
-      API.rules.getAll()
-    ]);
+  const [transactions, accounts, categories, rules] = await Promise.all([
+    fetchData('/api/transactions'),
+    fetchData('/api/accounts'),
+    fetchData('/api/categories'),
+    fetchData('/api/rules')
+  ]);
   // Сохраняем правила в глобальную переменную для автокатегоризации
   window.autoRules = Array.isArray(rules) ? rules : [];
   // Сохраняем полный список операций для фильтрации
@@ -149,7 +145,17 @@ async function initTransactionsPage() {
         }
       }
       try {
-        const created = await API.transactions.create(newTx);
+        const resp = await fetch('/api/transactions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newTx)
+        });
+        if (!resp.ok) {
+          const err = await resp.json();
+          alert('Ошибка: ' + (err.error || 'не удалось добавить операцию'));
+          return;
+        }
+        const created = await resp.json();
         // Добавляем в общий массив
         window.allTransactions.unshift(created);
         // Добавляем в таблицу в начало
@@ -162,11 +168,10 @@ async function initTransactionsPage() {
             else acc.balance -= adj;
           }
         });
-        toastSuccess('Операция добавлена');
         form.reset();
-      } catch (error) {
-        console.error(error);
-        toastError(`Не удалось добавить операцию: ${error.message}`);
+      } catch (err) {
+        console.error(err);
+        alert('Ошибка сети');
       }
     });
   }
@@ -212,29 +217,28 @@ async function initTransactionsPage() {
     }
   }
 
-    // Делегирование кликов по кнопкам удаления
-    tbody.addEventListener('click', async (e) => {
-      const btn = e.target.closest('.tx-del');
-      if (!btn) return;
-      const id = btn.getAttribute('data-id');
-      if (!id) return;
-      const ok = await confirmModal({ title: 'Удалить операцию?', message: 'Это действие нельзя отменить', danger: true });
-      if (!ok) return;
-      try {
-        await API.transactions.delete(id);
-        toastSuccess('Операция удалена');
-        // Удаляем из локального массива и перерисовываем
-        window.allTransactions = (window.allTransactions || []).filter(tx => String(tx.id) !== String(id));
-        renderTable(window.allTransactions);
-      } catch (error) {
-        console.error(error);
-        toastError(`Не удалось удалить операцию: ${error.message}`);
+  // Делегирование кликов по кнопкам удаления
+  tbody.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.tx-del');
+    if (!btn) return;
+    const id = btn.getAttribute('data-id');
+    if (!id) return;
+    if (!confirm('Удалить операцию?')) return;
+    try {
+      const resp = await fetch(`/api/transactions/${id}`, { method: 'DELETE' });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        alert('Ошибка: ' + (err.error || 'не удалось удалить операцию'));
+        return;
       }
-    });
-  } catch (error) {
-    console.error(error);
-    toastError(`Не удалось загрузить данные: ${error.message}`);
-  }
+      // Удаляем из локального массива и перерисовываем
+      window.allTransactions = (window.allTransactions || []).filter(tx => String(tx.id) !== String(id));
+      renderTable(window.allTransactions);
+    } catch (err) {
+      console.error(err);
+      alert('Ошибка сети');
+    }
+  });
 }
 
 // Запуск инициализации после загрузки страницы

@@ -1,7 +1,5 @@
 import Auth from '../modules/auth.js';
 import initProfileShell from '../modules/profile.js';
-import { API } from '../src/modules/api.js';
-import { toastError } from '../src/components/Toast.js';
 
 initProfileShell({ requireAuth: false });
 
@@ -15,25 +13,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const passEl = document.getElementById('loginPassword');
     const email = emailEl.value.trim();
     const password = passEl.value;
-    
-    if (!email || !password) {
-      toastError('Заполните все поля');
-      return;
-    }
-
+    if (!email || !password) return;
     try {
-      const response = await API.auth.login({ email, password });
-      // Backend возвращает { user: {...} }, извлекаем объект пользователя
-      const user = response.user || response;
+      const resp = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const result = await resp.json();
+      if (!resp.ok) {
+        alert(result.error || 'Ошибка входа');
+        return;
+      }
       // Используем Auth утилиту для сохранения пользователя
-      if (Auth.login(user)) {
+      if (Auth.login(result)) {
         window.location.href = 'dashboard.html';
       } else {
-        toastError('Ошибка сохранения данных');
+        alert('Ошибка сохранения данных');
       }
-    } catch (error) {
-      console.error(error);
-      toastError(error.message || 'Ошибка подключения к серверу');
+    } catch (err) {
+      console.error(err);
+      alert('Ошибка подключения к серверу');
     }
   });
 });

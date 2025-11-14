@@ -6,21 +6,22 @@ const serverModule = require('../server');
 
 const baseData = {
   accounts: [
-    { id: 1, user_id: 1, name: 'Main account', currency: 'USD', balance: 1000 },
+    { id: 1, name: 'Main account', currency: 'USD', balance: 1000 },
   ],
   categories: [
-    { id: 1, user_id: 1, name: 'Salary', type: 'income' },
-    { id: 2, user_id: 1, name: 'Groceries', type: 'expense' },
+    { id: 1, name: 'Salary', kind: 'income' },
+    { id: 2, name: 'Groceries', kind: 'expense' },
   ],
   transactions: [],
   budgets: [
     {
       id: 1,
-      user_id: 1,
       category_id: 2,
       month: '2024-01',
       limit: 500,
       spent: 0,
+      type: 'fixed',
+      percent: null,
       currency: 'USD',
     },
   ],
@@ -31,8 +32,6 @@ const baseData = {
   subscriptions: [],
   rules: [],
   recurring: [],
-  refreshTokens: [],
-  tokenBlacklist: [],
 };
 
 function cloneData() {
@@ -52,34 +51,17 @@ describe('service helpers', () => {
 
 describe('API endpoints', () => {
   let app;
-  const servers = [];
 
   beforeEach(() => {
     serverModule.setData(cloneData());
     app = serverModule.createServer();
-    servers.push(app);
-  });
-
-  afterAll((done) => {
-    servers.forEach((server) => {
-      if (server && server.close) {
-        server.close();
-      }
-    });
-    setTimeout(done, 100);
   });
 
   test('GET /api/accounts returns available accounts', async () => {
     const response = await request(app).get('/api/accounts').expect(200);
     expect(Array.isArray(response.body)).toBe(true);
-    expect(response.body.length).toBeGreaterThanOrEqual(1);
-    // Проверяем структуру первого аккаунта
-    expect(response.body[0]).toMatchObject({
-      id: expect.any(Number),
-      name: expect.any(String),
-      currency: expect.any(String),
-      balance: expect.any(Number),
-    });
+    expect(response.body).toHaveLength(1);
+    expect(response.body[0]).toMatchObject({ name: 'Main account', currency: 'USD' });
   });
 
   test('POST /api/register stores hashed password and returns public user', async () => {
@@ -92,8 +74,10 @@ describe('API endpoints', () => {
     );
     expect(response.body).not.toHaveProperty('password_hash');
 
-    // Успешный ответ означает что пользователь создан и пароль захэширован
-    // Прямую проверку getData() пропускаем т.к. данные могут быть в repository
+    const storedUser = serverModule.getData().users.find((user) => user.email === payload.email);
+    expect(storedUser).toBeDefined();
+    const expectedHash = crypto.createHash('sha256').update(payload.password).digest('hex');
+    expect(storedUser.password_hash).toBe(expectedHash);
   });
 
   test('POST /api/login authenticates registered user', async () => {
@@ -110,11 +94,11 @@ describe('API endpoints', () => {
     );
   });
 
-  // SKIP: Bcrypt.compare очень медленный на неправильных паролях в тестовой среде
-  // Функционально тест правильный, но занимает >5 секунд
-  test.skip('POST /api/login rejects invalid credentials', async () => {
-    const regPayload = { name: 'Eve', email: 'eve@example.com', password: 'hunter2' };
-    await request(app).post('/api/register').send(regPayload).expect(201);
+  test('POST /api/login rejects invalid credentials', async () => {
+    await request(app)
+      .post('/api/register')
+      .send({ name: 'Eve', email: 'eve@example.com', password: 'hunter2' })
+      .expect(201);
 
     await request(app)
       .post('/api/login')
@@ -124,7 +108,6 @@ describe('API endpoints', () => {
 
   test('POST /api/transactions updates balances and budgets', async () => {
     const payload = {
-      user_id: 1,
       account_id: 1,
       category_id: 2,
       type: 'expense',
@@ -142,16 +125,19 @@ describe('API endpoints', () => {
       type: 'expense',
     });
 
-    // Проверяем что транзакция создана через response
-    expect(response.body.id).toBeDefined();
-    expect(response.body.account_id).toBe(1);
-    expect(response.body.amount).toBe(50);
+    const updatedData = serverModule.getData();
+    expect(updatedData.transactions).toHaveLength(1);
+    expect(updatedData.accounts[0].balance).toBe(950);
+    expect(updatedData.budgets[0].spent).toBe(50);
   });
 
-  test('DELETE /api/categories/:id requires authentication', async () => {
-    // Без аутентификации должна вернуться ошибка
-    const deleteResponse = await request(app).delete('/api/categories/2').expect(404);
-    // 404 потому что категория не найдена или нет доступа
+  test('DELETE /api/categories/:id removes category and associated data', async () => {
+    const deleteResponse = await request(app).delete('/api/categories/2').expect(200);
+    expect(deleteResponse.body).toEqual({ success: true });
+
+    const updatedData = serverModule.getData();
+    expect(updatedData.categories.find((cat) => cat.id === 2)).toBeUndefined();
+    expect(updatedData.budgets).toHaveLength(0);
   });
 
   test('GET /api/rates returns conversion rate for supported currencies', async () => {
