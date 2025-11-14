@@ -1,18 +1,6 @@
+import fetchData from '../modules/api.js';
 import initNavigation from '../modules/navigation.js';
-import { API } from '../src/modules/api.js';
 import initProfileShell, { loadProfileSettings } from '../modules/profile.js';
-import {
-  createExpensesByCategoryChart,
-  createCashflowChart,
-  createBudgetForecastChart,
-  renderChart
-} from '../src/modules/charts.js';
-import {
-  createAccountCardSkeleton,
-  createChartSkeleton,
-  showSkeleton,
-  hideSkeleton
-} from '../src/components/SkeletonLoader.js';
 
 /**
  * Общие функции для загрузки данных и построения графиков
@@ -218,26 +206,8 @@ async function initDashboard() {
   } catch (e) {
     // если localStorage недоступен, просто продолжаем
   }
-
-  // Показываем skeleton loaders
-  const expenseChartContainer = document.getElementById("expenseChart")?.parentElement;
-  const pieChartContainer = document.getElementById("expensePie")?.parentElement;
-  const cashflowChartContainer = document.getElementById("cashflowChart")?.parentElement;
-  
-  if (expenseChartContainer) {
-    showSkeleton(expenseChartContainer, createChartSkeleton('bar'));
-  }
-  if (pieChartContainer) {
-    showSkeleton(pieChartContainer, createChartSkeleton('pie'));
-  }
-  if (cashflowChartContainer) {
-    showSkeleton(cashflowChartContainer, createChartSkeleton('bar'));
-  }
-
-  // Загружаем данные
-  const transactions = await API.transactions.getAll();
-  const categories = await API.categories.getAll();
-  const budgets = await API.budgets.getAll();
+  const transactions = await fetchData("/api/transactions");
+  const categories = await fetchData("/api/categories");
   // Выбранная пользователем валюта для отчётов
   const reportCurrency = getReportCurrency();
   // Выбранная пользователем валюта для баланса
@@ -260,46 +230,15 @@ async function initDashboard() {
   });
   const labels = Array.from(expenseMap.keys());
   const values = Array.from(expenseMap.values());
-  
-  // Убираем skeleton и рендерим графики с Chart.js
-  const expenseCanvas = document.getElementById("expenseChart");
-  if (expenseCanvas && expenseChartContainer) {
-    hideSkeleton(expenseChartContainer, expenseCanvas);
-    
-    // Создаем конфигурацию для donut chart расходов
-    const expensesConfig = createExpensesByCategoryChart(
-      transactions.filter(tx => tx.type === 'expense'),
-      categories,
-      reportCurrency
-    );
-    renderChart(expenseCanvas, expensesConfig);
+  const canvas = document.getElementById("expenseChart");
+  if (canvas) {
+    drawBarChart(canvas, labels, values);
   }
 
   // Рисуем круговую диаграмму расходов по категориям, если на странице есть соответствующий элемент
   const pieCanvas = document.getElementById("expensePie");
-  if (pieCanvas && pieChartContainer) {
-    hideSkeleton(pieChartContainer, pieCanvas);
-    
-    // Используем тот же конфиг для круговой диаграммы
-    const pieConfig = createExpensesByCategoryChart(
-      transactions.filter(tx => tx.type === 'expense'),
-      categories,
-      reportCurrency
-    );
-    renderChart(pieCanvas, pieConfig);
-  }
-
-  // Cashflow график (доходы/расходы по месяцам)
-  const cashflowCanvas = document.getElementById("cashflowChart");
-  if (cashflowCanvas && cashflowChartContainer) {
-    hideSkeleton(cashflowChartContainer, cashflowCanvas);
-    
-    const cashflowConfig = createCashflowChart(
-      transactions,
-      balanceCurrency,
-      6  // последние 6 месяцев
-    );
-    renderChart(cashflowCanvas, cashflowConfig);
+  if (pieCanvas) {
+    drawPieChart(pieCanvas, labels, values);
   }
 
   // Показываем топ‑категории (по убыванию суммы расходов)
@@ -364,7 +303,7 @@ async function initDashboard() {
 
   // AI‑прогноз: загружаем прогноз на 30 дней
   try {
-    const forecast = await API.utils.getForecast();
+    const forecast = await fetchData("/api/forecast");
     const aiIncomeEl = document.getElementById("aiIncome");
     const aiExpenseEl = document.getElementById("aiExpense");
     if (forecast && aiIncomeEl && aiExpenseEl) {

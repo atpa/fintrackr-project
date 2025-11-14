@@ -1,1 +1,49 @@
-import{i as e,A as t}from"./chunks/profile-BfLkpaKJ.js";import{A as n}from"./chunks/api-BDCGX8nm.js";import{a}from"./chunks/Toast-Cw3r9-oW.js";async function o(){const e=document.getElementById("registerForm");e&&e.addEventListener("submit",async e=>{e.preventDefault();const o=document.getElementById("regName").value.trim(),r=document.getElementById("regEmail").value.trim(),s=document.getElementById("regPassword").value;if(s!==document.getElementById("regConfirm").value)return void a("Пароли не совпадают");const m={name:o,email:r,password:s};try{const e=await n.auth.register(m),o=e.user||e;t.login(o)?window.location.href="dashboard.html":a("Ошибка сохранения данных")}catch(d){a(d.message||"Ошибка регистрации")}})}e({requireAuth:!1}),"loading"!==document.readyState?o():document.addEventListener("DOMContentLoaded",o);
+/**
+ * Логика регистрации пользователя. Отправляет данные на сервер и перенаправляет на дэшборд.
+ */
+async function initRegisterPage() {
+  const form = document.getElementById('registerForm');
+  if (!form) return;
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const name = document.getElementById('regName').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPassword').value;
+    const confirm = document.getElementById('regConfirm').value;
+    if (password !== confirm) {
+      alert('Пароли не совпадают');
+      return;
+    }
+    const newUser = { name, email, password };
+    try {
+      const resp = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newUser)
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        alert('Ошибка регистрации: ' + (err.error || resp.statusText));
+        return;
+      }
+      const created = await resp.json();
+      // Сохранение текущего пользователя
+      const user = created.user || created;
+      if (Auth.login(user)) {
+        // Редирект в личный кабинет
+        window.location.href = 'dashboard.html';
+      } else {
+        alert('Ошибка сохранения данных');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Ошибка сети');
+    }
+  });
+}
+
+if (document.readyState !== 'loading') {
+  initRegisterPage();
+} else {
+  document.addEventListener('DOMContentLoaded', initRegisterPage);
+}

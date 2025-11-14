@@ -1,17 +1,16 @@
 /**
  * FinTrackr Server
  * 
- * NOTE: This file is transitioning from monolithic to modular architecture.
- * New architecture (Phase 5):
- * - middleware/ - Authentication, logging, error handling, CORS
- * - repositories/ - Data access layer with BaseRepository pattern
- * - api/ - Modular route handlers by resource
- * - services/ - Authentication, data persistence, currency conversion
+ * NOTE: This file is currently monolithic (~2000 lines) and needs refactoring.
+ * Modular services have been created in:
  * - config/constants.js - Application constants
+ * - services/authService.js - Authentication and JWT
+ * - services/dataService.js - Data persistence
+ * - services/currencyService.js - Currency conversion
  * - utils/http.js - HTTP utilities
  * 
- * Migration Status: Middleware and API routes created, integration in progress
- * Old inline handlers preserved as fallback during migration
+ * See server.refactored.js for the target architecture.
+ * Migration in progress - use services where imported below.
  */
 
 const http = require("http");
@@ -24,10 +23,6 @@ const crypto = require("crypto");
 // Keeping original implementation for stability
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-
-// New modular infrastructure (Phase 5)
-const { requestLogger, corsMiddleware, errorHandler } = require("./middleware");
-const { handleApiRequest } = require("./api");
 
 const dataPath = path.join(__dirname, "data.json");
 
@@ -595,63 +590,41 @@ function handleApi(req, res) {
     let body = "";
     req.on("data", (c) => (body += c));
     req.on("end", async () => {
+      let payload;
       try {
-        let payload;
+        payload = JSON.parse(body || "{}");
+      } catch (err) {
+        return sendJson(res, { error: "Invalid JSON" }, 400);
+      }
+      const { email, password } = payload || {};
+      if (!email || !password) {
+        return sendJson(res, { error: "Missing login parameters" }, 400);
+      }
+      const user = data.users.find((u) => u.email && u.email.toLowerCase() === String(email).toLowerCase());
+      if (!user) return sendJson(res, { error: "Invalid email or password" }, 401);
+      let ok = false;
+      if (user.password_hash) {
         try {
-          payload = JSON.parse(body || "{}");
-        } catch (err) {
-          console.error("[LOGIN] Invalid JSON:", err.message);
-          return sendJson(res, { error: "Invalid JSON" }, 400);
-        }
-        const { email, password } = payload || {};
-        if (!email || !password) {
-          console.log("[LOGIN] Missing parameters");
-          return sendJson(res, { error: "Missing login parameters" }, 400);
-        }
-        console.log("[LOGIN] Attempting login for:", email);
-        const user = data.users.find((u) => u.email && u.email.toLowerCase() === String(email).toLowerCase());
-        if (!user) {
-          console.log("[LOGIN] User not found:", email);
-          return sendJson(res, { error: "Invalid email or password" }, 401);
-        }
-        let ok = false;
-        if (user.password_hash) {
-          try {
-            console.log("[LOGIN] Comparing password with bcrypt...");
-            ok = await bcrypt.compare(password, user.password_hash);
-            console.log("[LOGIN] bcrypt result:", ok);
-          } catch (e) {
-            console.error("[LOGIN] bcrypt.compare error:", e.message);
-            ok = false;
-          }
-          if (!ok) {
-            // Фоллбэк: поддержка старых sha256-хэшей
-            const sha = crypto.createHash("sha256").update(password).digest("hex");
-            if (user.password_hash === sha) {
-              console.log("[LOGIN] Fallback to SHA256 hash successful");
-              ok = true;
-              try {
-                user.password_hash = await bcrypt.hash(password, 10);
-                persistData();
-              } catch (e) {
-                console.error("[LOGIN] Failed to upgrade hash:", e.message);
-              }
-            }
-          }
+          ok = await bcrypt.compare(password, user.password_hash);
+        } catch (e) {
+          ok = false;
         }
         if (!ok) {
-          console.log("[LOGIN] Authentication failed for:", email);
-          return sendJson(res, { error: "Invalid email or password" }, 401);
+          // Фоллбэк: поддержка старых sha256-хэшей
+          const sha = crypto.createHash("sha256").update(password).digest("hex");
+          if (user.password_hash === sha) {
+            ok = true;
+            try {
+              user.password_hash = await bcrypt.hash(password, 10);
+              persistData();
+            } catch (e) {}
+          }
         }
-        console.log("[LOGIN] Issuing tokens for:", email);
-        const tokens = issueTokensForUser(user);
-        setAuthCookies(res, tokens);
-        console.log("[LOGIN] Login successful for:", email);
-        return sendJson(res, { user: sanitizeUser(user) }, 200);
-      } catch (error) {
-        console.error("[LOGIN] Unhandled error:", error);
-        return sendJson(res, { error: "Internal server error" }, 500);
       }
+      if (!ok) return sendJson(res, { error: "Invalid email or password" }, 401);
+      const tokens = issueTokensForUser(user);
+      setAuthCookies(res, tokens);
+      return sendJson(res, { user: sanitizeUser(user) }, 200);
     });
     return;
   }
@@ -1972,39 +1945,23 @@ function handleStatic(req, res) {
 
 // Создание HTTP‑сервера
 function createServer() {
-  // Инициализируем CORS middleware один раз (фабрика возвращает функцию)
-  const corsHandler = corsMiddleware();
-  return http.createServer(async (req, res) => {
-    console.log(`[SERVER] RAW REQUEST: ${req.method} ${req.url}`);
-
-    // Применяем CORS заголовки
-    corsHandler(req, res, () => {});
-
-    // Логирование запросов (только в dev среде)
+  return http.createServer((req, res) => {
+    // SECURITY: Log only in development, avoid exposing URLs in production
     if (process.env.NODE_ENV !== "production") {
-      requestLogger(req, res, () => {});
+      console.log("REQ:", req.method, req.url);
     }
 
-    try {
-      // Обрабатываем API‑запросы через новый модульный роутер
-      if (req.url.startsWith("/api/")) {
-        console.log(`[SERVER] Routing ${req.method} ${req.url} to handleApiRequest...`);
-        // Use new modular API router (Phase 5)
-        return await handleApiRequest(req, res);
-      }
-      
-      // Для нестатических путей разрешаем только GET
-      if (req.method !== "GET") {
-        res.statusCode = 405;
-        return res.end("Method Not Allowed");
-      }
-      
-      // Остальные запросы считаем статикой
-      return handleStatic(req, res);
-    } catch (error) {
-      // Global error handler
-      errorHandler(error, req, res);
+    // Обрабатываем API‑запросы отдельно, независимо от HTTP‑метода
+    if (req.url.startsWith("/api/")) {
+      return handleApi(req, res);
     }
+    // Для нестатических путей разрешаем только GET
+    if (req.method !== "GET") {
+      res.statusCode = 405;
+      return res.end("Method Not Allowed");
+    }
+    // Остальные запросы считаем статикой
+    return handleStatic(req, res);
   });
 }
 
@@ -2012,15 +1969,8 @@ const server = createServer();
 
 if (require.main === module) {
   const PORT = process.env.PORT || 3000;
-  // Режим запуска: выводим информацию о том, используется ли JSON-файл или DB-режим
-  const USE_DB = process.env.USE_DB === "true";
-  const DB_BACKEND = process.env.DB_BACKEND || "mongo"; // планируемая СУБД
-  const DISABLE_PERSIST = process.env.FINTRACKR_DISABLE_PERSIST === "true";
   server.listen(PORT, () => {
-    const modeLabel = USE_DB ? `DB mode (backend=${DB_BACKEND})` : "JSON file mode";
-    console.log(
-      `FinTrackr server listening on http://localhost:${PORT} | ${modeLabel} | persistDisabled=${DISABLE_PERSIST}`
-    );
+    console.log(`FinTrackr server listening on http://localhost:${PORT}`);
   });
 }
 

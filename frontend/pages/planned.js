@@ -1,7 +1,6 @@
+import fetchData from '../modules/api.js';
 import initNavigation from '../modules/navigation.js';
 import initProfileShell from '../modules/profile.js';
-import { API } from '../src/modules/api.js';
-import { toastSuccess, toastError } from '../src/components/Toast.js';
 
 initNavigation();
 initProfileShell();
@@ -54,14 +53,12 @@ function renderPlannedTable(plans, accounts, categories, tbody) {
 async function initPlannedPage() {
   const tbody = document.querySelector('#plannedTable tbody');
   if (!tbody) return;
-
-  try {
-    let [plans, accounts, categories] = await Promise.all([
-      API.planned.getAll(),
-      API.accounts.getAll(),
-      API.categories.getAll()
-    ]);
-    renderPlannedTable(plans, accounts, categories, tbody);
+  let [plans, accounts, categories] = await Promise.all([
+    fetchData('/api/planned'),
+    fetchData('/api/accounts'),
+    fetchData('/api/categories')
+  ]);
+  renderPlannedTable(plans, accounts, categories, tbody);
   // Заполняем селекты
   const accSelect = document.getElementById('plannedAccount');
   const catSelect = document.getElementById('plannedCategory');
@@ -105,22 +102,27 @@ async function initPlannedPage() {
         note: document.getElementById('plannedNote').value
       };
       try {
-        const created = await API.planned.create(payload);
+        const resp = await fetch('/api/planned', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!resp.ok) {
+          const err = await resp.json();
+          alert('Ошибка: ' + (err.error || 'не удалось добавить плановую операцию'));
+          return;
+        }
+        const created = await resp.json();
         plans.push(created);
-        toastSuccess('Плановая операция добавлена!');
         renderPlannedTable(plans, accounts, categories, tbody);
         form.reset();
         // вернуть дату начала к сегодняшнему дню
         if (startDateInput) startDateInput.value = new Date().toISOString().slice(0, 10);
-      } catch (error) {
-        console.error(error);
-        toastError(`Не удалось добавить плановую операцию: ${error.message}`);
+      } catch (err) {
+        console.error(err);
+        alert('Ошибка сети');
       }
     });
-  }
-  } catch (error) {
-    console.error(error);
-    toastError(`Не удалось загрузить данные: ${error.message}`);
   }
 }
 

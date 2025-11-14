@@ -5,13 +5,10 @@
 
 // Environment configuration
 const ENV = {
-  NODE_ENV: process.env.NODE_ENV || "development",
   JWT_SECRET: process.env.JWT_SECRET || "dev-secret-change",
   PORT: process.env.PORT || 3000,
   COOKIE_SECURE: process.env.COOKIE_SECURE === "true",
-  DISABLE_PERSIST: process.env.FINTRACKR_DISABLE_PERSIST === "true", // preserve original flag
-  USE_DB: process.env.USE_DB === "true", // new DB toggle
-  DB_BACKEND: process.env.DB_BACKEND || "mongo", // or 'pg'
+  DISABLE_PERSIST: process.env.FINTRACKR_DISABLE_PERSIST === "true",
 };
 
 // Token configuration
