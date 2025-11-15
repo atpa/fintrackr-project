@@ -12,158 +12,81 @@
     <link rel="stylesheet" href="css/tokens.css" />
     <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="css/design-system.css" />
+    <link rel="stylesheet" href="css/sidebar-footer.css" />
     <link rel="stylesheet" href="css/icons.css" />
     <link rel="stylesheet" href="css/transitions.css" />
     <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
   <script defer src="js/utils/auth.js"></script>
   <script defer src="js/app.js"></script>
+  
+  <!-- Sidebar Component Initialization -->
+  <script type="module">
+    import { mountSidebar } from '/js/components/Sidebar.js';
+    
+    // Mount sidebar после загрузки DOM
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => mountSidebar('sidebar-mount'));
+    } else {
+      mountSidebar('sidebar-mount');
+    }
+  </script>
   </head>
   <body class="workspace-page" data-page-title="Дэшборд" data-page-subtitle="Прогнозы, бюджеты и уведомления в едином месте">
     <a href="#main-content" class="visually-hidden" tabindex="1">Перейти к основному содержимому</a>
     
-    <header data-page-title="Дэшборд" data-page-subtitle="Прогнозы, бюджеты и уведомления в едином месте" role="banner">
-      <div class="brand visually-hidden">
-        <a href="dashboard.html">FinTrackr</a>
+    <header role="banner">
+      <div class="header-inner">
+        <div class="header-left">
+          <button class="burger" aria-label="Открыть меню навигации" aria-expanded="false" aria-controls="sidebar">
+            <span></span><span></span><span></span>
+          </button>
+          <div class="logo-text">FinTrackr</div>
+        </div>
+
+        <div class="header-center">
+          <div class="header-search">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M9 17A8 8 0 1 0 9 1a8 8 0 0 0 0 16zM18 18l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <input type="search" placeholder="Поиск операций, счетов..." aria-label="Поиск" />
+          </div>
+          
+          <select class="currency-selector" aria-label="Выбор валюты">
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="RUB">RUB</option>
+            <option value="PLN">PLN</option>
+          </select>
+        </div>
+
+        <div class="header-right">
+          <button class="btn-primary" onclick="location.href='transactions.html'">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M10 5v10M5 10h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            Операция
+          </button>
+          
+          <div class="header-quick">
+            <button class="icon-btn" aria-label="Уведомления">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+              </svg>
+            </button>
+            
+            <button class="icon-btn" aria-label="Профиль" onclick="location.href='settings.html'">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
-      <button class="burger" aria-label="Открыть меню навигации" aria-expanded="false" aria-controls="sidebar">
-        <span></span><span></span><span></span>
-      </button>
     </header>
 
-    <!-- Include sidebar component -->
-    <aside
-      class="sidebar"
-      id="sidebar"
-      role="navigation"
-      aria-label="Боковая навигация"
-    >
-    <div class="sidebar-top">
-      <div class="sidebar-header">
-        <a href="dashboard.html" class="logo" aria-label="FinTrackr логотип">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" focusable="false">
-            <rect width="24" height="24" rx="6" fill="var(--primary)"></rect>
-            <path d="M6 12h12M6 8h12M6 16h12" stroke="#fff" stroke-width="1.2" stroke-linecap="round"></path>
-          </svg>
-          <span class="logo-text">FinTrackr</span>
-        </a>
-      </div>
-    </div>
-
-    <div class="sidebar-scroll">
-      <nav class="sidebar-nav" aria-label="Меню приложения">
-        <div class="nav-section">
-          <h3 class="nav-section-title">Основное</h3>
-          <ul class="nav-list">
-            <li class="nav-item">
-              <a href="dashboard.html" class="nav-link">
-                <span class="nav-icon">🏠</span>
-                <span class="nav-label">Дэшборд</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="accounts.html" class="nav-link">
-                <span class="nav-icon">💼</span>
-                <span class="nav-label">Счёта</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="transactions.html" class="nav-link">
-                <span class="nav-icon">🔁</span>
-                <span class="nav-label">Операции</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="categories.html" class="nav-link">
-                <span class="nav-icon">🔖</span>
-                <span class="nav-label">Категории</span>
-              </a>
-            </li>
-          </ul>
-        </div>
-
-        <div class="nav-section">
-          <h3 class="nav-section-title">Планирование</h3>
-          <ul class="nav-list">
-            <li class="nav-item">
-              <a href="budgets.html" class="nav-link">
-                <span class="nav-icon">📊</span>
-                <span class="nav-label">Бюджеты</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="goals.html" class="nav-link">
-                <span class="nav-icon">🎯</span>
-                <span class="nav-label">Цели</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="planned.html" class="nav-link">
-                <span class="nav-icon">📅</span>
-                <span class="nav-label">Планируемые</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="recurring.html" class="nav-link">
-                <span class="nav-icon">🔄</span>
-                <span class="nav-label">Регулярные</span>
-              </a>
-            </li>
-          </ul>
-        </div>
-
-        <div class="nav-section">
-          <h3 class="nav-section-title">Аналитика</h3>
-          <ul class="nav-list">
-            <li class="nav-item">
-              <a href="reports.html" class="nav-link">
-                <span class="nav-icon">📈</span>
-                <span class="nav-label">Отчёты</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="forecast.html" class="nav-link">
-                <span class="nav-icon">🔮</span>
-                <span class="nav-label">Прогнозы</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="rules.html" class="nav-link">
-                <span class="nav-icon">⚙️</span>
-                <span class="nav-label">Правила</span>
-              </a>
-            </li>
-          </ul>
-        </div>
-
-        <div class="nav-section">
-          <h3 class="nav-section-title">Дополнительно</h3>
-          <ul class="nav-list">
-            <li class="nav-item">
-              <a href="education.html" class="nav-link">
-                <span class="nav-icon">📚</span>
-                <span class="nav-label">Обучение</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="premium.html" class="nav-link">
-                <span class="nav-icon">⭐</span>
-                <span class="nav-label">Премиум</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="settings.html" class="nav-link">
-                <span class="nav-icon">🔧</span>
-                <span class="nav-label">Настройки</span>
-              </a>
-            </li>
-          </ul>
-        </div>
-      </nav>
-    </div>
-    </aside>
-
-    <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
+    <!-- Sidebar Component Mount Point -->
+    <div id="sidebar-mount"></div>
 
     <main class="workspace-main" id="main-content" role="main">
       <section class="alert-banner alert-banner--info" aria-live="polite">

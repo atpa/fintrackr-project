@@ -95,6 +95,9 @@
   --radius-xl: 24px;
   --radius-full: 9999px;
   
+  /* ========== LAYOUT DIMENSIONS ========== */
+  --header-height: 64px;
+  
   /* ========== TYPOGRAPHY ========== */
   --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", "SF Mono", Monaco, "Cascadia Code", monospace;

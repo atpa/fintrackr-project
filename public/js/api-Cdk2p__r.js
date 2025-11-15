@@ -1,0 +1,1 @@
+async function o(t){const r=await fetch(t);if(!r.ok)return console.error(`Ошибка запроса ${t}:`,r.status),[];try{return await r.json()}catch(e){return console.error("Ошибка чтения ответа",e),[]}}export{o as f};

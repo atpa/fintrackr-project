@@ -33,7 +33,8 @@ async function initRegisterPage() {
       }
       const created = await resp.json();
       // Используем Auth утилиту для сохранения пользователя
-      if (Auth.login(created)) {
+      // Сервер возвращает { user: {...} }
+      if (Auth.login(created.user || created)) {
         window.location.href = 'dashboard.html';
       } else {
         alert('Ошибка сохранения данных');

@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 
 const inputs = {
+  // Pages
   accounts: 'frontend/pages/accounts.js',
   budgets: 'frontend/pages/budgets.js',
   categories: 'frontend/pages/categories.js',
@@ -21,6 +22,9 @@ const inputs = {
   subscriptions: 'frontend/pages/subscriptions.js',
   sync: 'frontend/pages/sync.js',
   transactions: 'frontend/pages/transactions.js',
+  
+  // Components (для переиспользования)
+  Sidebar: 'frontend/components/Sidebar.js',
 };
 
 export default defineConfig({

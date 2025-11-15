@@ -26,7 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       // Используем Auth утилиту для сохранения пользователя
-      if (Auth.login(result)) {
+      // Сервер возвращает { user: {...} }
+      if (Auth.login(result.user || result)) {
         window.location.href = 'dashboard.html';
       } else {
         alert('Ошибка сохранения данных');
