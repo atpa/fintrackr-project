@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background: #d4edda; }
+        .error { background: #f8d7da; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        input { padding: 8px; margin: 5px 0; width: 100%; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+    <script src="js/utils/auth.js"></script>
+</head>
+<body>
+    <h1>Authentication Test Page</h1>
+    
+    <div class="test-section">
+        <h2>Test Registration</h2>
+        <input type="text" id="testRegName" placeholder="Name" value="Test User">
+        <input type="email" id="testRegEmail" placeholder="Email" value="test@test.com">
+        <input type="password" id="testRegPassword" placeholder="Password" value="test123">
+        <button onclick="testRegister()">Register</button>
+        <div id="regResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Login</h2>
+        <input type="email" id="testLoginEmail" placeholder="Email" value="test@test.com">
+        <input type="password" id="testLoginPassword" placeholder="Password" value="test123">
+        <button onclick="testLogin()">Login</button>
+        <div id="loginResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Current User</h2>
+        <button onclick="checkUser()">Check User</button>
+        <div id="userResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Logout</h2>
+        <button onclick="testLogout()">Logout</button>
+        <div id="logoutResult"></div>
+    </div>
+
+    <script>
+        console.log('Auth object available:', typeof Auth !== 'undefined');
+        console.log('Auth methods:', Auth ? Object.keys(Auth) : 'N/A');
+
+        async function testRegister() {
+            const resultDiv = document.getElementById('regResult');
+            try {
+                const name = document.getElementById('testRegName').value;
+                const email = document.getElementById('testRegEmail').value;
+                const password = document.getElementById('testRegPassword').value;
+                
+                const resp = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+                
+                const data = await resp.json();
+                
+                if (resp.ok) {
+                    Auth.login(data);
+                    resultDiv.innerHTML = '<div class="success"><strong>Success!</strong><pre>' + JSON.stringify(data, null, 2) + '</pre></div>';
+                } else {
+                    resultDiv.innerHTML = '<div class="error"><strong>Error:</strong> ' + (data.error || resp.statusText) + '</div>';
+                }
+            } catch (err) {
+                resultDiv.innerHTML = '<div class="error"><strong>Error:</strong> ' + err.message + '</div>';
+            }
+        }
+
+        async function testLogin() {
+            const resultDiv = document.getElementById('loginResult');
+            try {
+                const email = document.getElementById('testLoginEmail').value;
+                const password = document.getElementById('testLoginPassword').value;
+                
+                const resp = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await resp.json();
+                
+                if (resp.ok) {
+                    Auth.login(data);
+                    resultDiv.innerHTML = '<div class="success"><strong>Success!</strong><pre>' + JSON.stringify(data, null, 2) + '</pre></div>';
+                } else {
+                    resultDiv.innerHTML = '<div class="error"><strong>Error:</strong> ' + (data.error || resp.statusText) + '</div>';
+                }
+            } catch (err) {
+                resultDiv.innerHTML = '<div class="error"><strong>Error:</strong> ' + err.message + '</div>';
+            }
+        }
+
+        function checkUser() {
+            const resultDiv = document.getElementById('userResult');
+            const user = Auth.getUser();
+            if (user) {
+                resultDiv.innerHTML = '<div class="success"><strong>User logged in:</strong><pre>' + JSON.stringify(user, null, 2) + '</pre></div>';
+            } else {
+                resultDiv.innerHTML = '<div class="error"><strong>No user logged in</strong></div>';
+            }
+        }
+
+        async function testLogout() {
+            const resultDiv = document.getElementById('logoutResult');
+            try {
+                await Auth.logout();
+                resultDiv.innerHTML = '<div class="success"><strong>Logged out successfully</strong></div>';
+            } catch (err) {
+                resultDiv.innerHTML = '<div class="error"><strong>Error:</strong> ' + err.message + '</div>';
+            }
+        }
+    </script>
+</body>
+</html>

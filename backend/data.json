@@ -1,53 +1,566 @@
 {
-  "users": [
-    {
-      "email": "accounts-user-1763190715149@example.com",
-      "password": "$2b$10$rb77t44dOI0qoLP9dovWLO1mf1UZ4GFR2q1mPvfiKpmfo458W2hEa",
-      "id": 1
-    },
-    {
-      "email": "existing@example.com",
-      "password": "$2b$10$hlPWdsdADh/kYWNrY3QVWOqYpha3QG5ujsc3Ph2aeiWNBWwwfg1LO",
-      "id": 2
-    },
-    {
-      "email": "login-success@example.com",
-      "password": "$2b$10$SBqCVygcpoZTcsg/wQrDZuG/IKEXzqr0dJHThwx2g6IQ/VUal7CTa",
-      "id": 3
-    },
-    {
-      "email": "wrongpass@example.com",
-      "password": "$2b$10$pQ9nBpL6xNXjG.Sm880Zdu0t0./mgQUPwQQ663xfeNlpmqA7gmm/q",
-      "id": 4
-    },
-    {
-      "email": "refresh-token@example.com",
-      "password": "$2b$10$OQm9iSOIwQFuhDZ0cIx.kOuBOjFhkR3A2rkwRmRWS8877LqMTF.3u",
-      "id": 5
-    },
-    {
-      "email": "logout@example.com",
-      "password": "$2b$10$fVaMq4Py0ba7wsyLTbjZCuseR0nssMZephzb2cww34gyALKFFc5WO",
-      "id": 6
-    }
-  ],
   "accounts": [
     {
-      "name": "Test Account",
-      "balance": 1000,
+      "id": 1,
+      "name": "Основной счёт",
       "currency": "USD",
-      "userId": 5,
-      "id": 1
+      "balance": -18500,
+      "user_id": 1
+    },
+    {
+      "id": 2,
+      "name": "Кредитная карта",
+      "currency": "USD",
+      "balance": -300,
+      "user_id": 1
+    },
+    {
+      "id": 3,
+      "name": "Наличные",
+      "currency": "EUR",
+      "balance": 150,
+      "user_id": 1
+    },
+    {
+      "id": 4,
+      "name": "Новый счёт",
+      "currency": "PLN",
+      "balance": 50,
+      "user_id": 1
+    },
+    {
+      "id": 5,
+      "user_id": 2,
+      "name": "Сбер",
+      "currency": "RUB",
+      "balance": 50000
+    },
+    {
+      "id": 6,
+      "user_id": 2,
+      "name": "Сбербанк",
+      "currency": "RUB",
+      "balance": 413000
     }
   ],
-  "categories": [],
-  "transactions": [],
-  "budgets": [],
-  "goals": [],
-  "planned": [],
+  "categories": [
+    {
+      "id": 1,
+      "name": "Продукты",
+      "kind": "expense",
+      "user_id": 1
+    },
+    {
+      "id": 2,
+      "name": "Зарплата",
+      "kind": "income",
+      "user_id": 1
+    },
+    {
+      "id": 3,
+      "name": "Транспорт",
+      "kind": "expense",
+      "user_id": 1
+    },
+    {
+      "id": 4,
+      "name": "Развлечения",
+      "kind": "expense",
+      "user_id": 1
+    },
+    {
+      "id": 5,
+      "name": "Подарки",
+      "kind": "expense",
+      "user_id": 1
+    },
+    {
+      "id": 6,
+      "user_id": 2,
+      "name": "Продукты",
+      "kind": "expense"
+    },
+    {
+      "id": 7,
+      "user_id": 2,
+      "name": "Развлечения",
+      "kind": "expense"
+    },
+    {
+      "id": 8,
+      "user_id": 2,
+      "name": "ЗП",
+      "kind": "income"
+    },
+    {
+      "id": 9,
+      "user_id": 2,
+      "name": "Темки",
+      "kind": "income"
+    },
+    {
+      "id": 10,
+      "user_id": 2,
+      "name": "Крипта",
+      "kind": "income"
+    },
+    {
+      "id": 11,
+      "user_id": 2,
+      "name": "Крипта расходы",
+      "kind": "expense"
+    }
+  ],
+  "transactions": [
+    {
+      "id": 1,
+      "account_id": 1,
+      "category_id": 2,
+      "type": "income",
+      "amount": 3200,
+      "currency": "USD",
+      "date": "2025-09-30",
+      "note": "Зарплата за сентябрь",
+      "user_id": 1
+    },
+    {
+      "id": 2,
+      "account_id": 1,
+      "category_id": 1,
+      "type": "expense",
+      "amount": 80.45,
+      "currency": "USD",
+      "date": "2025-10-01",
+      "note": "Продукты в супермаркете",
+      "user_id": 1
+    },
+    {
+      "id": 3,
+      "account_id": 1,
+      "category_id": 3,
+      "type": "expense",
+      "amount": 25,
+      "currency": "USD",
+      "date": "2025-10-02",
+      "note": "Такси",
+      "user_id": 1
+    },
+    {
+      "id": 4,
+      "account_id": 2,
+      "category_id": 4,
+      "type": "expense",
+      "amount": 120,
+      "currency": "USD",
+      "date": "2025-10-03",
+      "note": "Кино",
+      "user_id": 1
+    },
+    {
+      "id": 5,
+      "account_id": 3,
+      "category_id": 1,
+      "type": "expense",
+      "amount": 35.2,
+      "currency": "EUR",
+      "date": "2025-10-04",
+      "note": "Продуктовый рынок",
+      "user_id": 1
+    },
+    {
+      "id": 6,
+      "account_id": 1,
+      "category_id": 5,
+      "type": "expense",
+      "amount": 50,
+      "currency": "USD",
+      "date": "2025-10-05",
+      "note": "Подарок другу",
+      "user_id": 1
+    },
+    {
+      "id": 7,
+      "account_id": 4,
+      "category_id": 1,
+      "type": "expense",
+      "amount": 50,
+      "currency": "PLN",
+      "date": "2025-10-10",
+      "note": "тестовая",
+      "user_id": 1
+    },
+    {
+      "id": 8,
+      "account_id": 1,
+      "category_id": 1,
+      "type": "expense",
+      "amount": 1000,
+      "currency": "RUB",
+      "date": "2025-11-13",
+      "note": "",
+      "user_id": 1
+    },
+    {
+      "id": 9,
+      "account_id": 1,
+      "category_id": 1,
+      "type": "expense",
+      "amount": 10000,
+      "currency": "USD",
+      "date": "2025-11-13",
+      "note": "",
+      "user_id": 1
+    },
+    {
+      "id": 10,
+      "account_id": 1,
+      "category_id": 2,
+      "type": "expense",
+      "amount": 10000,
+      "currency": "RUB",
+      "date": "2025-11-13",
+      "note": "",
+      "user_id": 1
+    },
+    {
+      "id": 11,
+      "user_id": 2,
+      "account_id": 5,
+      "category_id": 6,
+      "type": "expense",
+      "amount": 50000,
+      "currency": "RUB",
+      "date": "2025-11-14",
+      "note": ""
+    },
+    {
+      "id": 12,
+      "user_id": 2,
+      "account_id": 6,
+      "category_id": 8,
+      "type": "income",
+      "amount": 250000,
+      "currency": "RUB",
+      "date": "2025-11-14",
+      "note": ""
+    },
+    {
+      "id": 13,
+      "user_id": 2,
+      "account_id": 6,
+      "category_id": 10,
+      "type": "income",
+      "amount": 1000,
+      "currency": "USD",
+      "date": "2025-11-12",
+      "note": ""
+    },
+    {
+      "id": 14,
+      "user_id": 2,
+      "account_id": 6,
+      "category_id": 11,
+      "type": "expense",
+      "amount": 300,
+      "currency": "USD",
+      "date": "2025-11-13",
+      "note": "бот"
+    }
+  ],
+  "budgets": [
+    {
+      "id": 1,
+      "category_id": 1,
+      "month": "2025-10",
+      "limit": 500,
+      "spent": 165.65,
+      "user_id": 1
+    },
+    {
+      "id": 2,
+      "category_id": 3,
+      "month": "2025-10",
+      "limit": 100,
+      "spent": 25,
+      "user_id": 1
+    },
+    {
+      "id": 3,
+      "category_id": 4,
+      "month": "2025-10",
+      "limit": 150,
+      "spent": 120,
+      "user_id": 1
+    },
+    {
+      "id": 4,
+      "category_id": 5,
+      "month": "2025-10",
+      "limit": 100,
+      "spent": 50,
+      "user_id": 1
+    },
+    {
+      "id": 5,
+      "category_id": 1,
+      "month": "2025-11",
+      "limit": 0,
+      "spent": 11000,
+      "user_id": 1
+    },
+    {
+      "id": 6,
+      "category_id": 2,
+      "month": "2025-11",
+      "limit": 0,
+      "spent": 10000,
+      "user_id": 1
+    },
+    {
+      "id": 7,
+      "user_id": 2,
+      "category_id": 6,
+      "month": "2025-11",
+      "limit": 0,
+      "spent": 50000,
+      "type": "fixed",
+      "percent": null,
+      "currency": "RUB"
+    },
+    {
+      "id": 8,
+      "user_id": 2,
+      "category_id": 11,
+      "month": "2025-11",
+      "limit": 0,
+      "spent": 300,
+      "type": "fixed",
+      "percent": null,
+      "currency": "USD"
+    }
+  ],
+  "goals": [
+    {
+      "id": 1,
+      "user_id": 2,
+      "title": "На машину",
+      "target_amount": 10000000,
+      "current_amount": 100000,
+      "deadline": "2027-02-13"
+    }
+  ],
+  "planned": [
+    {
+      "id": 1,
+      "user_id": 2,
+      "account_id": 5,
+      "category_id": 6,
+      "type": "expense",
+      "amount": 10,
+      "currency": "USD",
+      "start_date": "2025-11-01",
+      "frequency": "daily",
+      "note": ""
+    }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "name": "Александр",
+      "email": "atpagaming@gmail.com",
+      "password_salt": "$2a$12$n8m.umtELd3m3MB9JP1xCu",
+      "password_hash": "$2a$12$n8m.umtELd3m3MB9JP1xCuqFrzoiBNqCuPnn6Gl0uYBECwiQsR4.W",
+      "created_at": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "name": "Александр",
+      "email": "atpagaming@mail.ru",
+      "password_hash": "$2b$10$Mu9SY6yoXn0IRq./Mo/jROtke5m3mWOVovxZtmUfMiyZPCaPwLH9W"
+    },
+    {
+      "id": 3,
+      "name": "CLI Test",
+      "email": "cli-test-45345@example.com",
+      "password_hash": "$2b$10$fL9Bgny1zkrarLTkI2.4m..9z9ukQb.kaQim8WbhtW5UjAQaXv4qK"
+    },
+    {
+      "id": 4,
+      "name": "Test User",
+      "email": "test@example.com",
+      "password_hash": "$2b$10$CLw5loUESnqFmMS/OAXwL.MWdH0925en6.yoP8IonCIZTRmUX9Zl6"
+    },
+    {
+      "id": 5,
+      "name": "Test User",
+      "email": "test-78021000@example.com",
+      "password_hash": "$2b$10$dK5F0BDLGOYEY2hwjXGaheeHfHxcEoYy403RhwNmt0dTKNGWvQBs6"
+    },
+    {
+      "id": 6,
+      "name": "Test User",
+      "email": "test-337964772@example.com",
+      "password_hash": "$2b$10$A9PNAXXEDn6ljCGPpp7PwO4ITElt9Ukl.e7Bpf0nTW9E/VD0pJuaa"
+    },
+    {
+      "id": 7,
+      "name": "UI Test",
+      "email": "ui-test-382897377@example.com",
+      "password_hash": "$2b$10$qeX7IO.74a9huHUgkvq5jehQeyB.ONyur7uVs4Vk1AjImZNqIniIy"
+    },
+    {
+      "id": 8,
+      "name": "Full Test",
+      "email": "full-test-859521058@example.com",
+      "password_hash": "$2b$10$zcJBAWCm2gI7Q.GQ0YJp.OIEVPFTOa2zxY3x9tuCc5W3VZH7lLcCG"
+    },
+    {
+      "id": 9,
+      "name": "Test User",
+      "email": "123123@mail.ru",
+      "password_hash": "$2b$10$L5IITh38ALfs/ragSUJv.ezt.2C5Vb4TEJjwigLkX5TPKRt4OTck."
+    }
+  ],
+  "bankConnections": [],
   "subscriptions": [],
   "rules": [],
-  "recurring": [],
-  "refreshTokens": [],
-  "tokenBlacklist": []
+  "refreshTokens": [
+    {
+      "token": "fff8f8c3490e51026044f625ad725a46b05c4d2ce7fb98b7927410c7fff66d45f9d8f0ee23f51e8e6afc42ec22f6129f",
+      "userId": 2,
+      "expiresAt": 1763649891183
+    },
+    {
+      "token": "7e092ba8552a760c00d009dda524f7ccf800d318b0cd79e4fd8419a632eddc799ac648f430cb7ab1c28ecafb57f5f996",
+      "userId": 3,
+      "expiresAt": 1763650878685
+    },
+    {
+      "token": "1ad03bea432f68898147e28e1346cf66afa0dbcef057480ed60d7d0ef84c5aa9383199075f11c3e453932d951902c2d1",
+      "userId": 2,
+      "expiresAt": 1763650962151
+    },
+    {
+      "token": "445bef682ba528f413581e64c7f7b353b0dd23bc7c350037acf454c1df3a42be1eefc27f9486fad119f543ccee626b43",
+      "userId": 2,
+      "expiresAt": 1763708478694
+    },
+    {
+      "token": "fbfd67ccdc4dbb2838a0bf17eb42d684bca457e5d11a736276389c331dbc92156bef2b50e6f3b784167d774111754881",
+      "userId": 2,
+      "expiresAt": 1763708506901
+    },
+    {
+      "token": "38440919c29b7b104ac0aac18f957c1c48d5927388c6a5985011b1f31a3f6d66d4b4f77ddbe40d4705fc45d0974eb1ca",
+      "userId": 4,
+      "expiresAt": 1763708767725
+    },
+    {
+      "token": "9762846b6c14c78307ba4d46a8ad584415723c495322190703a5c7f36b03cc2349ac857f94ca0e6cbdf9a2c55b268c6a",
+      "userId": 4,
+      "expiresAt": 1763708792535
+    },
+    {
+      "token": "b9150e7a5843c1d3eabd56b06b0d1c6fcb1012632c96a59cdced65f32c5fe726b4153567bfe7e9d54ece598440a4905b",
+      "userId": 2,
+      "expiresAt": 1763708981645
+    },
+    {
+      "token": "c1567f51fcd681077d362f51f0dc1d5889a7b98131c1e43f78c358385c03b3257baf2d1c3e11e2f458d21df0ece4558e",
+      "userId": 5,
+      "expiresAt": 1763709382910
+    },
+    {
+      "token": "213471535e89c648b1f7d39d38ed9a3044368e4a4e37a32611666822b9d9ca7903d808d1b2dca30be1cedea4c66328d0",
+      "userId": 6,
+      "expiresAt": 1763709481889
+    },
+    {
+      "token": "209848ed528860c36d69460cc0acad8fea4c7e8c3055be5f2d2b31d26f6a603aa77b8f19f496d80e1f441e936dd1244b",
+      "userId": 2,
+      "expiresAt": 1763709610046
+    },
+    {
+      "token": "a48335c0d8c11132d3f180a7144ff27023fafcd4020b8b51d82291b5d96e7d59bf5ec4061155015a0e0fa14fb4b8571b",
+      "userId": 7,
+      "expiresAt": 1763709892943
+    },
+    {
+      "token": "78507115211da2feb52031d154f30ee95cb21d8808b8b7afe190678ff8ce2d5ed18b48272b0a1fe6e65bf940d392ba81",
+      "userId": 8,
+      "expiresAt": 1763710103474
+    },
+    {
+      "token": "840dc311f5acea4acfeeea1856cbb95ad490bc318fa391ca091140a5084161747601e51f302ca414208eb6b66ad77e9a",
+      "userId": 9,
+      "expiresAt": 1763710254807
+    },
+    {
+      "token": "b4a5f9d1d029ba2aae5d06b3c7c3629295dd4db3756007e0873ebe8867a3696b1f1a1f743f01645e4c1479cfcb1c405f",
+      "userId": 2,
+      "expiresAt": 1763710308736
+    },
+    {
+      "token": "bb4352c58977242f530cc49c85bb2dcfc24ff2e1d32695ff80908f6ce953fbafba0fc942dceeb9f5302f14bbcf8ea833",
+      "userId": 2,
+      "expiresAt": 1763716043462
+    },
+    {
+      "token": "85ecd8629c0791874fe3d3ddcf01e0f3ae329c66cc3a150e99c8ddca91e8ff559e3b5b69dedb8e78d07752c17fa8a4f1",
+      "userId": 2,
+      "expiresAt": 1763717384970
+    },
+    {
+      "token": "ff78e59a8fc46e973c6338249a2a6ccea283dc4b25c1b37352dc2ab4b47c04bbf428a7bdd8eb69be85d3ec34e537f31e",
+      "userId": 2,
+      "expiresAt": 1763721133473
+    },
+    {
+      "token": "8eec7019a320e5bf7eacc65ebd8b86c92a2fa562d75a223d37b2a18ffcbb1969c2a47293e03e0c1ddb49a6e982fa8bb2",
+      "userId": 2,
+      "expiresAt": 1763721135096
+    },
+    {
+      "token": "3cdeddc427823b658161ab0e1574ee8d5471fe353c5aed57da6f9f1747d5e4f6dfd6736436b0fce21062bbc26daa9972",
+      "userId": 2,
+      "expiresAt": 1763722116099
+    },
+    {
+      "token": "f50fd4d06afa5d253fef24b029134123fd276abdfefde815e5d3ca0b5defb9ce93c12c2bf9d454112d34e25b06227430",
+      "userId": 2,
+      "expiresAt": 1763722117430
+    },
+    {
+      "token": "36965e85d1183a4ff18eb18a7fab743039241c273e991a9de183c5ee915973eaeda300ff6528caf63e24a001f881a5d6",
+      "userId": 2,
+      "expiresAt": 1763722275005
+    },
+    {
+      "token": "4e2da2f6780483b7dd8c12db2b7dae2d5009c8cb9d8eed7c320762d3e6ea3dad3716d37542d309849e40da1919b68fda",
+      "userId": 2,
+      "expiresAt": 1763723645563
+    },
+    {
+      "token": "d17b48333a1cf171f60307afe35f95c6bceb9b4d81c0af5428f688297f1d41ed3b7700e324e4fa073636dc1919e34e76",
+      "userId": 2,
+      "expiresAt": 1763725924351
+    },
+    {
+      "token": "4fb776e871cfe7caf1fed356d87304149d29992fb01590d8fd4b70ab546af5d1d7274c8b5beb29de69843f2b5744fa43",
+      "userId": 2,
+      "expiresAt": 1763729672846
+    },
+    {
+      "token": "fd2012c6e51ba4e8f9729a73010454f017d15d84e079289161f430b066bf75420558ca95390eaac61cf53164860bed93",
+      "userId": 2,
+      "expiresAt": 1763729675429
+    },
+    {
+      "token": "a38c9d07b6700be0ab3f8964556e89a4f7e18eb5b6cacaf7a166168691496d37087f06fb78ad70d92853ad7e1ef4a8f5",
+      "userId": 2,
+      "expiresAt": 1763732099212
+    }
+  ],
+  "tokenBlacklist": [],
+  "recurring": []
 }
