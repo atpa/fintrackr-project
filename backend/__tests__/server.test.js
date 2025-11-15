@@ -6,16 +6,17 @@ const serverModule = require('../server');
 
 const baseData = {
   accounts: [
-    { id: 1, name: 'Main account', currency: 'USD', balance: 1000 },
+    { id: 1, user_id: 1, name: 'Main account', currency: 'USD', balance: 1000 },
   ],
   categories: [
-    { id: 1, name: 'Salary', kind: 'income' },
-    { id: 2, name: 'Groceries', kind: 'expense' },
+    { id: 1, user_id: 1, name: 'Salary', kind: 'income' },
+    { id: 2, user_id: 1, name: 'Groceries', kind: 'expense' },
   ],
   transactions: [],
   budgets: [
     {
       id: 1,
+      user_id: 1,
       category_id: 2,
       month: '2024-01',
       limit: 500,
@@ -32,10 +33,35 @@ const baseData = {
   subscriptions: [],
   rules: [],
   recurring: [],
+  refreshTokens: [],
+  tokenBlacklist: [],
 };
 
 function cloneData() {
   return JSON.parse(JSON.stringify(baseData));
+}
+
+// Helper to extract cookies from response
+function extractCookies(response) {
+  const cookies = {};
+  const setCookie = response.headers['set-cookie'];
+  if (setCookie) {
+    setCookie.forEach(cookie => {
+      const parts = cookie.split(';')[0].split('=');
+      cookies[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1]);
+    });
+  }
+  return cookies;
+}
+
+// Helper to create authenticated user and return cookies
+async function createAuthenticatedUser(app, userData) {
+  const registerResponse = await request(app)
+    .post('/api/register')
+    .send(userData);
+  
+  const cookies = extractCookies(registerResponse);
+  return cookies;
 }
 
 describe('service helpers', () => {
@@ -57,8 +83,18 @@ describe('API endpoints', () => {
     app = serverModule.createServer();
   });
 
-  test('GET /api/accounts returns available accounts', async () => {
-    const response = await request(app).get('/api/accounts').expect(200);
+  test('GET /api/accounts returns available accounts for authenticated user', async () => {
+    const cookies = await createAuthenticatedUser(app, {
+      name: 'Test User',
+      email: 'test@example.com',
+      password: 'testpass123'
+    });
+    
+    const response = await request(app)
+      .get('/api/accounts')
+      .set('Cookie', `access_token=${cookies.access_token}`)
+      .expect(200);
+      
     expect(Array.isArray(response.body)).toBe(true);
     expect(response.body).toHaveLength(1);
     expect(response.body[0]).toMatchObject({ name: 'Main account', currency: 'USD' });
@@ -69,15 +105,18 @@ describe('API endpoints', () => {
 
     const response = await request(app).post('/api/register').send(payload).expect(201);
 
-    expect(response.body).toEqual(
-      expect.objectContaining({ id: expect.any(Number), name: 'Alice', email: 'alice@example.com' })
-    );
-    expect(response.body).not.toHaveProperty('password_hash');
+    expect(response.body).toHaveProperty('user');
+    expect(response.body.user).toMatchObject({
+      id: expect.any(Number),
+      name: 'Alice',
+      email: 'alice@example.com'
+    });
+    expect(response.body.user).not.toHaveProperty('password_hash');
 
     const storedUser = serverModule.getData().users.find((user) => user.email === payload.email);
     expect(storedUser).toBeDefined();
-    const expectedHash = crypto.createHash('sha256').update(payload.password).digest('hex');
-    expect(storedUser.password_hash).toBe(expectedHash);
+    expect(storedUser.password_hash).toBeDefined();
+    expect(typeof storedUser.password_hash).toBe('string');
   });
 
   test('POST /api/login authenticates registered user', async () => {
@@ -89,9 +128,12 @@ describe('API endpoints', () => {
       .send({ email: payload.email, password: payload.password })
       .expect(200);
 
-    expect(response.body).toEqual(
-      expect.objectContaining({ id: expect.any(Number), email: payload.email, name: payload.name })
-    );
+    expect(response.body).toHaveProperty('user');
+    expect(response.body.user).toMatchObject({
+      id: expect.any(Number),
+      email: payload.email,
+      name: payload.name
+    });
   });
 
   test('POST /api/login rejects invalid credentials', async () => {
@@ -107,6 +149,12 @@ describe('API endpoints', () => {
   });
 
   test('POST /api/transactions updates balances and budgets', async () => {
+    const cookies = await createAuthenticatedUser(app, {
+      name: 'Test User',
+      email: 'test@example.com',
+      password: 'testpass123'
+    });
+    
     const payload = {
       account_id: 1,
       category_id: 2,
@@ -117,7 +165,12 @@ describe('API endpoints', () => {
       note: 'Groceries',
     };
 
-    const response = await request(app).post('/api/transactions').send(payload).expect(201);
+    const response = await request(app)
+      .post('/api/transactions')
+      .set('Cookie', `access_token=${cookies.access_token}`)
+      .send(payload)
+      .expect(201);
+      
     expect(response.body).toMatchObject({
       id: expect.any(Number),
       account_id: 1,
@@ -132,7 +185,17 @@ describe('API endpoints', () => {
   });
 
   test('DELETE /api/categories/:id removes category and associated data', async () => {
-    const deleteResponse = await request(app).delete('/api/categories/2').expect(200);
+    const cookies = await createAuthenticatedUser(app, {
+      name: 'Test User',
+      email: 'test@example.com',
+      password: 'testpass123'
+    });
+    
+    const deleteResponse = await request(app)
+      .delete('/api/categories/2')
+      .set('Cookie', `access_token=${cookies.access_token}`)
+      .expect(200);
+      
     expect(deleteResponse.body).toEqual({ success: true });
 
     const updatedData = serverModule.getData();

@@ -1146,8 +1146,15 @@ function handleApi(req, res) {
   }
   // Обработка GET‑запросов
   if (req.method === "GET") {
-    const auth = requireAuth(req, res);
-    if (!auth) return;
+    // Check if auth is required for this endpoint
+    const isPublic = isPublicApiRequest(req.method, url.pathname);
+    let auth = null;
+    
+    if (!isPublic) {
+      auth = requireAuth(req, res);
+      if (!auth) return;
+    }
+    
     // Специальные маршруты, обрабатываем до основного переключателя
     // Конвертация валют. Использует внешний сервис exchangerate.host, при недоступности
     // возвращает значения на основе фиксированных курсов как fallback.
