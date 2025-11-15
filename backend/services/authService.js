@@ -1,72 +1,253 @@
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
-const db = require('./databaseService');
+/**
+ * Authentication service
+ * Handles JWT tokens, cookies, and user authentication
+ */
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-default-jwt-secret';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-default-jwt-refresh-secret';
+const crypto = require("crypto");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const { ENV, TOKEN_CONFIG } = require("../config/constants");
+const { getData, persistData } = require("./dataService");
 
-const findUserByEmail = (email) => {
-    db._reload(); // Ensure latest data is loaded
-    return db.findOne('users', user => user.email === email);
-};
+/**
+ * Parse cookies from request headers
+ */
+function parseCookies(req) {
+  const cookies = {};
+  const header = req.headers.cookie;
+  if (!header) return cookies;
+  header.split(";").forEach((cookie) => {
+    const [name, ...rest] = cookie.split("=");
+    const value = rest.join("=").trim();
+    if (name) cookies[name.trim()] = decodeURIComponent(value);
+  });
+  return cookies;
+}
 
-const registerUser = (userData) => {
-    const { email, password, name } = userData;
-    const existingUser = findUserByEmail(email);
-    if (existingUser) {
-        throw new Error('User with this email already exists');
+/**
+ * Build cookie string with options
+ */
+function buildCookie(name, value, options = {}) {
+  let cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
+  cookie += `; Path=${options.path || "/"}`;
+  if (options.httpOnly !== false) cookie += "; HttpOnly";
+  if (options.maxAge != null) cookie += `; Max-Age=${options.maxAge}`;
+  if (options.sameSite) cookie += `; SameSite=${options.sameSite}`;
+  if (options.secure) cookie += "; Secure";
+  return cookie;
+}
+
+/**
+ * Set authentication cookies
+ */
+function setAuthCookies(res, tokens, options = {}) {
+  const sameSite = options.sameSite || "Lax";
+  const secure =
+    options.secure !== undefined ? options.secure : ENV.COOKIE_SECURE;
+  const cookies = [
+    buildCookie("access_token", tokens.accessToken, {
+      maxAge: TOKEN_CONFIG.ACCESS_TTL_SECONDS,
+      sameSite,
+      secure,
+    }),
+    buildCookie("refresh_token", tokens.refreshToken, {
+      maxAge: TOKEN_CONFIG.REFRESH_TTL_SECONDS,
+      sameSite,
+      secure,
+    }),
+  ];
+  res.setHeader("Set-Cookie", cookies);
+}
+
+/**
+ * Clear authentication cookies
+ */
+function clearAuthCookies(res, options = {}) {
+  const sameSite = options.sameSite || "Lax";
+  const secure =
+    options.secure !== undefined ? options.secure : ENV.COOKIE_SECURE;
+  const cookies = [
+    buildCookie("access_token", "", { maxAge: 0, sameSite, secure }),
+    buildCookie("refresh_token", "", { maxAge: 0, sameSite, secure }),
+  ];
+  res.setHeader("Set-Cookie", cookies);
+}
+
+/**
+ * Remove user password hash from object
+ */
+function sanitizeUser(user) {
+  if (!user) return null;
+  const { password_hash, ...clean } = user;
+  return clean;
+}
+
+/**
+ * Issue JWT tokens for user
+ */
+function issueTokensForUser(user) {
+  const data = getData();
+  const now = Date.now();
+
+  const accessToken = jwt.sign(
+    { sub: user.id, email: user.email },
+    ENV.JWT_SECRET,
+    {
+      expiresIn: TOKEN_CONFIG.ACCESS_TTL_SECONDS,
+      jwtid: crypto.randomBytes(16).toString("hex"),
     }
+  );
 
-    const hashedPassword = bcrypt.hashSync(password, 10); // Using sync version
-    const newUser = db.insert('users', { name, email, password: hashedPassword });
-    
-    // eslint-disable-next-line no-unused-vars
-    const { password: _, ...userWithoutPassword } = newUser;
-    return userWithoutPassword;
-};
-
-const generateTokens = (user) => {
-    const accessToken = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '15m' });
-    const refreshToken = jwt.sign({ id: user.id }, JWT_REFRESH_SECRET, { expiresIn: '7d' });
-    return { accessToken, refreshToken };
-};
-
-const loginUser = (credentials) => {
-    const { email, password } = credentials;
-    const user = findUserByEmail(email);
-    if (!user || !user.password) { // Check for user and password property
-        throw new Error('Invalid credentials');
+  const refreshToken = jwt.sign(
+    { sub: user.id, email: user.email },
+    ENV.JWT_SECRET,
+    {
+      expiresIn: TOKEN_CONFIG.REFRESH_TTL_SECONDS,
+      jwtid: crypto.randomBytes(16).toString("hex"),
     }
+  );
 
-    const isPasswordValid = bcrypt.compareSync(password, user.password);
-    if (!isPasswordValid) {
-        throw new Error('Invalid credentials');
-    }
+  data.refreshTokens.push({
+    token: refreshToken,
+    userId: user.id,
+    expiresAt: now + TOKEN_CONFIG.REFRESH_TTL_SECONDS * 1000,
+  });
 
-    const tokens = generateTokens(user);
-    // eslint-disable-next-line no-unused-vars
-    const { password: _, ...userWithoutPassword } = user;
+  persistData();
+  return { accessToken, refreshToken };
+}
 
-    return { ...tokens, user: userWithoutPassword };
-};
+/**
+ * Consume refresh token (remove from storage)
+ */
+function consumeRefreshToken(token) {
+  const data = getData();
+  const index = data.refreshTokens.findIndex((entry) => entry.token === token);
+  if (index >= 0) {
+    data.refreshTokens.splice(index, 1);
+    persistData();
+  }
+}
 
-const refreshAccessToken = (token) => {
+/**
+ * Check if token is blacklisted
+ */
+function isTokenBlacklisted(token) {
+  const data = getData();
+  return data.tokenBlacklist.some((entry) => entry.token === token);
+}
+
+/**
+ * Add token to blacklist
+ */
+function addTokenToBlacklist(token, expiresAt) {
+  const data = getData();
+  if (!expiresAt) {
     try {
-        const decoded = jwt.verify(token, JWT_REFRESH_SECRET);
-        const user = db.findOne('users', u => u.id === decoded.id);
-        if (!user) {
-            throw new Error('User not found');
-        }
-        const { accessToken, refreshToken } = generateTokens(user);
-        return { accessToken, refreshToken };
-    } catch (error) {
-        throw new Error('Invalid refresh token');
+      const decoded = jwt.decode(token);
+      expiresAt = decoded.exp ? decoded.exp * 1000 : Date.now() + 3600000;
+    } catch (e) {
+      expiresAt = Date.now() + 3600000;
     }
-};
+  }
+  data.tokenBlacklist.push({ token, expiresAt });
+  persistData();
+}
+
+/**
+ * Cleanup expired tokens from storage
+ */
+function cleanupTokenStores() {
+  const data = getData();
+  const now = Date.now();
+  const refreshBefore = data.refreshTokens.length;
+  const blacklistBefore = data.tokenBlacklist.length;
+
+  data.refreshTokens = data.refreshTokens.filter(
+    (entry) => entry && entry.expiresAt && entry.expiresAt > now
+  );
+
+  data.tokenBlacklist = data.tokenBlacklist.filter(
+    (entry) => entry && entry.expiresAt && entry.expiresAt > now
+  );
+
+  if (
+    refreshBefore !== data.refreshTokens.length ||
+    blacklistBefore !== data.tokenBlacklist.length
+  ) {
+    persistData();
+  }
+}
+
+/**
+ * Authenticate request using JWT tokens from cookies
+ */
+function authenticateRequest(req) {
+  const cookies = parseCookies(req);
+  let token = cookies.access_token;
+  let isRefresh = false;
+
+  if (!token) {
+    token = cookies.refresh_token;
+    isRefresh = true;
+  }
+
+  if (!token) {
+    return { ok: false, error: "No token provided" };
+  }
+
+  if (isTokenBlacklisted(token)) {
+    return { ok: false, error: "Token revoked" };
+  }
+
+  try {
+    const decoded = jwt.verify(token, ENV.JWT_SECRET);
+    const data = getData();
+    const user = data.users.find((u) => u.id === decoded.sub);
+
+    if (!user) {
+      return { ok: false, error: "User not found" };
+    }
+
+    if (isRefresh) {
+      const refreshEntry = data.refreshTokens.find((e) => e.token === token);
+      if (!refreshEntry) {
+        return { ok: false, error: "Invalid refresh token" };
+      }
+    }
+
+    return { ok: true, user: sanitizeUser(user), isRefresh };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+/**
+ * Hash password using bcrypt
+ */
+async function hashPassword(password) {
+  return await bcrypt.hash(password, 10);
+}
+
+/**
+ * Compare password with hash
+ */
+async function comparePassword(password, hash) {
+  return await bcrypt.compare(password, hash);
+}
 
 module.exports = {
-    registerUser,
-    loginUser,
-    refreshAccessToken,
-    findUserByEmail,
+  parseCookies,
+  buildCookie,
+  setAuthCookies,
+  clearAuthCookies,
+  sanitizeUser,
+  issueTokensForUser,
+  consumeRefreshToken,
+  isTokenBlacklisted,
+  addTokenToBlacklist,
+  cleanupTokenStores,
+  authenticateRequest,
+  hashPassword,
+  comparePassword,
 };

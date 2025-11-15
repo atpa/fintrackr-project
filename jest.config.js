@@ -1,8 +1,11 @@
 module.exports = {
   testEnvironment: 'node',
-  verbose: true,
-  roots: ['<rootDir>/backend'],
-  testMatch: ['**/__tests__/**/*.test.js'],
+  testMatch: ['**/backend/**/?(*.)+(spec|test).[jt]s?(x)'],
+  collectCoverageFrom: [
+    'backend/**/*.js',
+    '!backend/data.json',
+    '!backend/**/__tests__/**',
+  ],
+  coverageDirectory: 'coverage',
   clearMocks: true,
-  setupFilesAfterEnv: ['./jest.setup.js'], // Add this line
 };

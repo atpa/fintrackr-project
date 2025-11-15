@@ -1,110 +1,363 @@
-# FinTrackr - A Modern Personal Finance Tracker
+# 💰 FinTrackr - Персональный финансовый трекер
 
-This project is a complete refactoring of a personal finance tracking application, rebuilt from the ground up with modern web technologies and best practices.
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.0-green.svg)
+![Node](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen.svg)
 
-## Core Technologies
+> Современное веб-приложение для управления личными финансами с интуитивным интерфейсом, REST API и адаптивным дизайном.
 
--   **Backend**: Node.js, Express.js
--   **Frontend**: Vanilla JavaScript (ESM), Single Page Application (SPA)
--   **Build Tool**: Vite
--   **Styling**: CSS Variables, Modern CSS
--   **Charting**: Chart.js
+**FinTrackr** — полнофункциональный финансовый трекер, разработанный как выпускная квалификационная работа. Проект демонстрирует полный цикл разработки финтех-продукта: от проектирования архитектуры до развертывания на хостинге.
 
-## Project Architecture
+![FinTrackr Dashboard](https://via.placeholder.com/800x400?text=FinTrackr+Dashboard+Screenshot)
 
-### Backend
+## ✨ Основные возможности
 
-The backend is built with Express.js and follows a layered architecture pattern to separate concerns:
+- 📊 **Интерактивный дашборд** - визуализация доходов, расходов и баланса
+- 💳 **Управление счетами** - мультивалютная поддержка (USD, EUR, PLN, RUB)
+- 💸 **Учет транзакций** - полный CRUD с категоризацией и автоматическим пересчетом балансов
+- 📈 **Бюджеты** - создание лимитов по категориям с отслеживанием выполнения
+- 🔄 **Конвертация валют** - автоматическая конвертация при операциях
+- 🎯 **Финансовые цели** - планирование накоплений с отслеживанием прогресса
+- 📅 **Подписки** - управление регулярными платежами
+- 🔮 **Прогнозы** - анализ трендов расходов
+- 📱 **Адаптивный дизайн** - корректная работа на всех устройствах
+- 🌙 **Темная тема** - переключение светлой/темной темы
+- 🔐 **Аутентификация** - регистрация и вход пользователей (JWT + bcrypt)
 
--   `routes/`: Defines the API endpoints.
--   `controllers/`: Handles incoming requests, validates data, and calls the appropriate services.
--   `services/`: Contains the core business logic.
--   `repositories/`: Manages data access and interaction with the `data.json` file.
-
-Authentication is handled using JWTs, which are stored in secure, HttpOnly cookies.
+## 🚀 Технологии
 
 ### Frontend
+- **HTML5** - семантическая разметка (`<header>`, `<nav>`, `<main>`, `<section>`, `<footer>`)
+- **CSS3** - современный дизайн с CSS Grid, Flexbox, CSS переменными
+- **JavaScript (ES6+)** - модули ES6, async/await, Fetch API
+- **Canvas API** - визуализация графиков и диаграмм
 
-The frontend is a modern Single Page Application built with plain JavaScript modules.
+### Backend
+- **Node.js** (v14+) - серверная платформа
+- **HTTP Server** - встроенный модуль Node.js для REST API
+- **JSON Storage** - файловое хранилище данных (MVP)
+- **bcryptjs** - хеширование паролей
+- **jsonwebtoken** - JWT аутентификация
 
--   `public/index.html`: The single entry point for the application.
--   `frontend/src/app.js`: The main application script that initializes the router.
--   `frontend/src/router/index.js`: A simple hash-based client-side router.
--   `frontend/src/services/`: Modules for interacting with the backend API (`api.js`, `auth.js`).
--   `frontend/src/pages/`: Each file represents a distinct page in the application (e.g., `LoginPage.js`, `DashboardPage.js`).
--   `frontend/src/components/`: Reusable UI components (e.g., `Button.js`, `Card.js`).
--   `frontend/src/layout/`: Contains the main application layout (`MainLayout.js`).
--   `public/css/`: Contains the design system (`design.css`) and component styles (`components.css`).
+### Инструменты разработки
+- **Git** - система контроля версий
+- **Jest** - unit и integration тестирование
+- **Playwright** - end-to-end тестирование
+- **ESLint** - линтинг кода
+- **npm** - менеджер пакетов
 
-## Getting Started
+## 📦 Быстрый старт
 
-### Prerequisites
-
--   Node.js (v18 or later)
--   npm
-
-### Installation & Running
-
-1.  **Clone the repository:**
-    ```bash
-    git clone <repository-url>
-    cd fintrackr-project
-    ```
-
-2.  **Install dependencies:**
-    ```bash
-    npm install
-    ```
-
-3.  **Run the development server:**
-    This command starts both the backend server (on port 3000) and the Vite frontend server (on port 5173) concurrently.
-    ```bash
-    npm run dev
-    ```
-
-4.  **Open the application:**
-    Navigate to `http://localhost:5173` in your browser.
-
-## Testing
-
-This project uses [Jest](https://jestjs.io/) and [Supertest](https://github.com/ladjs/supertest) for backend API testing.
-
-To run the tests, use the following command:
+### Предварительные требования
 
 ```bash
-npm test
+node --version  # v14.0.0 или выше
+npm --version   # 6.0.0 или выше
 ```
 
-This will execute all test files located in the `backend/__tests__` directory. The tests cover key API endpoints, including user authentication and data retrieval, ensuring the backend logic works as expected.
+### Установка и запуск
 
-## Available Scripts
+```bash
+# 1. Клонируйте репозиторий
+git clone https://github.com/atpa/fintrackr-project.git
+cd fintrackr-project
 
--   `npm run dev`: Starts both backend and frontend development servers.
--   `npm run start:backend`: Starts only the backend server.
--   `npm run start:frontend`: Starts only the Vite development server.
--   `npm run build`: Builds the frontend for production.
+# 2. Установите зависимости
+npm install
 
-## Deployment
+# 3. Настройте переменные окружения (КРИТИЧНО для безопасности!)
+cp .env.example .env
+# Отредактируйте .env и установите безопасный JWT_SECRET:
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 
-### Frontend
+# 4. Запустите сервер
+npm start
 
-The frontend is a static site that can be deployed to any static hosting service.
+# Сервер запустится на http://localhost:3000
+```
 
-1.  Run `npm run build`.
-2.  Deploy the contents of the `dist/` directory.
+**⚠️ ВАЖНО**: В продакшене обязательно измените `JWT_SECRET` в `.env` и установите `COOKIE_SECURE=true` при использовании HTTPS!
 
-**Popular Services:**
--   [Netlify](https://www.netlify.com/)
--   [Vercel](https://vercel.com/)
--   [GitHub Pages](https://pages.github.com/)
+### Альтернативные порты
 
-### Backend
+```bash
+# Запуск на порту 8080
+npm run start:8080
 
-The backend is a Node.js application. It can be deployed to any service that supports Node.js.
+# Или установите переменную окружения
+# Windows PowerShell:
+$env:PORT=8080; npm start
 
-**Popular Services:**
--   [Heroku](https://www.heroku.com/)
--   [Render](https://render.com/)
--   [DigitalOcean App Platform](https://www.digitalocean.com/products/app-platform)
+# Linux/macOS:
+PORT=8080 npm start
+```
 
-**Important:** You will need to configure environment variables on your hosting service, such as `JWT_SECRET` and `PORT`.
+### Тестирование
+
+```bash
+# Запуск всех тестов
+npm test
+
+# Только backend тесты
+npm run test:backend
+
+# End-to-end тесты
+npm run test:e2e
+
+# Линтинг кода
+npm run lint
+```
+
+## 📁 Структура проекта
+
+```
+fintrackr-project/
+├── backend/                    # Серверная часть
+│   ├── server.js              # Главный файл сервера
+│   ├── app.js                 # Express приложение
+│   ├── data.json              # JSON база данных
+│   ├── controllers/           # Контроллеры для обработки запросов
+│   ├── repositories/          # Слой работы с данными
+│   ├── routes/                # Маршруты API
+│   ├── middleware/            # Middleware (auth, validation)
+│   ├── utils/                 # Утилиты
+│   └── __tests__/            # Backend тесты
+│
+├── public/                    # Статические файлы фронтенда
+│   ├── css/
+│   │   └── style.css         # Единый файл стилей
+│   ├── js/
+│   │   ├── app.js            # Основная логика
+│   │   ├── accounts.js       # Управление счетами
+│   │   ├── transactions.js   # Управление транзакциями
+│   │   └── utils/            # Утилиты фронтенда
+│   ├── dashboard.html        # Главная страница
+│   ├── accounts.html         # Управление счетами
+│   ├── transactions.html     # Операции
+│   ├── budgets.html          # Бюджеты
+│   ├── goals.html            # Цели
+│   ├── login.html            # Вход
+│   └── register.html         # Регистрация
+│
+├── tests/                     # E2E тесты
+├── docs/                      # Документация
+├── DEPLOYMENT.md              # Инструкции по развертыванию
+├── DESIGN_AUDIT_REPORT.md     # Отчет по аудиту дизайна
+└── README.md                  # Этот файл
+```
+
+## 📊 API Endpoints
+
+### Аутентификация
+```
+POST   /api/auth/register      # Регистрация нового пользователя
+POST   /api/auth/login         # Вход пользователя (получение JWT токена)
+```
+
+### Счета
+```
+GET    /api/accounts           # Список всех счетов
+POST   /api/accounts           # Создать новый счет
+PUT    /api/accounts/:id       # Обновить счет
+DELETE /api/accounts/:id       # Удалить счет
+```
+
+### Транзакции
+```
+GET    /api/transactions       # Список транзакций
+POST   /api/transactions       # Добавить транзакцию
+DELETE /api/transactions/:id   # Удалить транзакцию
+```
+
+### Бюджеты
+```
+GET    /api/budgets            # Список бюджетов
+POST   /api/budgets            # Создать/обновить бюджет
+```
+
+### Категории
+```
+GET    /api/categories         # Список категорий
+POST   /api/categories         # Добавить категорию
+```
+
+### Финансовые цели
+```
+GET    /api/goals              # Список целей
+POST   /api/goals              # Создать цель
+PUT    /api/goals/:id          # Обновить цель
+DELETE /api/goals/:id          # Удалить цель
+```
+
+### Подписки
+```
+GET    /api/subscriptions      # Список подписок
+POST   /api/subscriptions      # Добавить подписку
+DELETE /api/subscriptions/:id  # Удалить подписку
+```
+
+### Утилиты
+```
+GET    /api/convert?from&to&amt  # Конвертация валют
+GET    /api/rates                # Таблица курсов
+GET    /api/forecast             # Прогноз расходов
+```
+
+## 🎓 Соответствие учебным требованиям
+
+| №   | Требование                       | Статус | Детали                                    |
+| --- | -------------------------------- | ------ | ----------------------------------------- |
+| 1   | Экономическая обоснованность     | ✅     | Freemium бизнес-модель с монетизацией    |
+| 2   | Завершенность и демонстрация     | ✅     | Полный функционал, готов к презентации   |
+| 3   | Семантическая HTML + CSS         | ✅     | HTML5, CSS3 Grid/Flexbox, переменные     |
+| 4   | Git с осмысленными коммитами     | ✅     | Репозиторий на GitHub с историей         |
+| 5   | UX-ориентированный дизайн        | ✅     | Современный интерфейс, продуманный UX    |
+| 6   | Кроссбраузерность и адаптивность | ✅     | Mobile-first подход, работает везде      |
+| 7   | REST API и база данных           | ✅     | Node.js + JSON (готово к миграции на DB) |
+| 8   | Размещение на хостинге           | ✅     | Инструкции по деплою (Railway/Render)    |
+| 9   | Техническая документация         | ✅     | README + docs/ + комментарии в коде      |
+| 10  | Презентация проекта              | ✅     | План презентации готов                   |
+
+**Подробный отчет**: [`docs/requirements_compliance_report.md`](docs/requirements_compliance_report.md)
+
+## 💼 Бизнес-модель
+
+### Монетизация (Freemium)
+
+- **Free Plan**: Базовый учет финансов (до 3 счетов, 100 транзакций/месяц)
+- **Premium ($9/мес)**: Расширенная аналитика, неограниченные транзакции, экспорт данных
+- **Business ($29/мес)**: Семейные аккаунты, приоритетная поддержка, API доступ
+
+### Целевая аудитория
+
+- Молодежь 20-35 лет, начинающая вести бюджет
+- Семьи с детьми, планирующие расходы
+- Фрилансеры и самозанятые с нестабильным доходом
+
+### Конкурентные преимущества
+
+- Простой и интуитивный интерфейс (низкий порог входа)
+- Мультивалютность из коробки
+- Открытый исходный код (возможность самостоятельного хостинга)
+
+## 🎨 Дизайн-система
+
+Проект использует современную дизайн-систему с:
+- **Цветовая палитра**: Primary (#6366f1), Accent (#06b6d4)
+- **Отступы**: Системные (4/8/12/16/24/32/48/64px)
+- **Радиусы**: 6/8/12/16px
+- **Тени**: От xs до xl (мягкие, но заметные)
+- **Типографика**: От 0.75rem до 2.25rem
+
+**Подробный отчет**: [`DESIGN_AUDIT_REPORT.md`](DESIGN_AUDIT_REPORT.md)
+
+## 🚢 Развертывание
+
+### Railway (Рекомендуется)
+
+```bash
+# 1. Зарегистрируйтесь на railway.app
+# 2. Подключите GitHub репозиторий
+# 3. Railway автоматически определит Node.js проект
+# Приложение будет доступно по URL: https://fintrackr-production.up.railway.app
+```
+
+### Render
+
+```bash
+# Build Command: npm install
+# Start Command: npm start
+# Environment: Node.js
+# Port: 3000
+```
+
+### Локальное тестирование перед деплоем
+
+```bash
+npm install
+NODE_ENV=production npm start
+```
+
+**Подробнее**: [`DEPLOYMENT.md`](DEPLOYMENT.md)
+
+## 🧪 Тестирование
+
+Проект покрыт тестами на разных уровнях:
+
+- **Unit тесты**: Jest для backend контроллеров и утилит
+- **Integration тесты**: Supertest для API endpoints
+- **E2E тесты**: Playwright для критических user flows
+
+```bash
+# Запуск всех тестов с покрытием
+npm test -- --coverage
+
+# Watch mode для разработки
+npm test -- --watch
+```
+
+## 🔮 Roadmap
+
+### Ближайшие планы (Q1 2025)
+
+- [ ] Миграция на PostgreSQL
+- [ ] Продвинутые графики (Chart.js/D3.js)
+- [ ] Экспорт данных (Excel, PDF)
+- [ ] Email уведомления
+
+### Средне срочные цели (Q2-Q3 2025)
+
+- [ ] Мобильное приложение (React Native)
+- [ ] Интеграция с Open Banking API
+- [ ] AI-ассистент для советов по бюджету
+
+### Долгосрочные цели (2025-2026)
+
+- [ ] Маркетплейс финансовых продуктов
+- [ ] Социальные features (семейные бюджеты)
+- [ ] Интеграция с криптовалютными биржами
+
+## 🤝 Вклад в проект
+
+Проект открыт для контрибьюций! Если вы хотите помочь:
+
+1. Fork репозитория
+2. Создайте feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit изменения (`git commit -m 'Add some AmazingFeature'`)
+4. Push в branch (`git push origin feature/AmazingFeature`)
+5. Откройте Pull Request
+
+### Код стайл
+
+- Используйте ESLint конфигурацию проекта
+- Пишите тесты для новой функциональности
+- Обновляйте документацию при необходимости
+
+## 📝 Лицензия
+
+Этот проект лицензирован под MIT License - см. файл [LICENSE](LICENSE) для деталей.
+
+## 👨‍💻 Автор
+
+**atpa** 
+- GitHub: [@atpa](https://github.com/atpa)
+- Email: your.email@example.com
+
+## 🙏 Благодарности
+
+- Преподавателям за поддержку и ценные советы
+- Open source сообществу за инструменты и библиотеки
+- Тестировщикам за обратную связь
+
+## 📚 Дополнительные ресурсы
+
+- [Документация API](docs/api_documentation.md)
+- [Архитектура приложения](docs/architecture_overview.md)
+- [План презентации](docs/presentation_outline.md)
+- [Инструкции по развертыванию](DEPLOYMENT.md)
+
+---
+
+⭐ **Поставьте звезду, если проект был полезен!**
+
+📧 **Есть вопросы?** Создайте issue в репозитории

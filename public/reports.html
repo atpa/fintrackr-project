@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinTrackr – Отчёты</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script defer src="js/utils/auth.js"></script>
+  <script defer src="js/app.js"></script>
+  <script defer src="js/reports.js"></script>
+</head>
+<body class="workspace-page" data-page-title="Отчёты" data-page-subtitle="Аналитика доходов и расходов">
+  <header>
+    <div class="brand visually-hidden">
+      <a href="dashboard.html">FinTrackr</a>
+    </div>
+    <button class="burger" aria-label="Меню"><span></span><span></span><span></span></button>
+
+  </header>
+
+  <aside class="sidebar" id="sidebar" role="navigation" aria-label="Боковая навигация">
+    <div class="sidebar-top">
+      <!-- sidebar-footer удалён: профиль и auth вынесены в header dropdown -->
+      <div class="nav-section">
+        <h3 class="nav-section-title">Основное</h3>
+        <ul class="nav-list">
+          <li class="nav-item"><a href="dashboard.html" class="nav-link"><span class="nav-icon">🏠</span><span class="nav-label">Дэшборд</span></a></li>
+          <li class="nav-item"><a href="accounts.html" class="nav-link"><span class="nav-icon">💼</span><span class="nav-label">Счёта</span></a></li>
+          <li class="nav-item"><a href="transactions.html" class="nav-link"><span class="nav-icon">🔁</span><span class="nav-label">Операции</span></a></li>
+          <li class="nav-item"><a href="categories.html" class="nav-link"><span class="nav-icon">🔖</span><span class="nav-label">Категории</span></a></li>
+        </ul>
+      </div>
+
+      <div class="nav-section">
+        <h3 class="nav-section-title">Планирование</h3>
+        <ul class="nav-list">
+          <li class="nav-item"><a href="budgets.html" class="nav-link"><span class="nav-icon">📊</span><span class="nav-label">Бюджеты</span></a></li>
+          <li class="nav-item"><a href="goals.html" class="nav-link"><span class="nav-icon">🎯</span><span class="nav-label">Цели</span></a></li>
+          <li class="nav-item"><a href="planned.html" class="nav-link"><span class="nav-icon">📅</span><span class="nav-label">Планируемые</span></a></li>
+          <li class="nav-item"><a href="recurring.html" class="nav-link"><span class="nav-icon">🔁</span><span class="nav-label">Регулярные</span></a></li>
+        </ul>
+      </div>
+
+      <div class="nav-section">
+        <h3 class="nav-section-title">Аналитика</h3>
+        <ul class="nav-list">
+          <li class="nav-item"><a href="reports.html" class="nav-link"><span class="nav-icon">📈</span><span class="nav-label">Отчёты</span></a></li>
+          <li class="nav-item"><a href="forecast.html" class="nav-link"><span class="nav-icon">🔮</span><span class="nav-label">Прогнозы</span></a></li>
+          <li class="nav-item"><a href="rules.html" class="nav-link"><span class="nav-icon">⚙️</span><span class="nav-label">Правила</span></a></li>
+        </ul>
+      </div>
+
+      <div class="nav-section">
+        <h3 class="nav-section-title">Дополнительно</h3>
+        <ul class="nav-list">
+          <li class="nav-item"><a href="education.html" class="nav-link"><span class="nav-icon">📚</span><span class="nav-label">Обучение</span></a></li>
+          <li class="nav-item"><a href="premium.html" class="nav-link"><span class="nav-icon">⭐</span><span class="nav-label">Премиум</span></a></li>
+          <li class="nav-item"><a href="settings.html" class="nav-link"><span class="nav-icon">⚙️</span><span class="nav-label">Настройки</span></a></li>
+        </ul>
+      </div>
+    </nav>
+    </div>
+  </aside>
+
+  <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
+  </header>
+          <li><a href="subscriptions.html">Подписки</a></li>
+          <li><a href="rules.html">Правила</a></li>
+          <li><a href="settings.html">Настройки</a></li>
+        </ul>
+        <div class="auth-links">
+          <a href="login.html" class="login-link">Вход</a>
+          <a href="register.html" class="register-link">Регистрация</a>
+          <a href="#" class="logout-link" style="display: none">Выход</a>
+        </div>
+      </nav>
+      <div class="nav-backdrop"></div>
+    </header>
+    <main>
+      <section class="card">
+        <h2>Отчёты</h2>
+        <p>
+          Составляйте отчёты по своим доходам и расходам. Выберите период и
+          получите визуализацию трат по категориям, а также краткий текстовый
+          анализ.
+        </p>
+        <div class="report-controls">
+          <label>
+            Тип отчёта
+            <select id="reportPeriod">
+              <option value="month">Месяц</option>
+              <option value="year">Год</option>
+            </select>
+          </label>
+          <label id="reportMonthLabel">
+            Месяц
+            <input type="month" id="reportMonth" />
+          </label>
+          <label id="reportYearLabel" style="display: none">
+            Год
+            <input
+              type="number"
+              id="reportYear"
+              min="2000"
+              max="2100"
+              step="1"
+            />
+          </label>
+          <button class="btn-primary" id="generateReport">Сгенерировать</button>
+        </div>
+        <section class="reports-section">
+          <div class="report-bars card">
+            <canvas
+              id="reportChart"
+              width="600"
+              height="300"
+              aria-label="Столбчатая диаграмма отчёта"
+              role="img"
+            ></canvas>
+          </div>
+
+          <aside class="report-analysis card">
+            <canvas
+              id="reportPie"
+              width="300"
+              height="300"
+              aria-label="Круговая диаграмма отчёта"
+              role="img"
+            ></canvas>
+            <div id="reportSummary" class="report-summary"></div>
+          </aside>
+        </section>
+      </section>
+    </main>
+    <footer>
+      <p>&copy; 2025 FinTrackr. Все права защищены.</p>
+    </footer>
+  </body>
+</html>
+
