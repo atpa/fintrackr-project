@@ -79,11 +79,16 @@ class MLAnalyticsService {
       const amount = Math.abs(t.amount);
       const zScore = (amount - mean) / stdDev;
       return Math.abs(zScore) > sigmaThreshold;
-    }).map(t => ({
-      ...t,
-      severity: this.getAnomalySeverity(Math.abs(t.amount), mean, stdDev),
-      reason: `Transaction is ${((Math.abs(t.amount) - mean) / stdDev).toFixed(1)}σ from average`,
-    }));
+    }).map(t => {
+      const amount = Math.abs(t.amount);
+      const zscore = (amount - mean) / stdDev;
+      return {
+        ...t,
+        zscore,
+        severity: this.getAnomalySeverity(amount, mean, stdDev),
+        reason: `Transaction is ${zscore.toFixed(1)}σ from average`,
+      };
+    });
 
     return {
       anomalies,
@@ -129,14 +134,18 @@ class MLAnalyticsService {
 
       recommendations.push({
         category_id: parseInt(categoryId),
-        recommended_limit: recommended,
+        suggested_limit: recommended,
+        recommended_limit: recommended, // Alias for compatibility
         current_average: avgMonthly,
         rationale: `Based on ${data.count} transactions over recent months`,
         confidence: data.count >= 10 ? 'high' : data.count >= 5 ? 'medium' : 'low',
       });
     }
 
-    return recommendations;
+    return {
+      recommendations,
+      total_categories: Object.keys(categorySpending).length,
+    };
   }
 
   /**
@@ -173,7 +182,10 @@ class MLAnalyticsService {
       }
     }
 
-    return recurring;
+    return {
+      recurring,
+      total_patterns: recurring.length,
+    };
   }
 
   /**
@@ -223,19 +235,22 @@ class MLAnalyticsService {
     }
 
     // Recurring expense insight
-    const recurring = await this.identifyRecurringExpenses(userId);
-    if (recurring.length > 0) {
-      const totalRecurring = recurring.reduce((sum, r) => sum + r.amount, 0);
+    const recurringResult = await this.identifyRecurringExpenses(userId);
+    if (recurringResult.recurring && recurringResult.recurring.length > 0) {
+      const totalRecurring = recurringResult.recurring.reduce((sum, r) => sum + r.amount, 0);
       insights.push({
         type: 'info',
         title: 'Регулярные платежи',
-        message: `Найдено ${recurring.length} регулярных платежей на общую сумму ${totalRecurring.toFixed(2)}`,
+        message: `Найдено ${recurringResult.recurring.length} регулярных платежей на общую сумму ${totalRecurring.toFixed(2)}`,
         action: 'Просмотреть подписки',
         priority: 'low',
       });
     }
 
-    return insights;
+    return {
+      insights,
+      total: insights.length,
+    };
   }
 
   // Helper methods
@@ -315,6 +330,7 @@ class MLAnalyticsService {
     const groups = [];
     
     for (const tx of transactions) {
+      if (!tx.description) continue; // Skip transactions without description
       const desc = tx.description.toLowerCase();
       let found = false;
       

@@ -51,7 +51,12 @@ class SessionService {
     // Store in database
     await this.dataService.createSession(session);
     
-    return sessionId;
+    // Return complete session object with id (for tests and API responses)
+    return {
+      ...session,
+      id: sessionId,
+      session_id: sessionId,
+    };
   }
 
   /**
@@ -201,6 +206,15 @@ class SessionService {
     }
     
     return alerts;
+  }
+
+  // Aliases for backward compatibility with tests
+  async validateSession(sessionId) {
+    return await this.isSessionValid(sessionId);
+  }
+
+  async logoutEverywhere(userId, exceptSessionId = null) {
+    return await this.revokeAllSessions(userId, exceptSessionId);
   }
 }
 

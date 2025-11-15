@@ -11,6 +11,7 @@ describe('MLAnalyticsService', () => {
     // Mock data service with sample transactions
     mockDataService = {
       getTransactionsByUser: jest.fn(),
+      getTransactionsByUserId: jest.fn(),
       getBudgetsByUser: jest.fn(),
     };
 
@@ -34,7 +35,7 @@ describe('MLAnalyticsService', () => {
           category_id: 1,
         });
       }
-      mockDataService.getTransactionsByUser.mockResolvedValue(transactions);
+      mockDataService.getTransactionsByUserId.mockResolvedValue(transactions);
 
       const prediction = await mlService.predictSpending(1, 3);
 
@@ -49,7 +50,7 @@ describe('MLAnalyticsService', () => {
       const transactions = [
         { user_id: 1, amount: 1000, type: 'expense', date: new Date().toISOString() },
       ];
-      mockDataService.getTransactionsByUser.mockResolvedValue(transactions);
+      mockDataService.getTransactionsByUserId.mockResolvedValue(transactions);
 
       const prediction = await mlService.predictSpending(1, 1);
 
@@ -76,7 +77,7 @@ describe('MLAnalyticsService', () => {
           category_id: 1,
         },
       ];
-      mockDataService.getTransactionsByUser.mockResolvedValue(transactions);
+      mockDataService.getTransactionsByUserId.mockResolvedValue(transactions);
 
       const anomalies = await mlService.detectAnomalies(1, 2);
 
@@ -94,7 +95,7 @@ describe('MLAnalyticsService', () => {
         date: new Date().toISOString(),
         category_id: 1,
       }));
-      mockDataService.getTransactionsByUser.mockResolvedValue(transactions);
+      mockDataService.getTransactionsByUserId.mockResolvedValue(transactions);
 
       const anomalies = await mlService.detectAnomalies(1, 3);
 
@@ -111,7 +112,7 @@ describe('MLAnalyticsService', () => {
         date: new Date().toISOString(),
         category_id: 1,
       }));
-      mockDataService.getTransactionsByUser.mockResolvedValue(transactions);
+      mockDataService.getTransactionsByUserId.mockResolvedValue(transactions);
       mockDataService.getBudgetsByUser.mockResolvedValue([]);
 
       const recommendations = await mlService.generateBudgetRecommendations(1);
@@ -142,7 +143,7 @@ describe('MLAnalyticsService', () => {
           category_id: 1,
         });
       }
-      mockDataService.getTransactionsByUser.mockResolvedValue(transactions);
+      mockDataService.getTransactionsByUserId.mockResolvedValue(transactions);
 
       const recurring = await mlService.identifyRecurringExpenses(1);
 
@@ -160,7 +161,7 @@ describe('MLAnalyticsService', () => {
         date: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString(),
         category_id: 1,
       }));
-      mockDataService.getTransactionsByUser.mockResolvedValue(transactions);
+      mockDataService.getTransactionsByUserId.mockResolvedValue(transactions);
       mockDataService.getBudgetsByUser.mockResolvedValue([]);
 
       const insights = await mlService.generateInsights(1);
