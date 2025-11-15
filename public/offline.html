@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Нет подключения - FinTrackr</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      .offline-container {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: var(--space-6);
+        text-align: center;
+        background: linear-gradient(135deg, var(--primary-ultra-light) 0%, var(--bg) 100%);
+      }
+      
+      .offline-icon {
+        font-size: 6rem;
+        margin-bottom: var(--space-6);
+        animation: pulse 2s ease-in-out infinite;
+      }
+      
+      .offline-title {
+        font-size: var(--font-3xl);
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: var(--space-3);
+      }
+      
+      .offline-message {
+        font-size: var(--font-lg);
+        color: var(--text-secondary);
+        margin-bottom: var(--space-8);
+        max-width: 500px;
+      }
+      
+      .offline-actions {
+        display: flex;
+        gap: var(--space-4);
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      
+      @keyframes pulse {
+        0%, 100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.1);
+          opacity: 0.7;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="offline-container">
+      <div class="offline-icon">📡</div>
+      <h1 class="offline-title">Нет подключения к интернету</h1>
+      <p class="offline-message">
+        Проверьте подключение к сети и попробуйте снова.
+        Некоторые данные могут быть доступны в оффлайн-режиме.
+      </p>
+      <div class="offline-actions">
+        <button class="btn-primary" onclick="location.reload()">
+          Повторить попытку
+        </button>
+        <button class="btn-secondary" onclick="history.back()">
+          Назад
+        </button>
+      </div>
+    </div>
+    
+    <script>
+      // Auto-reload when back online
+      window.addEventListener('online', () => {
+        location.reload();
+      });
+      
+      // Check connection periodically
+      setInterval(() => {
+        if (navigator.onLine) {
+          location.reload();
+        }
+      }, 5000);
+    </script>
+  </body>
+</html>
