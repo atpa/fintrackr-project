@@ -35,6 +35,9 @@ out/
 *.db
 *.sqlite
 *.sqlite3
+*.db-*
+*.backup.*
+data.json.backup.*
 
 # Temporary files
 *.tmp
