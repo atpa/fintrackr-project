@@ -41,7 +41,7 @@ function buildCookie(name, value, options = {}) {
  * Set authentication cookies
  */
 function setAuthCookies(res, tokens, options = {}) {
-  const sameSite = options.sameSite || "Lax";
+  const sameSite = options.sameSite || ENV.COOKIE_SAMESITE || "Lax";
   const secure =
     options.secure !== undefined ? options.secure : ENV.COOKIE_SECURE;
   const cookies = [
@@ -63,7 +63,7 @@ function setAuthCookies(res, tokens, options = {}) {
  * Clear authentication cookies
  */
 function clearAuthCookies(res, options = {}) {
-  const sameSite = options.sameSite || "Lax";
+  const sameSite = options.sameSite || ENV.COOKIE_SAMESITE || "Lax";
   const secure =
     options.secure !== undefined ? options.secure : ENV.COOKIE_SECURE;
   const cookies = [
