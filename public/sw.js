@@ -1,9 +1,9 @@
 /**
  * FinTrackr Service Worker
- * Provides offline functionality and caching for PWA
+ * Provides offline functionality, caching, and background sync for PWA
  */
 
-const CACHE_VERSION = 'v1.0.0';
+const CACHE_VERSION = 'v2.0.0';
 const CACHE_NAME = `fintrackr-${CACHE_VERSION}`;
 
 // Resources to cache on install
@@ -19,6 +19,10 @@ const STATIC_CACHE_URLS = [
   '/goals.html',
   '/categories.html',
   '/css/style.css',
+  '/css/design-system.css',
+  '/css/icons.css',
+  '/css/transitions.css',
+  '/icons/icons.svg',
   '/js/app.js',
   '/js/login.js',
   '/js/register.js',
@@ -28,7 +32,8 @@ const STATIC_CACHE_URLS = [
   '/js/goals.js',
   '/js/categories.js',
   '/js/dashboard.js',
-  '/manifest.json'
+  '/manifest.json',
+  '/offline.html'
 ];
 
 // API endpoints that should always use network-first strategy
@@ -36,6 +41,9 @@ const API_ENDPOINTS = /^\/api\//;
 
 // Dynamic cache for runtime assets
 const RUNTIME_CACHE = `fintrackr-runtime-${CACHE_VERSION}`;
+
+// Background sync tag
+const SYNC_TAG = 'sync-transactions';
 
 /**
  * Install event - cache static assets
