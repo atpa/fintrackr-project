@@ -1,6 +1,7 @@
 import fetchData from '../modules/api.js';
 import initNavigation from '../modules/navigation.js';
 import initProfileShell from '../modules/profile.js';
+import { renderBarChart, renderDonutChart } from '../modules/charts.js';
 
 initNavigation();
 initProfileShell();
@@ -69,15 +70,16 @@ async function generateReport() {
     combinedLabels.push('Другие');
     combinedValues.push(otherSum);
   }
-  // Обновляем график
-  const canvas = document.getElementById('reportChart');
-  if (canvas) {
-    drawBarChart(canvas, combinedLabels, combinedValues);
+  // Получаем валюту для отчётов
+  const reportCurrency = (typeof getReportCurrency === 'function') ? getReportCurrency() : 'USD';
+  
+  // Обновляем график с помощью ApexCharts
+  if (document.getElementById('reportChart')) {
+    await renderBarChart('reportChart', combinedLabels, combinedValues, reportCurrency);
   }
-  // Также отображаем круговую диаграмму по тем же данным, если есть элемент
-  const pieCanvas = document.getElementById('reportPie');
-  if (pieCanvas) {
-    drawPieChart(pieCanvas, combinedLabels, combinedValues);
+  // Также отображаем круговую диаграмму по тем же данным
+  if (document.getElementById('reportPie')) {
+    await renderDonutChart('reportPie', combinedLabels, combinedValues, reportCurrency);
   }
   // Формируем текстовый отчёт
   const summaryEl = document.getElementById('reportSummary');

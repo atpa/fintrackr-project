@@ -1,6 +1,7 @@
 import fetchData from '../modules/api.js';
 import initNavigation from '../modules/navigation.js';
 import initProfileShell from '../modules/profile.js';
+import { renderMultiBarChart } from '../modules/charts.js';
 
 initNavigation();
 initProfileShell();
@@ -53,10 +54,17 @@ async function initForecastPage() {
   if (exp30El) exp30El.textContent = expense30.toFixed(2);
   if (income90El) income90El.textContent = income90.toFixed(2);
   if (exp90El) exp90El.textContent = expense90.toFixed(2);
-  // Рисуем сравнительный столбчатый график на 30 дней
-  const chartCanvas = document.getElementById('forecastChart');
-  if (chartCanvas) {
-    drawBarChart(chartCanvas, ['Доход 30д', 'Расход 30д'], [income30, expense30]);
+  // Рисуем сравнительный столбчатый график на 30 дней с помощью ApexCharts
+  if (document.getElementById('forecastChart')) {
+    await renderMultiBarChart(
+      'forecastChart',
+      ['30 дней'],
+      [
+        { name: 'Доход', data: [income30] },
+        { name: 'Расход', data: [expense30] }
+      ],
+      reportCurrency
+    );
   }
   // Вычисляем категории, находящиеся в зоне риска (используем текущий месяц)
   const riskList = document.getElementById('riskList');
