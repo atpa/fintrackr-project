@@ -2,12 +2,13 @@
   "name": "fintrackr",
   "version": "1.0.0",
   "description": "Personal Finance Tracker - MVP web application",
-  "main": "backend/server.js",
+  "main": "backend/index.js",
   "scripts": {
-    "start": "node backend/server.js",
-    "start:3000": "cross-env PORT=3000 node backend/server.js",
-    "start:8080": "cross-env PORT=8080 node backend/server.js",
-    "dev": "node backend/server.js",
+    "start": "node backend/index.js",
+    "start:3000": "cross-env PORT=3000 node backend/index.js",
+    "start:8080": "cross-env PORT=8080 node backend/index.js",
+    "start:legacy": "node backend/server.js",
+    "dev": "node backend/index.js",
     "test": "npm run test:backend",
     "test:backend": "cross-env FINTRACKR_DISABLE_PERSIST=true jest",
     "test:e2e": "cross-env FINTRACKR_DISABLE_PERSIST=true playwright test",
@@ -50,6 +51,7 @@
     "cookie-parser": "^1.4.7",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
-    "morgan": "^1.10.1"
+    "morgan": "^1.10.1",
+    "nodemailer": "^6.10.1"
   }
 }
