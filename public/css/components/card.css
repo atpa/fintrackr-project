@@ -1,0 +1,231 @@
+/* ========== CARD COMPONENT ========== */
+/* Unified card system with variants */
+
+.card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-base);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-light);
+}
+
+.card-header {
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.card-header h2,
+.card-header h3 {
+  margin: 0;
+  font-size: var(--font-2xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text);
+}
+
+.card-header p {
+  margin: var(--space-2) 0 0 0;
+  color: var(--text-light);
+  font-size: var(--font-sm);
+}
+
+.card-body {
+  margin-bottom: var(--space-4);
+}
+
+.card-footer {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: flex-end;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-color);
+}
+
+/* ========== VARIANTS ========== */
+
+/* Stat Card */
+.card--stat {
+  text-align: center;
+  padding: var(--space-6);
+}
+
+.card--stat .stat-label {
+  font-size: var(--font-sm);
+  color: var(--text-light);
+  margin-bottom: var(--space-2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: var(--font-weight-medium);
+}
+
+.card--stat .stat-value {
+  font-size: var(--font-4xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--primary);
+  margin-bottom: var(--space-2);
+}
+
+.card--stat .stat-change {
+  font-size: var(--font-sm);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  display: inline-block;
+}
+
+.card--stat .stat-change.positive {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+
+.card--stat .stat-change.negative {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+}
+
+/* Info Card */
+.card--info {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(6, 182, 212, 0.05) 100%);
+  border-left: 4px solid var(--primary);
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+}
+
+.card--info-icon {
+  font-size: var(--font-2xl);
+  flex-shrink: 0;
+}
+
+.card--info-content {
+  flex: 1;
+}
+
+.card--info-title {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text);
+  margin: 0 0 var(--space-1) 0;
+}
+
+.card--info-text {
+  color: var(--text-light);
+  font-size: var(--font-sm);
+  margin: 0;
+}
+
+/* Gradient Card */
+.card--gradient {
+  background: var(--gradient-primary);
+  color: #fff;
+  border: none;
+  padding: var(--space-8);
+  text-align: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.card--gradient::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.card--gradient-content {
+  position: relative;
+  z-index: 1;
+}
+
+.card--gradient h2 {
+  color: #fff;
+  margin: 0 0 var(--space-2) 0;
+}
+
+.card--gradient p {
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+  font-size: var(--font-sm);
+}
+
+/* ========== LIST CARD ========== */
+
+.card--list {
+  padding: 0;
+  overflow: hidden;
+}
+
+.card-list-item {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background var(--transition-base);
+}
+
+.card-list-item:last-child {
+  border-bottom: none;
+}
+
+.card-list-item:hover {
+  background: var(--bg-subtle);
+}
+
+/* ========== DARK MODE ========== */
+
+[data-theme="dark"] .card {
+  background: var(--bg-elevated);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .card--info {
+  background: linear-gradient(135deg, rgba(129, 140, 248, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
+}
+
+[data-theme="dark"] .card-list-item:hover {
+  background: var(--bg-subtle);
+}
+
+/* ========== RESPONSIVE ========== */
+
+@media (max-width: 768px) {
+  .card {
+    padding: var(--space-4);
+  }
+
+  .card--stat {
+    padding: var(--space-4);
+  }
+
+  .card--info {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .card-footer {
+    flex-direction: column;
+  }
+
+  .card-footer button,
+  .card-footer a {
+    width: 100%;
+  }
+}
+
+/* ========== ANIMATIONS ========== */
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .card-list-item {
+    transition: none;
+  }
+}

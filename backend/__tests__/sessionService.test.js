@@ -10,11 +10,11 @@ describe('SessionService', () => {
   beforeEach(() => {
     mockDataService = {
       createSession: jest.fn(),
-      getSessionsByUserIdId: jest.fn().mockResolvedValue([]),
+      getSessionsByUserId: jest.fn().mockResolvedValue([]),
       getSessionById: jest.fn(),
       updateSession: jest.fn(),
       deleteSession: jest.fn(),
-      deleteSessionsByUser: jest.fn(),
+      deleteSessionsByUserId: jest.fn(),
     };
 
     const { SessionService } = require('../services/sessionService');

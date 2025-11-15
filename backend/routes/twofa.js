@@ -149,7 +149,7 @@ router.post('/disable', async (req, res) => {
         }
 
         // Verify password
-        const validPassword = await authService.verifyPassword(password, user.password);
+        const validPassword = await authService.comparePassword(password, user.password);
         if (!validPassword) {
             return res.status(401).json({ error: 'Invalid password' });
         }

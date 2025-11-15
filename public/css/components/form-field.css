@@ -1,0 +1,194 @@
+/* ========== FORM FIELD COMPONENT ========== */
+/* Unified form input system */
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.form-field label {
+  font-size: var(--font-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text);
+  display: flex;
+  gap: var(--space-1);
+}
+
+.form-field label .required {
+  color: var(--danger);
+}
+
+.form-field input,
+.form-field textarea,
+.form-field select {
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--font-base);
+  font-family: var(--font-sans);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-base);
+  color: var(--text);
+  transition: all var(--transition-base);
+  line-height: var(--line-height-normal);
+}
+
+.form-field input:focus,
+.form-field textarea:focus,
+.form-field select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.form-field input:focus-visible,
+.form-field textarea:focus-visible,
+.form-field select:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.form-field textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+/* ========== STATES ========== */
+
+.form-field-hint {
+  font-size: var(--font-sm);
+  color: var(--text-light);
+  margin-top: -var(--space-1);
+}
+
+.form-field-error {
+  font-size: var(--font-sm);
+  color: var(--danger);
+  display: none;
+  margin-top: -var(--space-1);
+}
+
+.form-field.is-error input,
+.form-field.is-error textarea,
+.form-field.is-error select {
+  border-color: var(--danger);
+  background: rgba(239, 68, 68, 0.02);
+}
+
+.form-field.is-error .form-field-error {
+  display: block;
+}
+
+.form-field.is-success input,
+.form-field.is-success textarea,
+.form-field.is-success select {
+  border-color: var(--success);
+  background: rgba(16, 185, 129, 0.02);
+}
+
+/* ========== CHECKBOX & RADIO ========== */
+
+.form-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  user-select: none;
+}
+
+.form-check input[type="checkbox"],
+.form-check input[type="radio"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+
+.form-check label {
+  margin: 0;
+  cursor: pointer;
+  font-weight: var(--font-weight-normal);
+}
+
+/* ========== SELECT ========== */
+
+.form-field select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23475569' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-4) center;
+  padding-right: var(--space-10);
+}
+
+[data-theme="dark"] .form-field select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23cbd5e1' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+}
+
+/* ========== DISABLED ========== */
+
+.form-field input:disabled,
+.form-field textarea:disabled,
+.form-field select:disabled {
+  background: var(--bg-muted);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-field label:has(+ input:disabled),
+.form-field label:has(+ textarea:disabled),
+.form-field label:has(+ select:disabled) {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ========== DARK MODE ========== */
+
+[data-theme="dark"] .form-field input,
+[data-theme="dark"] .form-field textarea,
+[data-theme="dark"] .form-field select {
+  background: var(--bg-elevated);
+  color: var(--text);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .form-field input:focus,
+[data-theme="dark"] .form-field textarea:focus,
+[data-theme="dark"] .form-field select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.1);
+}
+
+/* ========== ANIMATIONS ========== */
+
+@media (prefers-reduced-motion: reduce) {
+  .form-field input,
+  .form-field textarea,
+  .form-field select {
+    transition: none;
+  }
+}
+
+/* ========== LAYOUT VARIANTS ========== */
+
+.form-field-inline {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  align-items: start;
+  gap: var(--space-4);
+}
+
+.form-field-inline label {
+  margin-top: var(--space-3);
+}
+
+@media (max-width: 640px) {
+  .form-field-inline {
+    grid-template-columns: 1fr;
+  }
+
+  .form-field-inline label {
+    margin-top: 0;
+  }
+}

@@ -464,6 +464,79 @@ function addTokenToBlacklist(token) {
   }
 }
 
+// ==================== SESSIONS ====================
+
+function createSession(sessionData) {
+  const stmt = getDB().prepare(`
+    INSERT INTO sessions (user_id, refresh_token, device_info, ip_address, last_activity, created_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+  const result = stmt.run(
+    sessionData.user_id,
+    sessionData.refresh_token,
+    sessionData.device_info || null,
+    sessionData.ip_address || null,
+    sessionData.last_activity || new Date().toISOString(),
+    sessionData.created_at || new Date().toISOString()
+  );
+  return result.lastInsertRowid;
+}
+
+function getSessionById(sessionId) {
+  return getDB().prepare('SELECT * FROM sessions WHERE id = ?').get(sessionId);
+}
+
+function getSessionsByUserId(userId) {
+  return getDB().prepare('SELECT * FROM sessions WHERE user_id = ? ORDER BY last_activity DESC').all(userId);
+}
+
+function getSessionByRefreshToken(refreshToken) {
+  return getDB().prepare('SELECT * FROM sessions WHERE refresh_token = ?').get(refreshToken);
+}
+
+function updateSession(sessionId, updates) {
+  const fields = [];
+  const values = [];
+  
+  if (updates.last_activity !== undefined) {
+    fields.push('last_activity = ?');
+    values.push(updates.last_activity);
+  }
+  if (updates.ip_address !== undefined) {
+    fields.push('ip_address = ?');
+    values.push(updates.ip_address);
+  }
+  if (updates.device_info !== undefined) {
+    fields.push('device_info = ?');
+    values.push(updates.device_info);
+  }
+  
+  if (fields.length === 0) return false;
+  
+  values.push(sessionId);
+  const stmt = getDB().prepare(`
+    UPDATE sessions SET ${fields.join(', ')} WHERE id = ?
+  `);
+  const result = stmt.run(...values);
+  return result.changes > 0;
+}
+
+function deleteSession(sessionId) {
+  const stmt = getDB().prepare('DELETE FROM sessions WHERE id = ?');
+  const result = stmt.run(sessionId);
+  return result.changes > 0;
+}
+
+function deleteSessionsByUserId(userId) {
+  const stmt = getDB().prepare('DELETE FROM sessions WHERE user_id = ?');
+  const result = stmt.run(userId);
+  return result.changes;
+}
+
+function getAllSessions() {
+  return getDB().prepare('SELECT * FROM sessions ORDER BY last_activity DESC').all();
+}
+
 // ==================== LEGACY COMPATIBILITY ====================
 
 /**
@@ -567,6 +640,16 @@ module.exports = {
   // Token blacklist
   isTokenBlacklisted,
   addTokenToBlacklist,
+  
+  // Sessions
+  createSession,
+  getSessionById,
+  getSessionsByUserId,
+  getSessionByRefreshToken,
+  updateSession,
+  deleteSession,
+  deleteSessionsByUserId,
+  getAllSessions,
   
   // Legacy compatibility (deprecated)
   getData,

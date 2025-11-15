@@ -16,6 +16,7 @@ const currencyRouter = require('./routes/currency');
 const metaRouter = require('./routes/meta');
 const syncRouter = require('./routes/sync');
 const authRouter = require('./routes/auth');
+const twofaRouter = require('./routes/twofa');
 const { errorHandler, AppError } = require('./middleware/errorHandler');
 
 const app = express();
@@ -25,7 +26,11 @@ app.use(cookieParser());
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// API routes
+// API routes - Auth routes first (no authentication required)
+app.use('/api', authRouter);
+app.use('/api/2fa', twofaRouter);
+
+// Protected routes (require authentication)
 app.use('/api/accounts', accountsRouter);
 app.use('/api/categories', categoriesRouter);
 app.use('/api/transactions', transactionsRouter);
@@ -38,7 +43,6 @@ app.use('/api', analyticsRouter);
 app.use('/api', currencyRouter);
 app.use('/api', metaRouter);
 app.use('/api/sync', syncRouter);
-app.use('/api', authRouter);
 
 // Fallback for unmatched API routes
 app.use('/api', (req, res, next) => {

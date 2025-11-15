@@ -9,6 +9,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="FinTrackr" />
     <title>FinTrackr – Дэшборд</title>
+    <link rel="stylesheet" href="css/tokens.css" />
     <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="css/design-system.css" />
     <link rel="stylesheet" href="css/icons.css" />
@@ -19,11 +20,13 @@
   <script defer src="js/app.js"></script>
   </head>
   <body class="workspace-page" data-page-title="Дэшборд" data-page-subtitle="Прогнозы, бюджеты и уведомления в едином месте">
-    <header data-page-title="Дэшборд" data-page-subtitle="Прогнозы, бюджеты и уведомления в едином месте">
+    <a href="#main-content" class="visually-hidden" tabindex="1">Перейти к основному содержимому</a>
+    
+    <header data-page-title="Дэшборд" data-page-subtitle="Прогнозы, бюджеты и уведомления в едином месте" role="banner">
       <div class="brand visually-hidden">
         <a href="dashboard.html">FinTrackr</a>
       </div>
-      <button class="burger" aria-label="Меню">
+      <button class="burger" aria-label="Открыть меню навигации" aria-expanded="false" aria-controls="sidebar">
         <span></span><span></span><span></span>
       </button>
     </header>
@@ -36,16 +39,11 @@
       aria-label="Боковая навигация"
     >
     <div class="sidebar-top">
-      <!-- sidebar-footer удалён: профиль и auth вынесены в header dropdown -->
-            focusable="false"
-          >
+      <div class="sidebar-header">
+        <a href="dashboard.html" class="logo" aria-label="FinTrackr логотип">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" focusable="false">
             <rect width="24" height="24" rx="6" fill="var(--primary)"></rect>
-            <path
-              d="M6 12h12M6 8h12M6 16h12"
-              stroke="#fff"
-              stroke-width="1.2"
-              stroke-linecap="round"
-            ></path>
+            <path d="M6 12h12M6 8h12M6 16h12" stroke="#fff" stroke-width="1.2" stroke-linecap="round"></path>
           </svg>
           <span class="logo-text">FinTrackr</span>
         </a>
@@ -167,7 +165,7 @@
 
     <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
 
-    <main class="workspace-main">
+    <main class="workspace-main" id="main-content" role="main">
       <section class="alert-banner alert-banner--info" aria-live="polite">
         <div>
           <p class="alert-banner-title">AI ассистент</p>

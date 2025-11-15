@@ -7,9 +7,7 @@ const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { ENV, TOKEN_CONFIG } = require("../config/constants");
-// Note: authService uses legacy JSON-based storage for compatibility with server.js
-// The new Express app (app.js) uses dataService.new.js directly in routes
-const { getData, persistData } = require("./dataService.legacy");
+const dataService = require("./dataService.new");
 
 /**
  * Parse cookies from request headers
@@ -85,37 +83,58 @@ function sanitizeUser(user) {
 }
 
 /**
- * Issue JWT tokens for user
+ * Generate access token
  */
-function issueTokensForUser(user) {
-  const data = getData();
-  const now = Date.now();
-
-  const accessToken = jwt.sign(
-    { sub: user.id, email: user.email },
+function generateAccessToken(payload) {
+  return jwt.sign(
+    { userId: payload.userId, email: payload.email },
     ENV.JWT_SECRET,
     {
       expiresIn: TOKEN_CONFIG.ACCESS_TTL_SECONDS,
       jwtid: crypto.randomBytes(16).toString("hex"),
     }
   );
+}
 
-  const refreshToken = jwt.sign(
-    { sub: user.id, email: user.email },
+/**
+ * Generate refresh token
+ */
+function generateRefreshToken() {
+  return jwt.sign(
+    { type: 'refresh' },
     ENV.JWT_SECRET,
     {
       expiresIn: TOKEN_CONFIG.REFRESH_TTL_SECONDS,
-      jwtid: crypto.randomBytes(16).toString("hex"),
+      jwtid: crypto.randomBytes(32).toString("hex"),
     }
   );
+}
 
-  data.refreshTokens.push({
-    token: refreshToken,
-    userId: user.id,
-    expiresAt: now + TOKEN_CONFIG.REFRESH_TTL_SECONDS * 1000,
-  });
+/**
+ * Verify refresh token
+ */
+function verifyRefreshToken(token) {
+  try {
+    const decoded = jwt.verify(token, ENV.JWT_SECRET);
+    return { valid: true, payload: decoded };
+  } catch (err) {
+    return { valid: false, error: err.message };
+  }
+}
 
-  persistData();
+/**
+ * Issue JWT tokens for user
+ */
+function issueTokensForUser(user) {
+  const now = Date.now();
+
+  const accessToken = generateAccessToken({ userId: user.id, email: user.email });
+  const refreshToken = generateRefreshToken();
+
+  // Store refresh token in SQLite
+  const expiresAt = new Date(now + TOKEN_CONFIG.REFRESH_TTL_SECONDS * 1000).toISOString();
+  dataService.createRefreshToken(user.id, refreshToken, expiresAt);
+
   return { accessToken, refreshToken };
 }
 
@@ -123,62 +142,30 @@ function issueTokensForUser(user) {
  * Consume refresh token (remove from storage)
  */
 function consumeRefreshToken(token) {
-  const data = getData();
-  const index = data.refreshTokens.findIndex((entry) => entry.token === token);
-  if (index >= 0) {
-    data.refreshTokens.splice(index, 1);
-    persistData();
-  }
+  dataService.deleteRefreshToken(token);
 }
 
 /**
  * Check if token is blacklisted
  */
 function isTokenBlacklisted(token) {
-  const data = getData();
-  return data.tokenBlacklist.some((entry) => entry.token === token);
+  return dataService.isTokenBlacklisted(token);
 }
 
 /**
  * Add token to blacklist
  */
-function addTokenToBlacklist(token, expiresAt) {
-  const data = getData();
-  if (!expiresAt) {
-    try {
-      const decoded = jwt.decode(token);
-      expiresAt = decoded.exp ? decoded.exp * 1000 : Date.now() + 3600000;
-    } catch (e) {
-      expiresAt = Date.now() + 3600000;
-    }
-  }
-  data.tokenBlacklist.push({ token, expiresAt });
-  persistData();
+function addTokenToBlacklist(token) {
+  dataService.addTokenToBlacklist(token);
 }
 
 /**
  * Cleanup expired tokens from storage
  */
 function cleanupTokenStores() {
-  const data = getData();
-  const now = Date.now();
-  const refreshBefore = data.refreshTokens.length;
-  const blacklistBefore = data.tokenBlacklist.length;
-
-  data.refreshTokens = data.refreshTokens.filter(
-    (entry) => entry && entry.expiresAt && entry.expiresAt > now
-  );
-
-  data.tokenBlacklist = data.tokenBlacklist.filter(
-    (entry) => entry && entry.expiresAt && entry.expiresAt > now
-  );
-
-  if (
-    refreshBefore !== data.refreshTokens.length ||
-    blacklistBefore !== data.tokenBlacklist.length
-  ) {
-    persistData();
-  }
+  // SQLite handles expiration via WHERE clauses in queries
+  // Optionally call deleteExpiredRefreshTokens if needed
+  dataService.deleteExpiredRefreshTokens();
 }
 
 /**
@@ -204,15 +191,14 @@ function authenticateRequest(req) {
 
   try {
     const decoded = jwt.verify(token, ENV.JWT_SECRET);
-    const data = getData();
-    const user = data.users.find((u) => u.id === decoded.sub);
+    const user = dataService.getUserById(decoded.sub);
 
     if (!user) {
       return { ok: false, error: "User not found" };
     }
 
     if (isRefresh) {
-      const refreshEntry = data.refreshTokens.find((e) => e.token === token);
+      const refreshEntry = dataService.getRefreshToken(token);
       if (!refreshEntry) {
         return { ok: false, error: "Invalid refresh token" };
       }
@@ -244,6 +230,9 @@ module.exports = {
   setAuthCookies,
   clearAuthCookies,
   sanitizeUser,
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken,
   issueTokensForUser,
   consumeRefreshToken,
   isTokenBlacklisted,
