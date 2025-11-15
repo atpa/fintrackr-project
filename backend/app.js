@@ -16,8 +16,7 @@ const currencyRouter = require('./routes/currency');
 const metaRouter = require('./routes/meta');
 const syncRouter = require('./routes/sync');
 const authRouter = require('./routes/auth');
-const errorHandler = require('./middleware/errorHandler');
-const { AppError } = require('./utils/responses');
+const { errorHandler, AppError } = require('./middleware/errorHandler');
 
 const app = express();
 
@@ -43,7 +42,7 @@ app.use('/api', authRouter);
 
 // Fallback for unmatched API routes
 app.use('/api', (req, res, next) => {
-  next(new AppError(404, 'Not found'));
+  next(new AppError('Not found', 404));
 });
 
 // Static files

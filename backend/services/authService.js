@@ -7,7 +7,9 @@ const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { ENV, TOKEN_CONFIG } = require("../config/constants");
-const { getData, persistData } = require("./dataService");
+// Note: authService uses legacy JSON-based storage for compatibility with server.js
+// The new Express app (app.js) uses dataService.new.js directly in routes
+const { getData, persistData } = require("./dataService.legacy");
 
 /**
  * Parse cookies from request headers
