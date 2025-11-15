@@ -1,18 +1,15 @@
 const express = require('express');
-const authRoutes = require('./auth.routes');
-const accountRoutes = require('./account.routes');
+const authRoutes = require('./auth');
+const accountsRoutes = require('./accounts');
+// Import other routes as they are created
+// const transactionsRoutes = require('./transactions');
+// const categoriesRoutes = require('./categories');
 
 const router = express.Router();
 
-// Базовый роут API
-router.get('/', (req, res) => {
-  res.json({ message: 'FinTrackr API v2.0' });
-});
-
-// Подключение роутов аутентификации
 router.use('/auth', authRoutes);
-
-// Подключение роутов для счетов
-router.use('/accounts', accountRoutes);
+router.use('/accounts', accountsRoutes);
+// router.use('/transactions', transactionsRoutes);
+// router.use('/categories', categoriesRoutes);
 
 module.exports = router;
