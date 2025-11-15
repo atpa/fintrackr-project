@@ -12,7 +12,9 @@
     "test:backend": "cross-env FINTRACKR_DISABLE_PERSIST=true jest",
     "test:e2e": "cross-env FINTRACKR_DISABLE_PERSIST=true playwright test",
     "test:all": "npm run test:backend && npm run test:e2e",
-    "lint": "eslint backend --ext .js"
+    "lint": "eslint backend --ext .js",
+    "db:migrate": "node backend/database/init.js",
+    "db:init": "node backend/database/init.js"
   },
   "keywords": [
     "finance",
@@ -44,6 +46,10 @@
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
-    "jsonwebtoken": "^9.0.2"
+    "better-sqlite3": "^12.4.1",
+    "cookie-parser": "^1.4.7",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.1"
   }
 }

@@ -8,6 +8,7 @@ const ENV = {
   JWT_SECRET: process.env.JWT_SECRET || "dev-secret-change",
   PORT: process.env.PORT || 3000,
   COOKIE_SECURE: process.env.COOKIE_SECURE === "true",
+  COOKIE_SAMESITE: process.env.COOKIE_SAMESITE || (process.env.NODE_ENV === "production" ? "Strict" : "Lax"),
   DISABLE_PERSIST: process.env.FINTRACKR_DISABLE_PERSIST === "true",
 };
 

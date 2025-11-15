@@ -1,0 +1,417 @@
+/* Page Transitions & Animations - FinTrackr */
+
+/* === Page Transitions === */
+
+/* Fade transition */
+.page-transition-fade-enter {
+  opacity: 0;
+}
+
+.page-transition-fade-enter-active {
+  opacity: 1;
+  transition: opacity 300ms ease-in;
+}
+
+.page-transition-fade-exit {
+  opacity: 1;
+}
+
+.page-transition-fade-exit-active {
+  opacity: 0;
+  transition: opacity 300ms ease-out;
+}
+
+/* Slide transition */
+.page-transition-slide-enter {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.page-transition-slide-enter-active {
+  transform: translateX(0);
+  opacity: 1;
+  transition: transform 350ms ease-out, opacity 350ms ease-out;
+}
+
+.page-transition-slide-exit {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.page-transition-slide-exit-active {
+  transform: translateX(-100%);
+  opacity: 0;
+  transition: transform 350ms ease-in, opacity 350ms ease-in;
+}
+
+/* === Celebratory Animations === */
+
+/* Success celebration */
+@keyframes celebrate {
+  0% {
+    transform: scale(0.8) rotate(-10deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(10deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.celebrate {
+  animation: celebrate 600ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Confetti effect */
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-100%) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.confetti {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+  animation: confetti-fall 3s linear forwards;
+}
+
+/* Goal achieved animation */
+@keyframes goal-achieved {
+  0%, 100% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.1) rotate(-5deg);
+  }
+  75% {
+    transform: scale(1.1) rotate(5deg);
+  }
+}
+
+.goal-achieved {
+  animation: goal-achieved 500ms ease-in-out;
+}
+
+/* Budget met pulse */
+@keyframes budget-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 0 20px rgba(16, 185, 129, 0);
+  }
+}
+
+.budget-pulse {
+  animation: budget-pulse 1s infinite;
+}
+
+/* === Modal Transitions === */
+
+/* Modal backdrop */
+.modal-backdrop-enter {
+  opacity: 0;
+}
+
+.modal-backdrop-enter-active {
+  opacity: 1;
+  transition: opacity 250ms ease-out;
+}
+
+.modal-backdrop-exit {
+  opacity: 1;
+}
+
+.modal-backdrop-exit-active {
+  opacity: 0;
+  transition: opacity 250ms ease-in;
+}
+
+/* Modal content */
+.modal-content-enter {
+  transform: scale(0.9) translateY(-20px);
+  opacity: 0;
+}
+
+.modal-content-enter-active {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-content-exit {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+.modal-content-exit-active {
+  transform: scale(0.9) translateY(-20px);
+  opacity: 0;
+  transition: all 200ms cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* === List Transitions === */
+
+/* Item enter */
+@keyframes list-item-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.list-item-enter {
+  animation: list-item-enter 300ms ease-out;
+}
+
+/* Item exit */
+@keyframes list-item-exit {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+}
+
+.list-item-exit {
+  animation: list-item-exit 250ms ease-in;
+}
+
+/* === Toast Notifications === */
+
+/* Toast slide in from right */
+@keyframes toast-slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast-enter {
+  animation: toast-slide-in 300ms ease-out;
+}
+
+/* Toast slide out */
+@keyframes toast-slide-out {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.toast-exit {
+  animation: toast-slide-out 250ms ease-in;
+}
+
+/* === Loading States === */
+
+/* Skeleton loading */
+@keyframes skeleton-loading {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary, #f3f4f6) 0%,
+    var(--bg-hover, #e5e7eb) 20%,
+    var(--bg-secondary, #f3f4f6) 40%,
+    var(--bg-secondary, #f3f4f6) 100%
+  );
+  background-size: 200px 100%;
+  animation: skeleton-loading 1.2s ease-in-out infinite;
+}
+
+/* Spinner */
+@keyframes spinner-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  display: inline-block;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-left-color: var(--primary-color, #7c3aed);
+  border-radius: 50%;
+  animation: spinner-rotate 0.8s linear infinite;
+}
+
+/* === Card Animations === */
+
+/* Card hover lift */
+.card-lift {
+  transition: transform 250ms ease, box-shadow 250ms ease;
+}
+
+.card-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg, 0 10px 25px rgba(0, 0, 0, 0.15));
+}
+
+/* Card flip */
+@keyframes card-flip {
+  0% {
+    transform: rotateY(0deg);
+  }
+  100% {
+    transform: rotateY(180deg);
+  }
+}
+
+.card-flip {
+  animation: card-flip 600ms ease-in-out;
+}
+
+/* === Number Animations === */
+
+/* Number count up (for balance updates) */
+@keyframes number-highlight {
+  0%, 100% {
+    color: inherit;
+    background: transparent;
+  }
+  50% {
+    color: var(--success-color, #10b981);
+    background: rgba(16, 185, 129, 0.1);
+  }
+}
+
+.number-highlight {
+  animation: number-highlight 1s ease-in-out;
+}
+
+/* === Progress Bar Animations === */
+
+@keyframes progress-fill {
+  from {
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  to {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+}
+
+.progress-fill {
+  animation: progress-fill 1s ease-out;
+}
+
+/* === Utility Classes === */
+
+/* Fade in on load */
+.fade-in {
+  animation: fadeIn 500ms ease-in;
+}
+
+/* Slide in from bottom */
+@keyframes slideInUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.slide-in-up {
+  animation: slideInUp 400ms ease-out;
+}
+
+/* Bounce */
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+.bounce {
+  animation: bounce 1s ease-in-out;
+}
+
+/* Shake (for errors) */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-5px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(5px);
+  }
+}
+
+.shake {
+  animation: shake 500ms ease-in-out;
+}
+
+/* === Dark Theme Adjustments === */
+
+[data-theme="dark"] .skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary, #1f2937) 0%,
+    var(--bg-hover, #374151) 20%,
+    var(--bg-secondary, #1f2937) 40%,
+    var(--bg-secondary, #1f2937) 100%
+  );
+}
+
+[data-theme="dark"] .spinner {
+  border-color: rgba(255, 255, 255, 0.1);
+  border-left-color: var(--primary-color, #a78bfa);
+}
+
+/* === Accessibility === */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
