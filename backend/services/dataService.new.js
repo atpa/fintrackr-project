@@ -18,13 +18,25 @@ let db = null;
  */
 function initDB() {
   if (db) return db;
-  
+
+  if (ENV.DISABLE_PERSIST) {
+    db = new Database(':memory:');
+    db.pragma('journal_mode = WAL');
+    db.pragma('foreign_keys = ON');
+
+    const schema = fs.readFileSync(schemaPath, 'utf-8');
+    db.exec(schema);
+    console.log('✅ In-memory database initialized with schema (persistence disabled)');
+    ensureBankConnectionsAccountIdColumn(db);
+    return db;
+  }
+
   const dbExists = fs.existsSync(dbPath);
-  
+
   db = new Database(dbPath);
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
-  
+
   // Initialize schema if database is new
   if (!dbExists) {
     const schema = fs.readFileSync(schemaPath, 'utf-8');
