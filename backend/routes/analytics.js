@@ -6,7 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateRequest } = require('../middleware/auth');
-const { 
+const {
   analyzeSpendingTrends,
   forecastSpending,
   analyzeByCategory,
@@ -15,7 +15,7 @@ const {
   analyzeSavingsPotential
 } = require('../services/analyticsService');
 const { convertAmount } = require('../services/currencyService');
-const db = require('../services/dataService.new');
+const { getDB } = require('../services/dataService.new');
 
 router.use(authenticateRequest);
 
@@ -27,11 +27,11 @@ router.use(authenticateRequest);
 router.get('/forecast', (req, res) => {
   try {
     const userId = req.user.id;
-    
+
     // Get transactions for last 30 days
-    const stmt = db.prepare(`
-      SELECT * FROM transactions 
-      WHERE user_id = ? 
+    const stmt = getDB().prepare(`
+      SELECT * FROM transactions
+      WHERE user_id = ?
       AND date >= date('now', '-30 days')
       ORDER BY date DESC
     `);
@@ -87,8 +87,8 @@ router.get('/analytics/trends', (req, res) => {
   try {
     const userId = req.user.id;
     const currency = req.query.currency || 'USD';
-    
-    const stmt = db.prepare('SELECT * FROM transactions WHERE user_id = ? ORDER BY date');
+
+    const stmt = getDB().prepare('SELECT * FROM transactions WHERE user_id = ? ORDER BY date');
     const transactions = stmt.all(userId);
     
     const trends = analyzeSpendingTrends(transactions, currency, convertAmount);
@@ -108,9 +108,9 @@ router.get('/analytics/categories', (req, res) => {
   try {
     const userId = req.user.id;
     const currency = req.query.currency || 'USD';
-    
-    const txStmt = db.prepare('SELECT * FROM transactions WHERE user_id = ?');
-    const catStmt = db.prepare('SELECT * FROM categories WHERE user_id = ?');
+
+    const txStmt = getDB().prepare('SELECT * FROM transactions WHERE user_id = ?');
+    const catStmt = getDB().prepare('SELECT * FROM categories WHERE user_id = ?');
     
     const transactions = txStmt.all(userId);
     const categories = catStmt.all(userId);
@@ -132,8 +132,8 @@ router.get('/analytics/anomalies', (req, res) => {
   try {
     const userId = req.user.id;
     const currency = req.query.currency || 'USD';
-    
-    const stmt = db.prepare('SELECT * FROM transactions WHERE user_id = ? ORDER BY date DESC');
+
+    const stmt = getDB().prepare('SELECT * FROM transactions WHERE user_id = ? ORDER BY date DESC');
     const transactions = stmt.all(userId);
     
     const anomalies = detectAnomalies(transactions, currency, convertAmount);
@@ -153,9 +153,9 @@ router.get('/analytics/recommendations', (req, res) => {
   try {
     const userId = req.user.id;
     const currency = req.query.currency || 'USD';
-    
-    const txStmt = db.prepare('SELECT * FROM transactions WHERE user_id = ?');
-    const catStmt = db.prepare('SELECT * FROM categories WHERE user_id = ?');
+
+    const txStmt = getDB().prepare('SELECT * FROM transactions WHERE user_id = ?');
+    const catStmt = getDB().prepare('SELECT * FROM categories WHERE user_id = ?');
     
     const transactions = txStmt.all(userId);
     const categories = catStmt.all(userId);
@@ -182,9 +182,9 @@ router.get('/analytics/savings', (req, res) => {
   try {
     const userId = req.user.id;
     const currency = req.query.currency || 'USD';
-    
-    const txStmt = db.prepare('SELECT * FROM transactions WHERE user_id = ?');
-    const catStmt = db.prepare('SELECT * FROM categories WHERE user_id = ?');
+
+    const txStmt = getDB().prepare('SELECT * FROM transactions WHERE user_id = ?');
+    const catStmt = getDB().prepare('SELECT * FROM categories WHERE user_id = ?');
     
     const transactions = txStmt.all(userId);
     const categories = catStmt.all(userId);
@@ -210,9 +210,9 @@ router.get('/analytics/savings', (req, res) => {
 router.get('/recurring', (req, res) => {
   try {
     const userId = req.user.id;
-    
+
     // Get recurring transactions from database
-    const stmt = db.prepare('SELECT * FROM recurring WHERE user_id = ?');
+    const stmt = getDB().prepare('SELECT * FROM recurring WHERE user_id = ?');
     const recurring = stmt.all(userId);
     
     res.json({ recurring });
@@ -230,17 +230,17 @@ router.get('/insights', (req, res) => {
   try {
     const userId = req.user.id;
     const currency = req.query.currency || 'USD';
-    
-    const txStmt = db.prepare(`
-      SELECT * FROM transactions 
-      WHERE user_id = ? 
+
+    const txStmt = getDB().prepare(`
+      SELECT * FROM transactions
+      WHERE user_id = ?
       AND date >= date('now', '-90 days')
       ORDER BY date DESC
     `);
-    const catStmt = db.prepare('SELECT * FROM categories WHERE user_id = ?');
-    const budStmt = db.prepare(`
-      SELECT * FROM budgets 
-      WHERE user_id = ? 
+    const catStmt = getDB().prepare('SELECT * FROM categories WHERE user_id = ?');
+    const budStmt = getDB().prepare(`
+      SELECT * FROM budgets
+      WHERE user_id = ?
       AND month = strftime('%Y-%m', 'now')
     `);
     
