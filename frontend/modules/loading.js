@@ -129,15 +129,69 @@ export function showEmpty(containerId, message, actionText = null, actionCallbac
  * @returns {Promise<any>} Result of async function
  */
 export async function withLoading(containerId, asyncFn, loadingMessage = 'Загрузка...') {
+  let timeoutId = null;
+  
   try {
     show(containerId, loadingMessage);
+    
+    // Safety timeout - force hide loading after 60 seconds
+    timeoutId = setTimeout(() => {
+      console.error('[Loading] Timeout - forcing hide loading spinner');
+      hide(containerId);
+      showError(containerId, 'Превышено время ожидания. Пожалуйста, обновите страницу.');
+    }, 60000);
+    
     const result = await asyncFn();
+    
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    
     hide(containerId);
     return result;
   } catch (error) {
-    showError(containerId, error.message || 'Произошла ошибка');
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    
+    // Get user-friendly error message
+    const message = getUserFriendlyErrorMessage(error);
+    showError(containerId, message);
     throw error;
   }
+}
+
+/**
+ * Get user-friendly error message
+ * @param {Error} error - Error object
+ * @returns {string} User-friendly message
+ */
+function getUserFriendlyErrorMessage(error) {
+  if (!error) {
+    return 'Произошла ошибка';
+  }
+  
+  // Check for timeout
+  if (error.code === 'REQUEST_TIMEOUT' || error.status === 408) {
+    return 'Превышено время ожидания. Проверьте подключение к интернету.';
+  }
+  
+  // Check for network errors
+  if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
+    return 'Ошибка сети. Проверьте подключение к интернету.';
+  }
+  
+  // Check for auth errors
+  if (error.status === 401) {
+    return 'Необходима авторизация';
+  }
+  
+  // Return error message if it's user-friendly (short and in Russian)
+  if (error.message && error.message.length < 200 && /[а-яА-Я]/.test(error.message)) {
+    return error.message;
+  }
+  
+  return 'Произошла ошибка';
 }
 
 /**

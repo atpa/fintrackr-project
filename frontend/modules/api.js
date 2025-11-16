@@ -1,5 +1,8 @@
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
+// Default timeout for API requests (30 seconds)
+const DEFAULT_TIMEOUT = 30000;
+
 let csrfToken = null;
 let csrfExpiry = 0;
 let csrfPromise = null;
@@ -63,8 +66,41 @@ async function parseJsonResponse(response) {
   return response.json();
 }
 
+/**
+ * Fetch with timeout
+ * @param {string} url - Request URL
+ * @param {Object} options - Fetch options
+ * @param {number} timeout - Timeout in milliseconds
+ */
+async function fetchWithTimeout(url, options = {}, timeout = DEFAULT_TIMEOUT) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    
+    // Handle timeout
+    if (error.name === 'AbortError') {
+      const timeoutError = new Error('Request timeout');
+      timeoutError.status = 408;
+      timeoutError.code = 'REQUEST_TIMEOUT';
+      throw timeoutError;
+    }
+    
+    throw error;
+  }
+}
+
 export async function request(endpoint, options = {}) {
   const method = (options.method || 'GET').toUpperCase();
+  const timeout = options.timeout || DEFAULT_TIMEOUT;
   const headers = {
     Accept: 'application/json',
     ...(options.headers || {}),
@@ -94,7 +130,7 @@ export async function request(endpoint, options = {}) {
     headers['X-CSRF-Token'] = token;
   }
 
-  const response = await fetch(endpoint, fetchOptions);
+  const response = await fetchWithTimeout(endpoint, fetchOptions, timeout);
 
   if (!response.ok) {
     let errorPayload = null;
@@ -108,6 +144,8 @@ export async function request(endpoint, options = {}) {
       errorPayload?.error || `HTTP ${response.status}: ${response.statusText}`
     );
     error.status = response.status;
+    error.statusCode = response.status;
+    error.code = errorPayload?.code;
     error.details = errorPayload || undefined;
 
     const csrfError =

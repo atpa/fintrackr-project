@@ -18,13 +18,13 @@ function renderRecurringRows(items, tbody) {
     const tr = document.createElement('tr');
     const amount = item.amount ?? item.sampleAmount ?? 0;
     const currency = item.currency || item.sampleCurrency || 'USD';
-    const frequency = item.frequency || (item.avgPeriodDays ? ${item.avgPeriodDays} days : '-');
-    tr.innerHTML = 
-      <td></td>
-      <td> </td>
-      <td></td>
-      <td></td>
-    ;
+    const frequency = item.frequency || (item.avgPeriodDays ? `${item.avgPeriodDays} days` : '-');
+    tr.innerHTML = `
+      <td>${item.name || item.pattern || '-'}</td>
+      <td>${amount.toFixed(2)} ${currency}</td>
+      <td>${frequency}</td>
+      <td><button class="btn-secondary" data-id="${item.id}">Удалить</button></td>
+    `;
     tbody.appendChild(tr);
   });
 }
@@ -37,7 +37,7 @@ function updateSummary(items) {
     return;
   }
   const total = items.reduce((sum, item) => sum + Number(item.amount ?? item.sampleAmount ?? 0), 0);
-  summary.textContent = Monthly recurring total: ;
+  summary.textContent = `Monthly recurring total: ${total.toFixed(2)}`;
 }
 
 async function loadRecurring() {
