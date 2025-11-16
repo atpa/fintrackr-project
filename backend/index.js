@@ -12,6 +12,7 @@
 
 const app = require('./app');
 const { initDB } = require('./services/dataService.new');
+const { ENV } = require('./config/constants');
 
 const PORT = process.env.PORT || 3000;
 
@@ -28,7 +29,11 @@ try {
 // Start server
 const server = app.listen(PORT, () => {
   console.log(`🚀 FinTrackr server running on http://localhost:${PORT}`);
-  console.log(`📊 Using SQLite database at: backend/fintrackr.db`);
+  if (ENV.DISABLE_PERSIST) {
+    console.log('📊 Using in-memory SQLite database (persistence disabled)');
+  } else {
+    console.log(`📊 Using SQLite database at: backend/fintrackr.db`);
+  }
   console.log(`🔒 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
