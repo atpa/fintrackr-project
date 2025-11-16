@@ -47,8 +47,12 @@ backend/
 | `/api/rules` | Auth | Text classification rules for auto-categorizing transactions. |
 | `/api/analytics/*` | Auth | Forecast, trends, categories, anomalies, savings, insights. |
 | `/api/recurring` | Auth | Returns `{ recurring: [...] }` directly from SQLite. |
+| `/api/subscriptions` | Auth | CRUD for recurring subscriptions (title, amount, frequency, nextDate). |
 | `/api/rates`, `/api/convert`, `/api/banks` | public GET | Exchange rates and mock bank list (used by the sync UI). |
-| `/api/sync/*` | Auth (TODO) | Placeholder routes for future bank connectors. |
+| `/api/sync/connections` | Auth | List stored bank connections (joins with banks + accounts). |
+| `/api/sync/connect` | Auth | Create a mock connection for a user-owned account. |
+| `/api/sync/transactions` | Auth | Return canned transactions for the linked bank (used for demo sync). |
+| `/api/sync/connections/:id` | Auth | Remove an existing bank connection. |
 
 ### Static assets
 `app.js` serves `public/` (landing/dashboard/etc.) and ensures non-API routes fall back to 404/HTML responses while API routes return JSON only.

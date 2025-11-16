@@ -36,6 +36,8 @@ Vite keeps `public/js/<entry>.js` aligned with `frontend/pages/<entry>.js`, so t
 - **Recurring** now consumes the real backend response (`GET /api/recurring` returns `{ recurring: [] }`).
 - **Auth pages** (`login.js`, `register.js`) rely on the shared `postData` helper with `csrf:false` and immediately run `Auth.syncSession(true)`.
 - **Settings** still stores visual preferences in `localStorage`, but the network layer is ready for a future `/api/profile` endpoint.
+- **Subscriptions** (`subscriptions.js`) uses the shared API helpers to manage `/api/subscriptions` and keeps the list in sync after every change.
+- **Bank sync** (`sync.js`) lists `/api/sync/connections`, can create a connection (`/api/sync/connect`), delete it, and trigger mock transactions through `/api/sync/transactions`.
 
 ## Network layer
 1. `Auth` registers a `window.fetch` interceptor as soon as it loads (imported by `profile.js` and many pages).

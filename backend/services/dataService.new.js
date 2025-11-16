@@ -31,8 +31,21 @@ function initDB() {
     db.exec(schema);
     console.log('✅ Database initialized with schema');
   }
+  ensureBankConnectionsAccountIdColumn(db);
   
   return db;
+}
+
+function ensureBankConnectionsAccountIdColumn(dbInstance) {
+  try {
+    const columns = dbInstance.prepare("PRAGMA table_info('bank_connections')").all();
+    const hasAccountId = columns.some((col) => col.name === 'account_id');
+    if (!hasAccountId) {
+      dbInstance.prepare('ALTER TABLE bank_connections ADD COLUMN account_id INTEGER').run();
+    }
+  } catch (error) {
+    console.warn('Failed to ensure bank_connections.account_id column:', error.message);
+  }
 }
 
 /**
@@ -414,6 +427,118 @@ function deleteGoal(id) {
   return stmt.run(id).changes > 0;
 }
 
+// ==================== SUBSCRIPTIONS ====================
+
+function getSubscriptionsByUserId(userId) {
+  return getDB()
+    .prepare('SELECT * FROM subscriptions WHERE user_id = ? ORDER BY next_date')
+    .all(userId);
+}
+
+function getSubscriptionById(id) {
+  return getDB().prepare('SELECT * FROM subscriptions WHERE id = ?').get(id);
+}
+
+function createSubscription(userId, title, amount, currency, frequency, nextDate) {
+  const stmt = getDB().prepare(`
+    INSERT INTO subscriptions (user_id, title, amount, currency, frequency, next_date)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+  const result = stmt.run(userId, title, amount, currency, frequency, nextDate);
+  return result.lastInsertRowid;
+}
+
+function updateSubscription(id, updates) {
+  const fields = [];
+  const values = [];
+  
+  if (updates.title !== undefined) {
+    fields.push('title = ?');
+    values.push(updates.title);
+  }
+  if (updates.amount !== undefined) {
+    fields.push('amount = ?');
+    values.push(updates.amount);
+  }
+  if (updates.currency !== undefined) {
+    fields.push('currency = ?');
+    values.push(updates.currency);
+  }
+  if (updates.frequency !== undefined) {
+    fields.push('frequency = ?');
+    values.push(updates.frequency);
+  }
+  if (updates.next_date !== undefined) {
+    fields.push('next_date = ?');
+    values.push(updates.next_date);
+  }
+  
+  if (!fields.length) {
+    return false;
+  }
+  
+  values.push(id);
+  const stmt = getDB().prepare(`UPDATE subscriptions SET ${fields.join(', ')} WHERE id = ?`);
+  return stmt.run(...values).changes > 0;
+}
+
+function deleteSubscription(id) {
+  const stmt = getDB().prepare('DELETE FROM subscriptions WHERE id = ?');
+  return stmt.run(id).changes > 0;
+}
+
+// ==================== BANK CONNECTIONS ====================
+
+function getBankConnectionsByUserId(userId) {
+  return getDB()
+    .prepare('SELECT * FROM bank_connections WHERE user_id = ? ORDER BY created_at DESC')
+    .all(userId);
+}
+
+function getBankConnectionById(id) {
+  return getDB().prepare('SELECT * FROM bank_connections WHERE id = ?').get(id);
+}
+
+function createBankConnection(userId, bankId, accountId, accountName, status = 'active') {
+  const stmt = getDB().prepare(`
+    INSERT INTO bank_connections (user_id, bank_id, account_id, account_name, status)
+    VALUES (?, ?, ?, ?, ?)
+  `);
+  const result = stmt.run(userId, bankId, accountId, accountName, status);
+  return result.lastInsertRowid;
+}
+
+function updateBankConnection(id, updates) {
+  const fields = [];
+  const values = [];
+  
+  if (updates.status !== undefined) {
+    fields.push('status = ?');
+    values.push(updates.status);
+  }
+  if (updates.account_name !== undefined) {
+    fields.push('account_name = ?');
+    values.push(updates.account_name);
+  }
+  if (updates.account_id !== undefined) {
+    fields.push('account_id = ?');
+    values.push(updates.account_id);
+  }
+  
+  if (!fields.length) {
+    return false;
+  }
+  
+  values.push(id);
+  const stmt = getDB().prepare(`UPDATE bank_connections SET ${fields.join(', ')} WHERE id = ?`);
+  return stmt.run(...values).changes > 0;
+}
+
+function deleteBankConnection(id) {
+  const stmt = getDB().prepare('DELETE FROM bank_connections WHERE id = ?');
+  return stmt.run(id).changes > 0;
+}
+
 // ==================== REFRESH TOKENS ====================
 
 function getRefreshToken(token) {
@@ -629,6 +754,20 @@ module.exports = {
   createGoal,
   updateGoal,
   deleteGoal,
+  
+  // Subscriptions
+  getSubscriptionsByUserId,
+  getSubscriptionById,
+  createSubscription,
+  updateSubscription,
+  deleteSubscription,
+  
+  // Bank connections
+  getBankConnectionsByUserId,
+  getBankConnectionById,
+  createBankConnection,
+  updateBankConnection,
+  deleteBankConnection,
   
   // Refresh tokens
   getRefreshToken,

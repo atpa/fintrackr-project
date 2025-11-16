@@ -1,13 +1,9 @@
-import fetchData from '../modules/api.js';
+import fetchData, { postData, deleteData } from '../modules/api.js';
 import initNavigation from '../modules/navigation.js';
 import initProfileShell from '../modules/profile.js';
 
 initNavigation();
 initProfileShell();
-
-/**
- * Логика для страницы категорий: загрузка, отображение, добавление и удаление категорий.
- */
 
 async function loadCategories() {
   try {
@@ -19,12 +15,12 @@ async function loadCategories() {
       const tr = document.createElement('tr');
       const td = document.createElement('td');
       td.colSpan = 3;
-      td.textContent = 'Категорий пока нет';
+      td.textContent = 'Категории пока не созданы';
       tr.appendChild(td);
       tbody.appendChild(tr);
       return;
     }
-    categories.forEach(cat => {
+    categories.forEach((cat) => {
       const tr = document.createElement('tr');
       const nameTd = document.createElement('td');
       nameTd.textContent = cat.name;
@@ -37,18 +33,12 @@ async function loadCategories() {
       delBtn.style.background = 'var(--danger)';
       delBtn.style.fontSize = '0.8rem';
       delBtn.addEventListener('click', async () => {
-        if (!confirm('Удалить категорию? Все операции останутся без категории.')) return;
+        if (!confirm('Удалить категорию? Связанные транзакции останутся без категории.')) return;
         try {
-          const resp = await fetch(`/api/categories/${cat.id}`, { method: 'DELETE' });
-          if (resp.ok) {
-            loadCategories();
-          } else {
-            const err = await resp.json();
-            alert('Ошибка: ' + (err.error || 'не удалось удалить'));
-          }
+          await deleteData(`/api/categories/${cat.id}`);
+          loadCategories();
         } catch (err) {
-          console.error(err);
-          alert('Ошибка сети');
+          alert(err.message || 'Не удалось удалить категорию');
         }
       });
       actionTd.appendChild(delBtn);
@@ -64,29 +54,17 @@ async function initCategoriesPage() {
   loadCategories();
   const form = document.getElementById('addCategoryForm');
   if (form) {
-    form.addEventListener('submit', async e => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const name = document.getElementById('catName').value.trim();
       const kind = document.getElementById('catKind').value;
       if (!name) return;
       try {
-        const resp = await fetch('/api/categories', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, kind })
-        });
-        if (resp.ok) {
-          const created = await resp.json();
-          // Перезагружаем список
-          loadCategories();
-          form.reset();
-        } else {
-          const err = await resp.json();
-          alert('Ошибка: ' + (err.error || 'не удалось добавить'));
-        }
+        await postData('/api/categories', { name, kind });
+        form.reset();
+        loadCategories();
       } catch (err) {
-        console.error(err);
-        alert('Ошибка сети');
+        alert(err.message || 'Не удалось создать категорию');
       }
     });
   }

@@ -252,8 +252,8 @@ function migrateFromJSON(db) {
     // Migrate bank connections
     if (jsonData.bankConnections && jsonData.bankConnections.length > 0) {
       const insertConnection = db.prepare(`
-        INSERT INTO bank_connections (id, user_id, bank_id, account_name, status)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO bank_connections (id, user_id, bank_id, account_id, account_name, status)
+        VALUES (?, ?, ?, ?, ?, ?)
       `);
       
       for (const conn of jsonData.bankConnections) {
@@ -261,6 +261,7 @@ function migrateFromJSON(db) {
           conn.id,
           conn.user_id,
           conn.bank_id,
+          conn.account_id || null,
           conn.account_name,
           conn.status || 'active'
         );

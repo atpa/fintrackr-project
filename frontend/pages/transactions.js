@@ -1,4 +1,4 @@
-import fetchData from '../modules/api.js';
+import fetchData, { postData, deleteData } from '../modules/api.js';
 import initNavigation from '../modules/navigation.js';
 import initProfileShell from '../modules/profile.js';
 
@@ -145,17 +145,7 @@ async function initTransactionsPage() {
         }
       }
       try {
-        const resp = await fetch('/api/transactions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newTx)
-        });
-        if (!resp.ok) {
-          const err = await resp.json();
-          alert('Ошибка: ' + (err.error || 'не удалось добавить операцию'));
-          return;
-        }
-        const created = await resp.json();
+        const created = await postData('/api/transactions', newTx);
         // Добавляем в общий массив
         window.allTransactions.unshift(created);
         // Добавляем в таблицу в начало
@@ -225,12 +215,7 @@ async function initTransactionsPage() {
     if (!id) return;
     if (!confirm('Удалить операцию?')) return;
     try {
-      const resp = await fetch(`/api/transactions/${id}`, { method: 'DELETE' });
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({}));
-        alert('Ошибка: ' + (err.error || 'не удалось удалить операцию'));
-        return;
-      }
+      await deleteData(`/api/transactions/${id}`);
       // Удаляем из локального массива и перерисовываем
       window.allTransactions = (window.allTransactions || []).filter(tx => String(tx.id) !== String(id));
       renderTable(window.allTransactions);

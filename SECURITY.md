@@ -22,6 +22,7 @@
 ## Data storage
 - SQLite runs in WAL mode; back up `backend/fintrackr.db` together with `*.db-wal`/`*.db-shm`.
 - Passwords are hashed with bcrypt; refresh tokens live in the `refresh_tokens` table.
+- Bank connections and subscriptions are stored per user in SQLite, linked to accounts via foreign keys.
 - The CSRF store is in-memory. For multiple API instances, move tokens into Redis or expose sticky sessions.
 
 ## Hardening checklist

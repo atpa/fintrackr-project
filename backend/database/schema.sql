@@ -163,10 +163,12 @@ CREATE TABLE IF NOT EXISTS bank_connections (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   bank_id INTEGER NOT NULL,
+  account_id INTEGER,
   account_name TEXT NOT NULL,
   status TEXT DEFAULT 'active',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_bank_connections_user_id ON bank_connections(user_id);
