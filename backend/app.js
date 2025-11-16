@@ -24,6 +24,9 @@ const logger = require('./utils/logger');
 
 const app = express();
 
+// Disable ETag generation to prevent 304 on API JSON responses
+app.set('etag', false);
+
 // Security middleware
 app.use(securityHeaders);
 app.use(sanitizeInput);
@@ -36,7 +39,8 @@ app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
     const duration = Date.now() - start;
-    logger.logRequest(req.method, req.url, res.statusCode, duration);
+    // Use originalUrl to capture full mounted route path (e.g., /api/accounts)
+    logger.logRequest(req.method, req.originalUrl || req.url, res.statusCode, duration);
   });
   next();
 });
@@ -44,6 +48,14 @@ app.use((req, res, next) => {
 app.use(cookieParser());
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Ensure API responses are never cached by the browser
+app.use('/api', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
 
 // CSRF protection for all API routes (validates POST/PUT/DELETE/PATCH)
 app.use('/api', validateCsrfToken);

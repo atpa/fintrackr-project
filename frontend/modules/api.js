@@ -11,9 +11,31 @@
  */
 export async function fetchData(endpoint) {
   try {
-    const response = await fetch(endpoint);
+    const headers = {
+      'Accept': 'application/json',
+      'Cache-Control': 'no-cache'
+    };
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      cache: 'no-store',
+      credentials: 'include',
+      headers
+    });
     
     if (!response.ok) {
+      // Some environments can return 304 for API GETs; retry with cache-busting
+      if (response.status === 304) {
+        const bustUrl = endpoint + (endpoint.includes('?') ? '&' : '?') + `_ts=${Date.now()}`;
+        const retry = await fetch(bustUrl, {
+          method: 'GET',
+          cache: 'no-store',
+          credentials: 'include',
+          headers
+        });
+        if (retry.ok) {
+          return await retry.json();
+        }
+      }
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
     }
@@ -39,8 +61,10 @@ export async function postData(endpoint, data) {
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       },
+      credentials: 'include',
       body: JSON.stringify(data)
     });
     
@@ -70,8 +94,10 @@ export async function putData(endpoint, data) {
     const response = await fetch(endpoint, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       },
+      credentials: 'include',
       body: JSON.stringify(data)
     });
     
@@ -98,7 +124,11 @@ export async function putData(endpoint, data) {
 export async function deleteData(endpoint) {
   try {
     const response = await fetch(endpoint, {
-      method: 'DELETE'
+      method: 'DELETE',
+      credentials: 'include',
+      headers: {
+        'Accept': 'application/json'
+      }
     });
     
     if (!response.ok) {

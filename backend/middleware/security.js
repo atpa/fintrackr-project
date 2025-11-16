@@ -159,7 +159,7 @@ function sanitizeInput(req, res, next) {
  */
 function sanitizeObject(obj) {
   for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
       if (typeof obj[key] === 'string') {
         // Remove potential XSS attacks
         obj[key] = obj[key]
