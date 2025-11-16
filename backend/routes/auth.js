@@ -25,23 +25,24 @@ const {
   isTokenBlacklisted
 } = require('../services/dataService.new');
 const { parseCookies } = require('../services/authService');
+const { rateLimit } = require('../middleware/security');
+const logger = require('../utils/logger');
+const { validate, schemas } = require('../middleware/validation');
+
+// Strict rate limiter for authentication endpoints
+// Prevents brute force attacks by limiting login/register attempts
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  maxRequests: 5 // Only 5 attempts per 15 minutes per IP
+});
 
 /**
  * POST /api/register
  * Register a new user
  */
-router.post('/register', async (req, res) => {
+router.post('/register', authLimiter, validate(schemas.auth.register), async (req, res) => {
   try {
     const { name, email, password } = req.body;
-    
-    // Validation
-    if (!name || !email || !password) {
-      return res.status(400).json({ error: 'Name, email, and password are required' });
-    }
-    
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' });
-    }
     
     // Check if user exists
     const existing = getUserByEmail(email);
@@ -70,8 +71,10 @@ router.post('/register', async (req, res) => {
     res.status(201).json({
       user: { id: userId, name, email }
     });
+    
+    logger.logAuth('register', userId, email, true);
   } catch (error) {
-    console.error('Registration error:', error);
+    logger.logError('Registration failed', error, { email: req.body.email });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -80,14 +83,9 @@ router.post('/register', async (req, res) => {
  * POST /api/login
  * Authenticate user and return tokens
  */
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, validate(schemas.auth.login), async (req, res) => {
   try {
     const { email, password } = req.body;
-    
-    // Validation
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
-    }
     
     // Find user
     const user = getUserByEmail(email);
@@ -116,8 +114,10 @@ router.post('/login', async (req, res) => {
     res.json({
       user: sanitizeUser(user)
     });
+    
+    logger.logAuth('login', user.id, user.email, true);
   } catch (error) {
-    console.error('Login error:', error);
+    logger.logError('Login failed', error, { email: req.body.email });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -146,8 +146,10 @@ router.post('/logout', (req, res) => {
     clearAuthCookies(res);
     
     res.json({ success: true });
+    
+    logger.info('User logged out');
   } catch (error) {
-    console.error('Logout error:', error);
+    logger.logError('Logout failed', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -184,8 +186,10 @@ router.post('/refresh', (req, res) => {
     setAuthCookies(res, { accessToken, refreshToken });
     
     res.json({ success: true });
+    
+    logger.info('Token refreshed', { userId: user.id });
   } catch (error) {
-    console.error('Refresh error:', error);
+    logger.logError('Token refresh failed', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

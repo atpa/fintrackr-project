@@ -106,6 +106,12 @@ function validateCsrfToken(req, res, next) {
     return next();
   }
   
+  // Skip CSRF for authentication endpoints (register, login)
+  const publicAuthPaths = ['/api/register', '/api/login', '/api/refresh'];
+  if (publicAuthPaths.includes(req.path)) {
+    return next();
+  }
+  
   // Skip if user not authenticated (handled by auth middleware)
   if (!req.user || !req.user.id) {
     return next();

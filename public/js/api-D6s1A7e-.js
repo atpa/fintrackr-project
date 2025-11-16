@@ -1,0 +1,1 @@
+async function a(t){try{const r=await fetch(t);if(!r.ok){const o=await r.json().catch(()=>({}));throw new Error(o.error||`HTTP ${r.status}: ${r.statusText}`)}return await r.json()}catch(r){throw r instanceof Error?r:new Error(`Ошибка запроса: ${r}`)}}export{a as f};

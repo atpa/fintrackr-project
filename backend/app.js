@@ -18,17 +18,42 @@ const syncRouter = require('./routes/sync');
 const authRouter = require('./routes/auth');
 const twofaRouter = require('./routes/twofa');
 const { errorHandler, AppError } = require('./middleware/errorHandler');
+const { securityHeaders, sanitizeInput } = require('./middleware/security');
+const { validateCsrfToken, getCsrfToken } = require('./middleware/csrf');
+const logger = require('./utils/logger');
 
 const app = express();
 
+// Security middleware
+app.use(securityHeaders);
+app.use(sanitizeInput);
+
+// HTTP request logging
 app.use(morgan('dev'));
+
+// Log HTTP requests with Winston
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    logger.logRequest(req.method, req.url, res.statusCode, duration);
+  });
+  next();
+});
+
 app.use(cookieParser());
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// CSRF protection for all API routes (validates POST/PUT/DELETE/PATCH)
+app.use('/api', validateCsrfToken);
+
 // API routes - Auth routes first (no authentication required)
 app.use('/api', authRouter);
 app.use('/api/2fa', twofaRouter);
+
+// CSRF token endpoint
+app.get('/api/csrf-token', getCsrfToken);
 
 // Protected routes (require authentication)
 app.use('/api/accounts', accountsRouter);

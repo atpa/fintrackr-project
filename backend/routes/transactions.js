@@ -19,6 +19,8 @@ const {
 } = require('../services/dataService.new');
 const { authenticateRequest } = require('../middleware/auth');
 const { convertAmount } = require('../services/currencyService');
+const { validate, schemas } = require('../middleware/validation');
+const logger = require('../utils/logger');
 
 router.use(authenticateRequest);
 
@@ -31,7 +33,7 @@ router.get('/', (req, res) => {
     const transactions = getTransactionsByUserId(req.user.userId);
     res.json(transactions);
   } catch (error) {
-    console.error('Get transactions error:', error);
+    logger.logError('Get transactions failed', error, { userId: req.user.userId });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -40,18 +42,9 @@ router.get('/', (req, res) => {
  * POST /api/transactions
  * Create new transaction and update account balance and budgets
  */
-router.post('/', (req, res) => {
+router.post('/', validate(schemas.transaction.create), (req, res) => {
   try {
     const { account_id, category_id, type, amount, currency, date, note } = req.body;
-    
-    // Validation
-    if (!account_id || !type || !amount || !currency || !date) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-    
-    if (!['income', 'expense'].includes(type)) {
-      return res.status(400).json({ error: 'Type must be income or expense' });
-    }
     
     // Verify account ownership
     const account = getAccountById(account_id);
