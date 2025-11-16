@@ -1,6 +1,7 @@
 import fetchData from '../modules/api.js';
 import initNavigation from '../modules/navigation.js';
 import initProfileShell, { loadProfileSettings } from '../modules/profile.js';
+import Auth from '../modules/auth.js';
 import { renderBarChart, renderDonutChart } from '../modules/charts.js';
 
 /**
@@ -74,16 +75,9 @@ function convertAmount(amount, from, to) {
  * Инициализация дэшборда: загрузка данных и построение графика
  */
 async function initDashboard() {
-  // Если пользователь не авторизован, перенаправляем на страницу входа
-  try {
-    const stored = localStorage.getItem("user");
-    if (!stored) {
-      window.location.href = "login.html";
-      return;
-    }
-  } catch (e) {
-    // если localStorage недоступен, просто продолжаем
-  }
+  // Гарантируем, что сессия актуальна перед загрузкой данных
+  await Auth.requireAuth();
+
   const transactions = await fetchData("/api/transactions");
   const categories = await fetchData("/api/categories");
   // Выбранная пользователем валюта для отчётов
