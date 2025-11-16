@@ -1,4 +1,7 @@
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
+const { ENV } = require('../config/constants');
+const { parseCookies } = require('../services/authService');
 
 /**
  * CSRF Protection Middleware
@@ -74,25 +77,56 @@ function cleanupExpiredTokens() {
   }
 }
 
-/**
- * Middleware to generate CSRF token
- * Adds token to response for client to store
- */
+function getUserIdFromRequest(req) {
+  if (req.user && (req.user.id || req.user.userId)) {
+    return req.user.id || req.user.userId;
+  }
+
+  const cookies = parseCookies(req);
+  const rawToken = cookies.access_token;
+  if (!rawToken) {
+    return null;
+  }
+
+  try {
+    const payload = jwt.verify(rawToken, ENV.JWT_SECRET);
+    const resolvedId = payload.userId || payload.sub;
+    if (resolvedId && !req.user) {
+      req.user = {
+        id: resolvedId,
+        userId: resolvedId,
+        email: payload.email,
+      };
+    }
+    return resolvedId;
+  } catch (error) {
+    return null;
+  }
+}
+
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+const PUBLIC_AUTH_PATHS = ['/api/login', '/api/register', '/api/refresh'];
+
+function normalizePath(req) {
+  if (req.originalUrl) {
+    return req.originalUrl.split('?')[0];
+  }
+  const base = req.baseUrl || '';
+  const path = req.path || req.url || '';
+  return `${base}${path}`;
+}
+
 function generateCsrfToken(req, res, next) {
-  // Only generate for authenticated users
-  if (!req.user || !req.user.id) {
+  const userId = getUserIdFromRequest(req);
+  if (!userId) {
     return next();
   }
-  
+
   const token = generateToken();
-  storeToken(token, req.user.id);
-  
-  // Add token to response header
+  storeToken(token, userId);
   res.setHeader('X-CSRF-Token', token);
-  
-  // Also make it available in res.locals for templates
   res.locals.csrfToken = token;
-  
+
   next();
 }
 
@@ -101,65 +135,58 @@ function generateCsrfToken(req, res, next) {
  * Checks token from header or body
  */
 function validateCsrfToken(req, res, next) {
-  // Skip CSRF check for safe methods
-  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+  if (SAFE_METHODS.has(req.method)) {
     return next();
   }
-  
-  // Skip CSRF for authentication endpoints (register, login, refresh)
-  const publicAuthPaths = ['/api/register', '/api/login', '/api/refresh'];
-  if (publicAuthPaths.includes(req.path)) {
+
+  const path = normalizePath(req);
+  if (PUBLIC_AUTH_PATHS.includes(path)) {
     return next();
   }
-  
-  // TEMPORARY: Skip CSRF validation until frontend is updated
-  // TODO: Implement CSRF token handling in frontend
-  // For now, just pass through all requests
-  return next();
-  
-  /* Original CSRF validation code - will be re-enabled after frontend update
-  // Skip if user not authenticated (handled by auth middleware)
-  if (!req.user || !req.user.id) {
-    return next();
+
+  const userId = getUserIdFromRequest(req);
+  if (!userId) {
+    return res.status(401).json({
+      error: 'Authentication required',
+      code: 'CSRF_AUTH_REQUIRED',
+    });
   }
-  
-  // Get token from header or body
-  const token = req.headers['x-csrf-token'] || req.body?._csrf;
-  
+
+  const token =
+    req.headers['x-csrf-token'] ||
+    req.headers['X-CSRF-Token'] ||
+    req.body?._csrf;
+
   if (!token) {
     return res.status(403).json({
       error: 'CSRF token missing',
       code: 'CSRF_TOKEN_MISSING',
     });
   }
-  
-  // Validate token
-  if (!validateToken(token, req.user.id)) {
+
+  if (!validateToken(token, userId)) {
     return res.status(403).json({
       error: 'Invalid or expired CSRF token',
       code: 'CSRF_TOKEN_INVALID',
     });
   }
-  
-  // Optionally consume token (for one-time use)
-  // consumeToken(token);
-  
+
   next();
-  */
 }
 
 /**
  * Endpoint to get a new CSRF token
  */
 function getCsrfToken(req, res) {
-  if (!req.user || !req.user.id) {
+  const userId = getUserIdFromRequest(req);
+  if (!userId) {
     return res.status(401).json({
       error: 'Authentication required',
     });
   }
   
   const token = generateToken();
-  storeToken(token, req.user.id);
+  storeToken(token, userId);
   
   res.json({
     csrfToken: token,

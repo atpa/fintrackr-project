@@ -31,7 +31,7 @@ function updateProfileSummary(user) {
   }
 }
 
-function toggleAuthLinks(user, logoutRedirect) {
+async function toggleAuthLinks(user, logoutRedirect) {
   const loginLink = document.querySelector('.login-link');
   const registerLink = document.querySelector('.register-link');
   const logoutLink = document.querySelector('.logout-link');
@@ -41,11 +41,15 @@ function toggleAuthLinks(user, logoutRedirect) {
     if (registerLink) registerLink.style.display = 'none';
     if (logoutLink) {
       logoutLink.style.display = 'inline-block';
-      logoutLink.addEventListener('click', (event) => {
-        event.preventDefault();
-        Auth.logout();
-        window.location.href = logoutRedirect;
-      }, { once: true });
+      logoutLink.addEventListener(
+        'click',
+        async (event) => {
+          event.preventDefault();
+          await Auth.logout();
+          window.location.href = logoutRedirect;
+        },
+        { once: true }
+      );
     }
   } else {
     if (logoutLink) logoutLink.style.display = 'none';
@@ -54,7 +58,7 @@ function toggleAuthLinks(user, logoutRedirect) {
   }
 }
 
-function setupProfileShell({
+async function setupProfileShell({
   requireAuth = true,
   loginPath = 'login.html',
   logoutRedirect = 'landing.html',
@@ -63,23 +67,33 @@ function setupProfileShell({
   const currentPage = getCurrentPage();
   const isPublic = publicPages.has(currentPage);
 
-  if (requireAuth && !isPublic && !Auth.isLoggedIn()) {
-    window.location.href = loginPath;
-    return;
+  try {
+    if (requireAuth && !isPublic) {
+      await Auth.requireAuth();
+    } else {
+      await Auth.syncSession().catch(() => null);
+    }
+  } catch (error) {
+    if (requireAuth && !isPublic) {
+      window.location.href = loginPath;
+      return;
+    }
   }
 
   const user = Auth.getUser();
   updateProfileSummary(user);
-  toggleAuthLinks(user, logoutRedirect);
+  await toggleAuthLinks(user, logoutRedirect);
 }
 
 export function initProfileShell(options = {}) {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => setupProfileShell(options), {
-      once: true,
-    });
-  } else {
+  const run = () => {
     setupProfileShell(options);
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run, { once: true });
+  } else {
+    run();
   }
 }
 

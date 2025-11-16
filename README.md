@@ -1,519 +1,107 @@
-# 💰 FinTrackr — Персональный финансовый трекер
-
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Version](https://img.shields.io/badge/version-1.0.0-green.svg)
-![Node](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen.svg)
-![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
-
-**FinTrackr** — полнофункциональный веб-приложение для управления личными финансами. Современный стек, интуитивный интерфейс, REST API, безопасность на уровне Production. Разработано как выпускная квалификационная работа с демонстрацией полного цикла разработки финтех-продукта.
-
-## 🎯 Быстрый старт
-
-```bash
-# Клонирование и установка
-git clone https://github.com/atpa/fintrackr-project.git
-cd fintrackr-project
-npm install
-
-# Конфигурация (обязательно!)
-cp .env.example .env
-# Сгенерируйте безопасный JWT_SECRET:
-node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
-
-# Запуск
-npm start
-
-# Откройте в браузере: http://localhost:3000
-```
-
-## ✨ Основные возможности
-
-| Функция | Описание |
-|---------|----------|
-| 📊 **Дашборд** | Интерактивная визуализация доходов, расходов, баланса |
-| 💳 **Счета** | Управление мультивалютными счетами (USD, EUR, PLN, RUB) |
-| 💸 **Транзакции** | Полный CRUD с категоризацией и автоматическим пересчетом балансов |
-| 📈 **Бюджеты** | Создание лимитов по категориям, отслеживание выполнения |
-| 🔄 **Конвертация** | Автоматическая конвертация валют при операциях |
-| 🎯 **Финцели** | Планирование накоплений с прогрессом |
-| 📅 **Подписки** | Управление регулярными платежами |
-| 🔮 **Прогнозы** | Анализ трендов расходов (ML) |
-| 📱 **Адаптив** | Работает на всех устройствах (mobile-first) |
-| 🌙 **Темы** | Переключение светлой/темной темы |
-| 🔐 **Безопасность** | JWT + bcrypt, CSRF-защита, HTTPS ready |
-
-## 🏗️ Архитектура
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    FinTrackr Stack                       │
-├─────────────────────────────────────────────────────────┤
-│                                                           │
-│  Frontend (Vanilla JS + Vite)       Backend (Express)    │
-│  ├── Pages (Modules)               ├── Routes (14x)      │
-│  ├── Modules (auth, api, nav)      ├── Middleware (7x)   │
-│  ├── Components (UI)               ├── Services (13x)    │
-│  ├── CSS (2000+ lines)             ├── SQLite DB         │
-│  └── PWA + ServiceWorker           └── JWT Auth          │
-│                                                           │
-│  ┌─────────────────────────────────┐                     │
-│  │   HTTP ← → REST API (JSON)      │                     │
-│  │   Cookies (HttpOnly + Secure)   │                     │
-│  │   CORS + CSRF Protection        │                     │
-│  └─────────────────────────────────┘                     │
-│                                                           │
-└─────────────────────────────────────────────────────────┘
-```
-
-### Технологический стек
-
-**Frontend:**
-- HTML5 (семантика)
-- CSS3 (Grid, Flexbox, переменные)
-- JavaScript ES6+ (модули, async/await)
-- Vite (сборка)
-- ApexCharts (графики)
-- PWA (offline режим)
-
-**Backend:**
-- Node.js 14+ (runtime)
-- Express 5.x (фреймворк)
-- SQLite 3 (БД, better-sqlite3)
-- JWT (аутентификация)
-- bcryptjs (хеширование)
-- Winston (логирование)
-
-**DevOps:**
-- Jest (unit + integration тесты)
-- Playwright (E2E тесты)
-- ESLint (линтинг)
-- GitHub Actions (CI/CD)
-
-## 📁 Структура проекта
-
-```
-fintrackr-project/
-│
-├── 📂 backend/                          # Серверная часть
-│   ├── index.js                         # Entry point (Express)
-│   ├── app.js                           # Конфигурация Express
-│   ├── fintrackr.db                     # SQLite база данных
-│   │
-│   ├── 📂 routes/                       # API маршруты (14 файлов)
-│   │   ├── auth.js, accounts.js, budgets.js
-│   │   ├── categories.js, transactions.js, goals.js
-│   │   ├── subscriptions.js, planned.js, rules.js
-│   │   ├── recurring.js, analytics.js, currency.js
-│   │   ├── twofa.js, meta.js, sync.js
-│   │
-│   ├── 📂 middleware/                   # Middleware (7 файлов)
-│   │   ├── auth.js (JWT verification)
-│   │   ├── security.js (headers, CORS)
-│   │   ├── csrf.js (CSRF protection)
-│   │   ├── validation.js (input checks)
-│   │   ├── errorHandler.js (error management)
-│   │   ├── cache.js (response caching)
-│   │   └── runner.js (startup checks)
-│   │
-│   ├── 📂 services/                     # Бизнес-логика (13 файлов)
-│   │   ├── dataService.new.js (SQLite access)
-│   │   ├── authService.js (auth logic)
-│   │   ├── accountService.js (accounts)
-│   │   ├── transactionService.js (transactions)
-│   │   ├── budgetService.js (budgets)
-│   │   ├── goalService.js (goals)
-│   │   ├── currencyService.js (rates)
-│   │   ├── reportService.js (reports)
-│   │   ├── subscriptionService.js, ruleset.js, и др.
-│   │
-│   ├── 📂 utils/                        # Утилиты
-│   │   ├── logger.js (Winston logger)
-│   │   ├── validation.js (validators)
-│   │   └── helpers.js (common functions)
-│   │
-│   └── 📂 __tests__/                    # Backend тесты (Jest)
-│       └── server.test.js, services/*.test.js
-│
-├── 📂 frontend/                         # Исходный код фронтенда
-│   ├── 📂 pages/                        # Страницы приложения
-│   │   ├── dashboard.js, accounts.js, transactions.js
-│   │   ├── budgets.js, goals.js, subscriptions.js
-│   │   ├── planned.js, recurring.js, rules.js
-│   │   ├── reports.js, sync.js, settings.js
-│   │   └── converter.js, forecast.js
-│   │
-│   ├── 📂 modules/                      # Общие модули
-│   │   ├── auth.js (auth state + tokens)
-│   │   ├── api.js (fetch wrapper)
-│   │   ├── navigation.js (sidebar)
-│   │   ├── profile.js (user settings)
-│   │   ├── currency.js (conversion)
-│   │   └── validation.js (client-side)
-│   │
-│   └── 📂 components/                   # UI компоненты
-│       └── (переиспользуемые элементы)
-│
-├── 📂 public/                           # Собранный фронтенд
-│   ├── 📂 js/                           # Vite build output
-│   │   ├── dashboard.js, accounts.js (бандлы)
-│   │   ├── modules/ (общие модули)
-│   │   └── (остальные страницы)
-│   │
-│   ├── 📂 css/                          # Стили
-│   │   └── style.css (2200+ строк)
-│   │
-│   ├── 📂 icons/                        # SVG иконки
-│   ├── 📂 images/                       # Изображения
-│   ├── manifest.json                    # PWA манифест
-│   ├── sw.js                            # Service Worker
-│   │
-│   └── 📂 html/                         # HTML страницы
-│       ├── login.html, register.html
-│       ├── dashboard.html, accounts.html
-│       ├── transactions.html, budgets.html
-│       ├── goals.html, subscriptions.html
-│       └── (остальные страницы)
-│
-├── 📂 tests/                            # E2E тесты (Playwright)
-│   ├── auth.spec.js, dashboard.spec.js
-│   ├── accounts.spec.js, transactions.spec.js
-│   └── budgets.spec.js
-│
-├── 📂 docs/                             # Документация
-│   ├── BACKEND.md (архитектура API)
-│   ├── FRONTEND.md (стек фронтенда)
-│   └── SECURITY.md (механизмы безопасности)
-│
-├── 📂 logs/                             # Лог файлы
-├── .env.example                         # Пример конфигурации
-├── .github/copilot-instructions.md      # AI инструкции
-├── package.json                         # Зависимости
-├── vite.config.js                       # Конфиг Vite
-├── jest.config.js                       # Конфиг Jest
-├── playwright.config.js                 # Конфиг Playwright
-├── eslint.config.js                     # Конфиг ESLint
-├── README.md                            # 👈 Вы здесь
-├── SECURITY.md                          # Политика безопасности
-├── LICENSE                              # MIT License
-└── DEPLOYMENT.md                        # Инструкции деплоя
-```
-
-## 🚀 Установка и запуск
-
-### Требования
-
-```bash
-node >= 14.0.0
-npm >= 6.0.0
-```
-
-### Пошаговая установка
-
-**1. Клонирование репозитория**
-```bash
-git clone https://github.com/atpa/fintrackr-project.git
-cd fintrackr-project
-```
-
-**2. Установка зависимостей**
-```bash
-npm install
-```
-
-**3. Конфигурация переменных окружения**
-```bash
-cp .env.example .env
-```
-
-Отредактируйте `.env`:
-```env
-# Сервер
-PORT=3000
-NODE_ENV=development
-
-# Безопасность (генерируйте новый секрет!)
-JWT_SECRET=<сгенерируйте_случайный_64_символа>
-JWT_EXPIRE=7d
-REFRESH_TOKEN_EXPIRE=30d
-
-# Cookies (production)
-COOKIE_SECURE=false        # true для HTTPS
-COOKIE_SAMESITE=Lax        # Strict для production
-COOKIE_DOMAIN=localhost
-
-# Database
-DATABASE_PATH=./backend/fintrackr.db
-FINTRACKR_DISABLE_PERSIST=false
-
-# Логирование
-LOG_LEVEL=info
-```
-
-**Генерация безопасного JWT_SECRET:**
-```bash
-node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
-```
-
-**4. Инициализация базы данных**
-```bash
-npm run db:init
-```
-
-**5. Запуск сервера**
-```bash
-npm start
-```
-
-Откройте в браузере: **http://localhost:3000**
-
-### Альтернативные порты
-
-```bash
-# Запуск на конкретном порту
-npm run start:3000
-npm run start:8080
-
-# Или через переменную окружения
-$env:PORT=4000; npm start          # PowerShell (Windows)
-PORT=4000 npm start                # Bash (Linux/macOS)
-```
-
-## 📋 npm команды
-
-```bash
-# Запуск
-npm start                  # Запуск сервера (port 3000)
-npm run dev               # Запуск в dev режиме
-npm run start:3000        # Запуск на порту 3000
-npm run start:8080        # Запуск на порту 8080
-npm run start:legacy      # Запуск legacy сервера
-
-# Тестирование
-npm test                  # Запуск backend тестов (Jest)
-npm run test:backend      # Backend тесты с покрытием
-npm run test:e2e          # E2E тесты (Playwright)
-npm run test:all          # Все тесты
-
-# Качество кода
-npm run lint              # ESLint проверка
-npm run lint:fix          # ESLint автофикс
-
-# Сборка фронтенда
-npx vite build            # Собрать фронтенд в public/js
-
-# База данных
-npm run db:init           # Инициализировать SQLite БД
-npm run db:migrate        # Миграция из JSON в SQLite
-```
-
-## 📊 API Endpoints
-
-### Полная карта API
-
-| Категория | Метод | Endpoint | Описание |
-|-----------|-------|----------|---------|
-| **Аутентификация** | | | |
-| | POST | `/api/auth/register` | Регистрация нового пользователя |
-| | POST | `/api/auth/login` | Вход (получение JWT) |
-| | POST | `/api/auth/logout` | Выход (blacklist токена) |
-| | POST | `/api/auth/refresh` | Обновление access токена |
-| | GET | `/api/session` | Проверка текущей сессии |
-| **Счета** | | | |
-| | GET | `/api/accounts` | Список счетов пользователя |
-| | POST | `/api/accounts` | Создать новый счет |
-| | PUT | `/api/accounts/:id` | Обновить счет |
-| | DELETE | `/api/accounts/:id` | Удалить счет |
-| **Транзакции** | | | |
-| | GET | `/api/transactions` | Список транзакций (фильтруемый) |
-| | POST | `/api/transactions` | Создать транзакцию |
-| | PUT | `/api/transactions/:id` | Обновить транзакцию |
-| | DELETE | `/api/transactions/:id` | Удалить транзакцию |
-| **Бюджеты** | | | |
-| | GET | `/api/budgets` | Список бюджетов |
-| | POST | `/api/budgets` | Создать/обновить бюджет |
-| | DELETE | `/api/budgets/:id` | Удалить бюджет |
-| **Категории** | | | |
-| | GET | `/api/categories` | Список категорий |
-| | POST | `/api/categories` | Добавить категорию |
-| | DELETE | `/api/categories/:id` | Удалить категорию |
-| **Финансовые цели** | | | |
-| | GET | `/api/goals` | Список целей |
-| | POST | `/api/goals` | Создать цель |
-| | PUT | `/api/goals/:id` | Обновить цель |
-| | DELETE | `/api/goals/:id` | Удалить цель |
-| **Подписки** | | | |
-| | GET | `/api/subscriptions` | Список подписок |
-| | POST | `/api/subscriptions` | Добавить подписку |
-| | DELETE | `/api/subscriptions/:id` | Удалить подписку |
-| **Планируемые операции** | | | |
-| | GET | `/api/planned` | Список плана |
-| | POST | `/api/planned` | Создать план |
-| | DELETE | `/api/planned/:id` | Удалить план |
-| **Рекуррентные** | | | |
-| | GET | `/api/recurring` | Список рекуррентных |
-| | POST | `/api/recurring` | Создать рекуррент |
-| | DELETE | `/api/recurring/:id` | Удалить рекуррент |
-| **Правила** | | | |
-| | GET | `/api/rules` | Список правил |
-| | POST | `/api/rules` | Создать правило |
-| | DELETE | `/api/rules/:id` | Удалить правило |
-| **Валюты** | | | |
-| | GET | `/api/currency/convert` | Конвертировать валюты |
-| | GET | `/api/currency/rates` | Получить курсы |
-| | GET | `/api/currency/list` | Список поддерживаемых валют |
-| **Аналитика** | | | |
-| | GET | `/api/analytics/summary` | Сводка по счетам |
-| | GET | `/api/analytics/trends` | Тренды расходов |
-| | GET | `/api/analytics/forecast` | Прогноз (ML) |
-| | GET | `/api/analytics/reports` | Отчеты |
-| **Синхронизация** | | | |
-| | POST | `/api/sync` | Синхронизировать данные |
-| | GET | `/api/sync/status` | Статус синхронизации |
-
-**📖 Полная документация API**: [`BACKEND.md`](BACKEND.md)
-
-## 🔐 Безопасность
-
-FinTrackr реализует enterprise-level безопасность:
-
-| Механизм | Статус | Детали |
-|----------|--------|--------|
-| **JWT Auth** | ✅ | HttpOnly cookies, токен в памяти |
-| **CSRF Protection** | ✅ | SameSite cookies + CSRF tokens |
-| **XSS Protection** | ✅ | Input sanitization, CSP headers |
-| **SQL Injection** | ✅ | Parameterized queries (better-sqlite3) |
-| **Password Hash** | ✅ | bcryptjs (10 rounds) |
-| **HTTPS Ready** | ✅ | Secure cookies, HSTS headers |
-| **Rate Limiting** | ✅ | Per-IP throttling |
-| **CORS** | ✅ | Whitelist domains |
-
-**📖 Полная политика**: [`SECURITY.md`](SECURITY.md)
-
-## 🧪 Тестирование
-
-```bash
-# Запуск всех тестов
-npm test
-
-# Backend с покрытием
-npm run test:backend -- --coverage
-
-# E2E тесты
-npm run test:e2e
-
-# Watch mode для разработки
-npm test -- --watch
-```
-
-**Покрытие:**
-- Unit tests: 45+ тестов
-- Integration tests: 20+ тестов
-- E2E tests: 15+ сценариев
-
-## 🌍 Развертывание (Deployment)
-
-### Railway (рекомендуется)
-
-```bash
-# 1. Зарегистрируйтесь на railway.app
-# 2. Подключите GitHub репозиторий
-# 3. Railway автоматически определит Node.js проект
-# 4. Установите переменные окружения в Railway dashboard
-# 5. Приложение будет доступно по персональному URL
-```
-
-### Render.com
-
-```
-Build Command: npm install
-Start Command: npm start
-Environment: Node.js
-Port: 3000 (автоматически)
-```
-
-### Локальное тестирование перед деплоем
-
-```bash
-npm install
-NODE_ENV=production npm start
-```
-
-**⚠️ Production checklist:**
-- [ ] Установить сильный `JWT_SECRET`
-- [ ] Включить `COOKIE_SECURE=true`
-- [ ] Использовать `HTTPS` (обязательно!)
-- [ ] Установить `NODE_ENV=production`
-- [ ] Скопировать `.env` на сервер (не в git)
-- [ ] Настроить SSL сертификат (Let's Encrypt)
-- [ ] Включить `HSTS` заголовки
-- [ ] Настроить резервную копию БД
-
-**📖 Полные инструкции**: [`DEPLOYMENT.md`](DEPLOYMENT.md)
-
-## 🗺️ Roadmap
-
-### Q4 2024 — Стабильность
-- [x] Миграция на Express + SQLite
-- [x] CSRF protection
-- [x] E2E тесты (Playwright)
-- [x] Документация (API, Security)
-
-### Q1 2025 — Масштабирование
-- [ ] Двухфакторная аутентификация (TOTP)
-- [ ] Advanced аналитика с ML
-- [ ] Экспорт данных (Excel, PDF, CSV)
-- [ ] Email уведомления
-- [ ] Многоязычная поддержка (i18n)
-
-### Q2 2025 — Мобильность
-- [ ] React Native приложение
-- [ ] Offline-first синхронизация
-- [ ] WebSocket для real-time обновлений
-- [ ] Shared accounts (семейные бюджеты)
-
-### Q3-Q4 2025 — Интеграции
-- [ ] Open Banking API (PSD2)
-- [ ] Криптовалюта поддержка
-- [ ] Интеграция с банковскими сервисами
-- [ ] AI-ассистент для финансовых советов
-
-## ⚠️ Known Issues
-
-| Проблема | Статус | Решение |
-|----------|--------|---------|
-| JSON storage concurrent access | 🔴 | Мигрировано на SQLite в v1.0 |
-| Rate limiting reset на рестарт | 🟡 | Планируется Redis в Q1 2025 |
-| Нет 2FA | 🟡 | Добавляется в v1.1 |
-| Нет экспорта данных | 🟡 | Планируется в Q1 2025 |
-| Нет мобильного приложения | 🟡 | React Native в Q2 2025 |
-
-## 📚 Дополнительные ресурсы
-
-- 📖 [Документация Backend](BACKEND.md) — Архитектура API, маршруты, примеры
-- 🎨 [Документация Frontend](FRONTEND.md) — Стек, модули, компоненты
-- 🔒 [Политика безопасности](SECURITY.md) — Механизмы, best practices
-- 🚀 [Инструкции по развертыванию](DEPLOYMENT.md) — Railway, Render, Docker
-- 📋 [LICENSE](LICENSE) — MIT License
-
-## 💬 Вопросы и поддержка
-
-- 🐛 **Баги**: [GitHub Issues](https://github.com/atpa/fintrackr-project/issues)
-- 💡 **Идеи**: [GitHub Discussions](https://github.com/atpa/fintrackr-project/discussions)
-- 🔒 **Безопасность**: [SECURITY.md](SECURITY.md) (ответственное раскрытие)
-
-## 📝 Лицензия
-
-MIT © 2024 FinTrackr Development Team
-
-## 👨‍💻 Автор
-
-**atpa**
-- GitHub: [@atpa](https://github.com/atpa)
-- Email: atpagaming@gmail.com
-
----
-
-**⭐ Если проект был полезен, поставьте звезду!**
-
-**Последнее обновление:** Ноябрь 2024  
-**Версия:** 1.0.0
+# FinTrackr
+
+FinTrackr is a production-ready personal finance tracker (Node.js + Express + SQLite + Vite). The backend exposes a REST API protected by JWT cookies, the frontend is a modular Vanilla JS + Vite bundle with a service worker, and persistence lives in SQLite (with IndexedDB mirrors for offline scenarios).
+
+## Highlights
+- **Hardened authentication** – JWT stored in HttpOnly/SameSite cookies, refresh flows, aggressive rate limiting, Joi validation and centralized error handling.
+- **CSRF protection** – server-issued tokens (/api/csrf-token) are required for any unsafe method; the frontend automatically attaches them to every etch call.
+- **Rich data domain** – accounts, categories, transactions, budgets, goals, analytics and planned operations are handled by ackend/routes/* backed by services/dataService.new.js (SQLite WAL, migrations from data.json).
+- **Analytics & dashboards** – forecasts, anomalies, recurring detection and visual widgets on the dashboard via ApexCharts modules.
+- **PWA** – manifest, custom service worker (public/sw.js) with cache-first + network-first strategies, offline page, notifications and a Background Sync stub.
+- **Modular frontend** – Vite compiles page-level modules (rontend/pages/*) and shared building blocks (rontend/modules/*, rontend/components/*).
+- **Tooling** – Jest + Supertest for the API, Playwright e2e, ESLint, database migration utilities and npm scripts.
+
+## Architecture
+`
+Frontend (Vite + JS)  <---->  Express API (app.js)
+pages/, modules/, PWA          routers/, services/
+        ^                                |
+        |                                v
+Service Worker & IndexedDB     SQLite (better-sqlite3)
+(offline shell/cache)          schema + WAL + init
+`
+- **Backend** (ackend/app.js) wires all middleware (security headers, logging, CSRF), mounts routers, serves public/ and delegates errors to the global handler.
+- **Data layer** (services/dataService.new.js) hides CRUD for SQLite (tables for every finance entity, refresh tokens, blacklist and sessions). Initialize the DB via 
+pm run db:init.
+- **Frontend** – each static HTML shell in public/ loads its Vite bundle from public/js/*.js; sources live in rontend/pages. Shared modules (pi.js, uth.js, profile.js, 
+avigation.js, charts.js, offlineStorage.js) encapsulate networking and UI utilities.
+
+## Repository layout
+`
+backend/
+  app.js, index.js, routes/, services/, middleware/, database/
+frontend/
+  pages/, modules/, components/
+public/
+  *.html, css/, js/, sw.js, manifest.json
+scripts/, tests/, dist/, docs/
+`
+
+## Quick start
+1. **Install dependencies**
+   `ash
+   git clone https://github.com/atpa/fintrackr-project.git
+   cd fintrackr-project
+   npm install
+   `
+2. **Configure environment**
+   `ash
+   cp .env.example .env
+   # update JWT_SECRET, COOKIE_SECURE, COOKIE_SAMESITE for your environment
+   `
+3. **Prepare the database**
+   `ash
+   npm run db:init   # creates backend/fintrackr.db using database/schema.sql
+   `
+4. **Run the API**
+   `ash
+   npm start         # Express + SQLite on http://localhost:3000
+   `
+5. **Build the frontend bundles**
+   `ash
+   npx vite build --config vite.config.js   # outputs to public/js and dist/assets
+   `
+6. **PWA** – ensure public/manifest.json and public/sw.js are reachable in production and keep pp.use(express.static(...)) enabled (see pp.js).
+
+### Development loop
+- 
+pm run dev – starts the Express API with SQLite.
+- Attach Vite HMR via 
+px vite --watch or spin up 
+px vite pointing at rontend/ while the API serves /public assets.
+- Logging: Winston writes to logs/combined.log and logs/error.log, while Morgan + a Winston helper print concise HTTP traces to stdout.
+
+### Testing
+- 
+pm run test:backend – Jest + Supertest (sets FINTRACKR_DISABLE_PERSIST=true).
+- 
+pm run test:e2e – Playwright e2e (start the API first).
+- 
+pm run lint – ESLint for ackend/ (extend to rontend/ if needed).
+
+## Networking & security
+- rontend/modules/api.js – single entry point for REST calls. Responsibilities: caching CSRF tokens, automatic retries on CSRF_* errors, JSON parsing and bubbling 401 events to the Auth module.
+- rontend/modules/auth.js – manages sessionStorage, /api/session syncing, /api/logout and now wraps the global window.fetch (forces credentials:'include' and injects CSRF headers for every unsafe API call).
+- Server-side middleware/csrf.js validates tokens before routers execute and /api/csrf-token is gated by uthenticateRequest.
+
+## PWA & offline
+- Service worker (public/sw.js) pre-caches shell HTML/CSS/JS and uses network-first for API GETs (with runtime cache fallback).
+- rontend/modules/offlineStorage.js contains IndexedDB stores for pending transactions, cached accounts/categories/budgets and a sync queue stub.
+- The manifest (public/manifest.json) defines icons, shortcuts and uses /dashboard.html as the start URL.
+
+## Deployment notes
+1. Build the frontend (
+px vite build).
+2. Set production secrets (JWT_SECRET, COOKIE_SECURE=true, strict SameSite mode, TLS in front of Express).
+3. Run 
+pm start behind a reverse proxy (NGINX/Caddy) with HTTPS so PWA/service worker features function.
+4. Rotate logs and back up ackend/fintrackr.db (WAL files included).
+
+## Common tasks
+- **Schema updates** – edit ackend/database/schema.sql, run 
+pm run db:init for fresh installs, or ship SQL migrations for live systems.
+- **New API endpoints** – add a router in ackend/routes, mount it in pp.js, extend services/*.js as needed.
+- **New pages** – create rontend/pages/<page>.js, add the entry to ite.config.js, and include the module via <script type="module"> in the corresponding public/*.html file.
+
+## License
+MIT (see LICENSE).

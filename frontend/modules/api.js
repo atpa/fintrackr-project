@@ -1,148 +1,150 @@
-/**
- * Centralized API client with proper error handling
- * Throws errors instead of returning empty arrays
- */
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
-/**
- * Fetch data from endpoint (GET request)
- * @param {string} endpoint - API endpoint
- * @returns {Promise<any>} Response data
- * @throws {Error} On network or HTTP errors
- */
-export async function fetchData(endpoint) {
-  try {
-    const headers = {
-      'Accept': 'application/json',
-      'Cache-Control': 'no-cache'
-    };
-    const response = await fetch(endpoint, {
+let csrfToken = null;
+let csrfExpiry = 0;
+let csrfPromise = null;
+let unauthorizedHandler = null;
+
+export function onUnauthorized(handler) {
+  unauthorizedHandler = typeof handler === 'function' ? handler : null;
+}
+
+async function fetchCsrfToken(force = false) {
+  if (!force && csrfToken && Date.now() < csrfExpiry - 5000) {
+    return csrfToken;
+  }
+
+  if (csrfPromise && !force) {
+    return csrfPromise;
+  }
+
+  csrfPromise = (async () => {
+    const response = await fetch('/api/csrf-token', {
       method: 'GET',
-      cache: 'no-store',
       credentials: 'include',
-      headers
-    });
-    
-    if (!response.ok) {
-      // Some environments can return 304 for API GETs; retry with cache-busting
-      if (response.status === 304) {
-        const bustUrl = endpoint + (endpoint.includes('?') ? '&' : '?') + `_ts=${Date.now()}`;
-        const retry = await fetch(bustUrl, {
-          method: 'GET',
-          cache: 'no-store',
-          credentials: 'include',
-          headers
-        });
-        if (retry.ok) {
-          return await retry.json();
-        }
-      }
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    if (error instanceof Error) {
-      throw error;
-    }
-    throw new Error(`Ошибка запроса: ${error}`);
-  }
-}
-
-/**
- * Send data to endpoint (POST request)
- * @param {string} endpoint - API endpoint
- * @param {object} data - Request body
- * @returns {Promise<any>} Response data
- * @throws {Error} On network or HTTP errors
- */
-export async function postData(endpoint, data) {
-  try {
-    const response = await fetch(endpoint, {
-      method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        Accept: 'application/json',
+        'Cache-Control': 'no-cache',
       },
-      credentials: 'include',
-      body: JSON.stringify(data)
     });
-    
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      csrfPromise = null;
+      throw new Error('Unable to fetch CSRF token');
     }
-    
-    return await response.json();
-  } catch (error) {
-    if (error instanceof Error) {
-      throw error;
-    }
-    throw new Error(`Ошибка запроса: ${error}`);
-  }
+
+    const payload = await response.json();
+    csrfToken = payload.csrfToken;
+    csrfExpiry = Date.now() + (Number(payload.expiresIn) || 0);
+    csrfPromise = null;
+    return csrfToken;
+  })().catch((error) => {
+    csrfPromise = null;
+    csrfToken = null;
+    csrfExpiry = 0;
+    throw error;
+  });
+
+  return csrfPromise;
 }
 
-/**
- * Update data at endpoint (PUT request)
- * @param {string} endpoint - API endpoint
- * @param {object} data - Request body
- * @returns {Promise<any>} Response data
- * @throws {Error} On network or HTTP errors
- */
-export async function putData(endpoint, data) {
-  try {
-    const response = await fetch(endpoint, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify(data)
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    if (error instanceof Error) {
-      throw error;
-    }
-    throw new Error(`Ошибка запроса: ${error}`);
-  }
+export function ensureCsrfToken(force = false) {
+  return fetchCsrfToken(force);
 }
 
-/**
- * Delete data at endpoint (DELETE request)
- * @param {string} endpoint - API endpoint
- * @returns {Promise<any>} Response data
- * @throws {Error} On network or HTTP errors
- */
-export async function deleteData(endpoint) {
-  try {
-    const response = await fetch(endpoint, {
-      method: 'DELETE',
-      credentials: 'include',
-      headers: {
-        'Accept': 'application/json'
-      }
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    if (error instanceof Error) {
-      throw error;
-    }
-    throw new Error(`Ошибка запроса: ${error}`);
+async function parseJsonResponse(response) {
+  if (response.status === 204) {
+    return null;
   }
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    return null;
+  }
+  return response.json();
+}
+
+export async function request(endpoint, options = {}) {
+  const method = (options.method || 'GET').toUpperCase();
+  const headers = {
+    Accept: 'application/json',
+    ...(options.headers || {}),
+  };
+
+  const fetchOptions = {
+    method,
+    credentials: 'include',
+    headers,
+  };
+
+  if (method === 'GET') {
+    fetchOptions.cache = 'no-store';
+  }
+
+  if (options.data !== undefined) {
+    headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+    fetchOptions.body =
+      headers['Content-Type'] === 'application/json'
+        ? JSON.stringify(options.data)
+        : options.data;
+  }
+
+  const needsCsrf = options.csrf !== false && !SAFE_METHODS.has(method);
+  if (needsCsrf) {
+    const token = await fetchCsrfToken();
+    headers['X-CSRF-Token'] = token;
+  }
+
+  const response = await fetch(endpoint, fetchOptions);
+
+  if (!response.ok) {
+    let errorPayload = null;
+    try {
+      errorPayload = await response.json();
+    } catch {
+      errorPayload = null;
+    }
+
+    const error = new Error(
+      errorPayload?.error || `HTTP ${response.status}: ${response.statusText}`
+    );
+    error.status = response.status;
+    error.details = errorPayload || undefined;
+
+    const csrfError =
+      needsCsrf &&
+      errorPayload &&
+      typeof errorPayload.code === 'string' &&
+      errorPayload.code.startsWith('CSRF_');
+
+    if (csrfError && options._retry !== false) {
+      await fetchCsrfToken(true);
+      return request(endpoint, { ...options, _retry: false });
+    }
+
+    if (response.status === 401 && unauthorizedHandler) {
+      unauthorizedHandler({ endpoint, method, error });
+    }
+
+    throw error;
+  }
+
+  return parseJsonResponse(response);
+}
+
+export function fetchData(endpoint, options = {}) {
+  return request(endpoint, { ...options, method: 'GET' });
+}
+
+export function postData(endpoint, data, options = {}) {
+  return request(endpoint, { ...options, method: 'POST', data });
+}
+
+export function putData(endpoint, data, options = {}) {
+  return request(endpoint, { ...options, method: 'PUT', data });
+}
+
+export function deleteData(endpoint, options = {}) {
+  return request(endpoint, { ...options, method: 'DELETE' });
 }
 
 export default fetchData;

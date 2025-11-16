@@ -20,6 +20,7 @@ const twofaRouter = require('./routes/twofa');
 const { errorHandler, AppError } = require('./middleware/errorHandler');
 const { securityHeaders, sanitizeInput } = require('./middleware/security');
 const { validateCsrfToken, getCsrfToken } = require('./middleware/csrf');
+const { authenticateRequest } = require('./middleware/auth');
 const logger = require('./utils/logger');
 
 const app = express();
@@ -65,7 +66,7 @@ app.use('/api', authRouter);
 app.use('/api/2fa', twofaRouter);
 
 // CSRF token endpoint
-app.get('/api/csrf-token', getCsrfToken);
+app.get('/api/csrf-token', authenticateRequest, getCsrfToken);
 
 // Protected routes (require authentication)
 app.use('/api/accounts', accountsRouter);

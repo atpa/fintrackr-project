@@ -1,44 +1,57 @@
+import fetchData from '../modules/api.js';
 import initNavigation from '../modules/navigation.js';
 import initProfileShell from '../modules/profile.js';
 
 initNavigation();
 initProfileShell();
 
+function renderRecurringRows(items, tbody) {
+  tbody.innerHTML = '';
+  if (!Array.isArray(items) || items.length === 0) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td colspan="4">������� ����樨 ��� �� ���������</td>';
+    tbody.appendChild(tr);
+    return;
+  }
+
+  items.forEach((item) => {
+    const tr = document.createElement('tr');
+    const amount = item.amount ?? item.sampleAmount ?? 0;
+    const currency = item.currency || item.sampleCurrency || '�';
+    const frequency = item.frequency || (item.avgPeriodDays ? `${item.avgPeriodDays} ����` : '-');
+    tr.innerHTML = `
+      <td>${item.name || '��� �࠭����'}</td>
+      <td>${Number(amount).toFixed(2)} ${currency}</td>
+      <td>${frequency}</td>
+      <td>${item.nextDate || item.next_date || '-'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function updateSummary(items) {
+  const summary = document.getElementById('recurringSummary');
+  if (!summary) return;
+  if (!Array.isArray(items) || items.length === 0) {
+    summary.textContent = '�㬬�ୠ� �������筠� ����㧪�: 0';
+    return;
+  }
+  const total = items.reduce((sum, item) => sum + Number(item.amount ?? item.sampleAmount ?? 0), 0);
+  summary.textContent = `�㬬�ୠ� �������筠� ����㧪�: ${total.toFixed(2)}`;
+}
+
 async function loadRecurring() {
   try {
-    const response = await fetch('/api/recurring');
-    const data = await response.json();
     const tbody = document.querySelector('#recurringTable tbody');
-    const summary = document.getElementById('recurringSummary');
-
     if (!tbody) {
       return;
     }
-
-    tbody.innerHTML = '';
-    if (Array.isArray(data.items) && data.items.length) {
-      data.items.forEach((item) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${item.name}</td>
-          <td>${item.sampleAmount} ₽</td>
-          <td>${item.frequency || item.avgPeriodDays + ' дней'}</td>
-          <td>${item.nextDate || '—'}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    } else {
-      const emptyRow = document.createElement('tr');
-      emptyRow.innerHTML = '<td colspan="4">Регулярные операции ещё не добавлены</td>';
-      tbody.appendChild(emptyRow);
-    }
-
-    if (summary) {
-      const monthly = data.monthly ? `${data.monthly} ₽` : '0 ₽';
-      summary.textContent = `Суммарная ежемесячная нагрузка: ${monthly}`;
-    }
+    const data = await fetchData('/api/recurring');
+    const items = data?.recurring || [];
+    renderRecurringRows(items, tbody);
+    updateSummary(items);
   } catch (error) {
-    console.error('Не удалось загрузить повторяющиеся операции', error);
+    console.error('�� 㤠���� ����㧨�� �������騥�� ����樨', error);
   }
 }
 
