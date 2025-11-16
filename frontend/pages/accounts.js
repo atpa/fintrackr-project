@@ -39,13 +39,13 @@ async function initAccountsPage() {
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const newAccount = {
-      name: document.getElementById('accName')?.value,
+      name: document.getElementById('accName')?.value?.trim(),
       currency: document.getElementById('accCurrency')?.value,
       balance: parseFloat(document.getElementById('accBalance')?.value) || 0,
     };
 
     if (!newAccount.name || !newAccount.currency) {
-      alert('������� �������� и валюту');
+      alert('Please provide an account name and currency.');
       return;
     }
 
@@ -55,7 +55,7 @@ async function initAccountsPage() {
       renderAccounts(accounts, tableBody);
       form.reset();
     } catch (error) {
-      alert(error.message || '�訡�� �� ������ ����');
+      alert(error.message || 'Unable to create account.');
     }
   });
 }

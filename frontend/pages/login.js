@@ -10,10 +10,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const email = document.getElementById('loginEmail')?.value.trim();
+    const email = document.getElementById('loginEmail')?.value?.trim();
     const password = document.getElementById('loginPassword')?.value;
     if (!email || !password) {
-      alert('�����४�� email � ��஫�');
+      alert('Enter both email and password.');
       return;
     }
 
@@ -21,13 +21,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const result = await postData('/api/login', { email, password }, { csrf: false });
       const payload = result?.user || result;
       if (!Auth.login(payload)) {
-        alert('�訡�� ��࠭���� ������');
+        alert('Failed to save session data.');
         return;
       }
       await Auth.syncSession(true).catch(() => null);
       window.location.href = 'dashboard.html';
     } catch (error) {
-      alert(error.message || '�訡�� �室�');
+      alert(error.message || 'Login failed.');
     }
   });
 });
