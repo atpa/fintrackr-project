@@ -87,7 +87,11 @@ function sanitizeUser(user) {
  */
 function generateAccessToken(payload) {
   return jwt.sign(
-    { userId: payload.userId, email: payload.email },
+    {
+      sub: payload.userId,
+      userId: payload.userId,
+      email: payload.email,
+    },
     ENV.JWT_SECRET,
     {
       expiresIn: TOKEN_CONFIG.ACCESS_TTL_SECONDS,
@@ -191,7 +195,8 @@ function authenticateRequest(req) {
 
   try {
     const decoded = jwt.verify(token, ENV.JWT_SECRET);
-    const user = dataService.getUserById(decoded.sub);
+    const resolvedUserId = decoded.userId || decoded.sub;
+    const user = dataService.getUserById(resolvedUserId);
 
     if (!user) {
       return { ok: false, error: "User not found" };
@@ -204,7 +209,12 @@ function authenticateRequest(req) {
       }
     }
 
-    return { ok: true, user: sanitizeUser(user), isRefresh };
+    return {
+      ok: true,
+      user: sanitizeUser(user),
+      isRefresh,
+      tokenPayload: decoded,
+    };
   } catch (err) {
     return { ok: false, error: err.message };
   }

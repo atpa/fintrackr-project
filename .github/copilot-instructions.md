@@ -1,4 +1,146 @@
-# FinTrackr AI Agent Instructions
+
+## Краткое описание проекта
+
+FinTrackr — MVP для персонального финансового учёта. Архитектура: Node.js backend (без Express), хранение данных в JSON (переход на БД), фронтенд на чистом JS (ES6), сборка через Vite, аутентификация через JWT (HttpOnly cookie).
+
+**Важное:** Проект в процессе рефакторинга. Основная логика в `backend/server.js`, постепенно переносится в сервисы (`backend/services/`).
+
+## Архитектура
+
+### Backend
+- Точка входа: `backend/server.js` (роутинг, бизнес-логика, аутентификация)
+- Цель: переход к сервисам (`backend/services/`, `backend/utils/`)
+- Данные: `backend/data.json` (12 коллекций: users, accounts, categories, transactions, budgets, goals, planned, subscriptions, rules, recurring, refreshTokens, tokenBlacklist, bankConnections)
+- Аутентификация: JWT в HttpOnly cookie, чёрный список токенов, поддержка устаревшего заголовка `X-User-Id`
+- Хелпер: `authenticateRequest(req)`
+
+### Frontend
+- HTML без сборки: `public/*.html`
+- JS-модули: `frontend/pages/*.js`, `frontend/modules/*.js`
+- Сборка: Vite (`npx vite build` → `public/js/`)
+- Ключевые модули: auth.js, api.js, navigation.js, profile.js
+- Стили: `public/css/style.css`, темы через CSS custom properties
+
+### Конвертация валют
+- Единая таблица RATE_MAP (синхронизировать между backend и frontend)
+- Хелпер: `convertAmount(amount, fromCur, toCur)`
+- Эндпоинт: `/api/convert` (динамические курсы)
+
+## Workflow
+
+### Запуск
+```powershell
+npm start            # порт 3000
+npm run start:8080   # порт 8080
+$env:PORT=4000; npm start
+```
+Фронтенд dev-сервера нет, только сборка через Vite.
+
+### Тесты
+```powershell
+npm run test:backend   # unit-тесты (Jest)
+npm run test:e2e       # e2e (Playwright)
+```
+В тестах всегда FINTRACKR_DISABLE_PERSIST=true.
+
+### Линтинг
+```powershell
+npm run lint           # только backend
+```
+Фронтенд исключён в eslint.config.js.
+
+## API
+
+### Паттерны эндпоинтов
+```
+POST /api/register    { name, email, password }
+POST /api/login       { email, password }
+POST /api/logout      (инвалидация токенов)
+GET  /api/session     (проверка и refresh)
+
+GET    /api/{resource}           # список
+POST   /api/{resource}           # создать
+PUT    /api/{resource}/:id       # полное обновление
+PATCH  /api/{resource}/:id       # частичное обновление
+DELETE /api/{resource}/:id       # удалить
+```
+Все ресурсы фильтруются по user_id (см. filterForUser).
+
+### Форматы запросов/ответов
+- Content-Type: application/json; charset=utf-8
+- Ошибка: { error: "сообщение" }, статус
+- Успех: сущность или { success: true }
+- Валидация: 400 с описанием
+
+## Побочные эффекты
+
+### Бюджеты
+- При создании/удалении расхода: ищется бюджет по user_id, category_id, месяцу
+- Автосоздание бюджета, если нет
+- budget.spent обновляется через convertAmount
+
+### Баланс аккаунта
+- CRUD транзакций напрямую меняет account.balance (с конвертацией)
+
+### Каскадное удаление категорий
+- Удаление из categories, budgets, planned, null в transactions
+
+## Типовые проблемы
+
+1. Порт занят — Get-NetTCPConnection -LocalPort 3000
+2. Тесты портят data.json — FINTRACKR_DISABLE_PERSIST=true
+3. Фронтенд не обновляется — npx vite build
+4. 401 — проверь whitelist, JWT, чёрный список
+5. Валюты — всегда convertAmount, RATE_MAP синхронизировать
+
+## Добавление фич
+
+### Новый API-эндпоинт
+1. Выбрать метод
+2. Добавить роут в handleApi (server.js)
+3. Валидация
+4. persistData после изменений
+5. Побочные эффекты
+6. Тесты (backend/__tests__/server.test.js)
+7. Фронтенд (frontend/pages/*.js)
+
+### Новая страница
+1. HTML в public/
+2. JS-модуль в frontend/pages/
+3. Импортировать общие модули
+4. Инициализация навигации
+5. Ссылка в sidebar
+6. Сборка Vite
+7. vite.config.js (inputs)
+
+## Рефакторинг
+- Перенос логики из server.js в сервисы
+- Писать тесты для новых модулей
+- Сохранять обратную совместимость
+- Сохранять JWT, user_id, бюджеты, балансы, конвертацию
+
+## Стиль и соглашения
+- Комментарии на русском
+- camelCase для JS, kebab-case для HTML/CSS
+- Ошибки для пользователя — на русском, debug — на английском
+
+## Ключевые файлы
+| Файл | Назначение | Частота правок |
+|------|------------|----------------|
+| backend/server.js | Сервер, API | Высокая |
+| backend/data.json | БД | Не трогать |
+| backend/services/ | Сервисы | Средняя |
+| frontend/pages/   | Логика страниц | Высокая |
+| frontend/modules/ | Общие утилиты | Средняя |
+| public/css/style.css | Стили | Средняя |
+| public/js/        | Сборка | Не трогать |
+| vite.config.js    | Сборка | Низкая |
+| jest.config.js    | Тесты | Низкая |
+| playwright.config.js | E2E | Низкая |
+
+---
+
+**Последнее обновление:** 16.11.2025
 
 ## Project Overview
 

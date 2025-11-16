@@ -30,7 +30,8 @@ function authenticateRequest(req, res, next) {
     try {
       const payload = jwt.verify(accessToken, ENV.JWT_SECRET);
       req.user = {
-        userId: payload.userId,
+        id: payload.userId || payload.sub,
+        userId: payload.userId || payload.sub,
         email: payload.email
       };
       next();
@@ -59,7 +60,8 @@ function optionalAuth(req, res, next) {
       try {
         const payload = jwt.verify(accessToken, ENV.JWT_SECRET);
         req.user = {
-          userId: payload.userId,
+          id: payload.userId || payload.sub,
+          userId: payload.userId || payload.sub,
           email: payload.email
         };
       } catch (jwtError) {
