@@ -117,10 +117,9 @@ const transactionSchemas = {
         'string.length': 'Валюта должна быть трёхбуквенным кодом (USD, EUR и т.д.)',
         'any.required': 'Валюта обязательна'
       }),
-    date: Joi.date().iso().max('now').required()
+    date: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).required()
       .messages({
-        'date.base': 'Некорректный формат даты',
-        'date.max': 'Дата не может быть в будущем',
+        'string.pattern.base': 'Дата должна быть в формате YYYY-MM-DD',
         'any.required': 'Дата обязательна'
       }),
     note: Joi.string().max(500).optional().allow('', null)
@@ -135,7 +134,7 @@ const transactionSchemas = {
     type: Joi.string().valid('income', 'expense').optional(),
     amount: Joi.number().positive().precision(2).optional(),
     currency: Joi.string().length(3).uppercase().optional(),
-    date: Joi.date().iso().max('now').optional(),
+    date: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).optional(),
     note: Joi.string().max(500).optional().allow('', null)
   }).min(1).messages({
     'object.min': 'Необходимо указать хотя бы одно поле для обновления'

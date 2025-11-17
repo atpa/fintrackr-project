@@ -1,6 +1,6 @@
-import{i}from"./navigation-BDLIzq93.js";import{i as c}from"./profile-BEROGLl0.js";i();c();async function d(){try{const e=await(await fetch("/api/recurring")).json(),n=document.querySelector("#recurringTable tbody"),o=document.getElementById("recurringSummary");if(!n)return;if(n.innerHTML="",Array.isArray(e.items)&&e.items.length)e.items.forEach(t=>{const a=document.createElement("tr");a.innerHTML=`
-          <td>${t.name}</td>
-          <td>${t.sampleAmount} ₽</td>
-          <td>${t.frequency||t.avgPeriodDays+" дней"}</td>
-          <td>${t.nextDate||"—"}</td>
-        `,n.appendChild(a)});else{const t=document.createElement("tr");t.innerHTML='<td colspan="4">Регулярные операции ещё не добавлены</td>',n.appendChild(t)}if(o){const t=e.monthly?`${e.monthly} ₽`:"0 ₽";o.textContent=`Суммарная ежемесячная нагрузка: ${t}`}}catch(r){console.error("Не удалось загрузить повторяющиеся операции",r)}}document.readyState==="loading"?document.addEventListener("DOMContentLoaded",d):d();
+import{i as u,f as i}from"./profile-DStBtrFs.js";import{i as s}from"./navigation-BDLIzq93.js";s();u();function l(t,n){if(n.innerHTML="",!Array.isArray(t)||t.length===0){const r=document.createElement("tr");r.innerHTML='<td colspan="4">No recurring patterns detected yet.</td>',n.appendChild(r);return}t.forEach(r=>{const e=document.createElement("tr"),o=r.amount??r.sampleAmount??0,c=r.currency||r.sampleCurrency||"USD",d=r.frequency||(r.avgPeriodDays?`${r.avgPeriodDays} days`:"-");e.innerHTML=`
+      <td>${r.name||r.pattern||"-"}</td>
+      <td>${o.toFixed(2)} ${c}</td>
+      <td>${d}</td>
+      <td><button class="btn-secondary" data-id="${r.id}">Удалить</button></td>
+    `,n.appendChild(e)})}function y(t){const n=document.getElementById("recurringSummary");if(!n)return;if(!Array.isArray(t)||t.length===0){n.textContent="Monthly recurring total: 0";return}const r=t.reduce((e,o)=>e+Number(o.amount??o.sampleAmount??0),0);n.textContent=`Monthly recurring total: ${r.toFixed(2)}`}async function a(){try{const t=document.querySelector("#recurringTable tbody");if(!t)return;const n=await i("/api/recurring"),r=(n==null?void 0:n.recurring)||[];l(r,t),y(r)}catch(t){console.error("Failed to load recurring data",t)}}document.readyState==="loading"?document.addEventListener("DOMContentLoaded",a):a();
