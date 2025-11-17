@@ -4,12 +4,12 @@
  */
 
 const Database = require('better-sqlite3');
-const fs = require('fs');
-const path = require('path');
+const { readFileSync, existsSync, copyFileSync } = require('fs');
+const { join } = require('path');
 
-const dbPath = path.join(__dirname, '..', 'fintrackr.db');
-const schemaPath = path.join(__dirname, 'schema.sql');
-const jsonDataPath = path.join(__dirname, '..', 'data.json');
+const dbPath = join(__dirname, '..', 'fintrackr.db');
+const schemaPath = join(__dirname, 'schema.sql');
+const jsonDataPath = join(__dirname, '..', 'data.json');
 
 /**
  * Initialize database with schema
@@ -22,7 +22,7 @@ function initializeDatabase() {
   db.pragma('foreign_keys = ON'); // Enforce foreign keys
   
   // Read and execute schema
-  const schema = fs.readFileSync(schemaPath, 'utf-8');
+  const schema = readFileSync(schemaPath, 'utf-8');
   db.exec(schema);
   
   console.log('✅ Database schema created successfully');
@@ -35,12 +35,12 @@ function initializeDatabase() {
 function migrateFromJSON(db) {
   console.log('Migrating data from JSON...');
   
-  if (!fs.existsSync(jsonDataPath)) {
+  if (!existsSync(jsonDataPath)) {
     console.log('⚠️  No data.json found, skipping migration');
     return;
   }
   
-  const jsonData = JSON.parse(fs.readFileSync(jsonDataPath, 'utf-8'));
+  const jsonData = JSON.parse(readFileSync(jsonDataPath, 'utf-8'));
   
   // Start transaction for atomic migration
   const migrate = db.transaction(() => {
@@ -305,7 +305,7 @@ function migrateFromJSON(db) {
   
   // Backup old JSON file
   const backupPath = jsonDataPath + '.backup.' + Date.now();
-  fs.copyFileSync(jsonDataPath, backupPath);
+  copyFileSync(jsonDataPath, backupPath);
   console.log(`✅ Original data backed up to ${backupPath}`);
 }
 
