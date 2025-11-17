@@ -21,12 +21,16 @@ const { errorHandler, AppError } = require('./middleware/errorHandler');
 const { securityHeaders, sanitizeInput } = require('./middleware/security');
 const { validateCsrfToken, getCsrfToken } = require('./middleware/csrf');
 const { authenticateRequest } = require('./middleware/auth');
+const { requestTimeout } = require('./middleware/timeout');
 const logger = require('./utils/logger');
 
 const app = express();
 
 // Disable ETag generation to prevent 304 on API JSON responses
 app.set('etag', false);
+
+// Request timeout middleware (30 seconds for all requests)
+app.use(requestTimeout(30000));
 
 // Security middleware
 app.use(securityHeaders);
